@@ -13,20 +13,20 @@
 // limitations under the License.
 edition = "2023";
 
-// The conversation proto contains data relating to a (potentially multi-modal)
-// set of interactions with a language model or a human expert.
-//  - Conversations can be joined with the original case study input via
-//    the `case_study_id`.
-//  - Each conversation consists of an ordered sequence of `Message`s that can
-//    be joined with elements of the original case_study via the `tag`.
+// 对话原型包含与一种(可能的多种模式)有关的数据。
+// 与语言模型或人类专家的一组互动。
+//  - 可以通过下列途径与最初的个案研究投入结合起来进行交谈：
+//    联合 国 `case_study_id` .
+//  -每次谈话都包含一个顺序的 `Message` s
+//    与原 case_study 的元素通过 `tag` 合并。
 package phllm_protos;
 
 option features.enum_type = CLOSED;
 option features.utf8_validation = NONE;
 
-// / Conversations and messages.
+// /谈话与信息。
 
-// User provided feedback.
+// 用户提供了反馈。
 message Feedback {
   enum Type {
     FEEDBACK_TYPE_UNSPECIFIED = 0;
@@ -36,74 +36,74 @@ message Feedback {
 
   Type type = 1;
 
-  // Category typically is only specified when a negative feedback is provided.
+  // 类别一般只在提供负面反馈时才指定。
   string category = 2;
 
-  // User provided feedback. Typically only provided for a negative feedback.
+  // 用户提供反馈，通常只提供负面反馈。
   string text = 3;
 }
 
-// Message constituents
+// 信件组件
 message Chunk {
   oneof value {
     string text = 1;
     Feedback feedback = 2;
 
-    // Base64 encoded image to include as part of the message. This may
-    // be an input image for multimodal models, or generated/rendered images
-    // as part of the output.
+    // Base64 编码了图像，以包含在信件中。这可能会
+    // 成为 多模态 模型的输入图像，或生成/传递的图像
+    // 作为产出的一部分。
     string image_base64 = 3;
   }
 }
 
-// A single message in the conversation.
+// 谈话中只有一条消息
 message Message {
-  // Optional metadata / tagging info for this message intended for debug usage
+  // 用于调试的此信件的可选元数据/ 标记信息
   string tag = 1;
 
-  // Common message roles assigned to messages.
+  // 指派给消息的共同消息角色。
   enum Role {
     UNKNOWN_ROLE = 0;
 
-    // System instructions or commands ahead of the conversation. e.g.
-    // "assistant should be polite and helpful"
+    // 系统指令或命令在对话前进行，例如：
+    // "助手应该礼貌和有帮助"
     SYSTEM = 1;
 
-    // Input from the user in a dialogue between user & assistant.
+    // 用户在用户和助手间的对话中输入。
     USER = 2;
 
-    // Responses from the assistant in a dialogue between user & assistant.
+    // 助理在用户和助理之间对话中的答复。
     ASSISTANT = 3;
 
-    // Additional documents or information relevant to this conversation.
+    // 与这次对话有关的补充文件或资料。
     CONTEXT = 4;
 
-    // For ground truth notes / responses provided by a human
+    // 关于地面真相笔记/由人类提供的答复
     GRADER = 5;
 
-    // User provided feedback.
+    // 用户提供了反馈。
     USER_FEEDBACK = 6;
   }
 
   Role role = 2;
 
-  // The ordered constituent chunks of the message.
+  // 命令的信息组成块。
   repeated Chunk chunks = 3;
 
-  // The score assigned by the model to this message.
-  // NOTE: This is model-dependent. Often, the score is log-likelihood, but care
-  // should be taken to interpret the score in the context of the application.
+  // 此消息的模型所分配的分数。
+  // NOTE :这是依赖模型的。通常，得分是象日志，但要小心
+  // 应在申请中解释分数。
   float score = 4;
 }
 
 message Conversation {
-  // The unique identifier for the case study this conversation derives from.
+  // 案例研究的独特识别特征来自这一对话。
   string case_study_id = 1;
 
-  // A unique identifier for this conversation.
+  // 这是这次谈话的独有标识。
   string conversation_id = 2;
 
-  // Ordered messages that comprise this conversation. It is assumed that
-  // preceding messages are included in the context for subsequent messages.
+  // 包含这次谈话的有序消息。
+  // 先前的电文在下文中包含，用于随后的电文。
   repeated Message messages = 3;
 }

@@ -27,8 +27,8 @@ Usage:
 Research Question: "Is specialization better than one generalist?"
 """
 
-# Version for debugging - increment on each fix
-__version__ = "1.11.0"  # Fix is_expression stripping print() from compound blocks + search recovery
+# 调试版本 - 在每个固定器上递增
+__version__ = "1.11.0"  # 固定 is_expression从复合区块中剥离打印( ) + 搜索回收
 
 import io
 import os
@@ -41,7 +41,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
-# Import shared request stats
+# 导入共享请求数据
 try:
     from ..utils.request_stats import request_stats
     _STATS_AVAILABLE = True
@@ -50,7 +50,7 @@ except ImportError:
 
 
 # =============================================================================
-# Tool Call Logging
+# 工具调用日志
 # =============================================================================
 
 def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str = None):
@@ -62,13 +62,13 @@ def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str 
         output: The tool output (will be truncated for display).
         error: Error message if the tool failed.
     """
-    # Record stats
+    # 记录数据
     if _STATS_AVAILABLE:
         request_stats.record_tool(tool_name, had_error=error is not None)
     
     timestamp = datetime.now().strftime("%H:%M:%S")
     
-    # Format inputs
+    # 格式输入
     input_str = ", ".join(f"{k}={repr(v)[:50]}" for k, v in inputs.items())
     
     print(f"\n{'─' * 60}")
@@ -78,7 +78,7 @@ def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str 
     if error:
         print(f"   ❌ Error: {error[:200]}")
     elif output is not None:
-        # Truncate output for display
+        # 显示的截断输出
         output_str = str(output)
         if len(output_str) > 300:
             output_str = output_str[:300] + "..."
@@ -108,37 +108,37 @@ def clean_agent_response(text: str) -> str:
     if not text:
         return text
     
-    # Handle JSON-escaped newlines (convert \n literal to actual newlines)
+    # 处理 JSON - 逃逸的新线(将\n字转换为实际的新线)
     if '\\n' in text:
         text = text.replace('\\n', '\n')
     
-    # Remove surrounding quotes if the entire text is quoted
+    # 如果引用了整个文字，删除周围的引文
     text = text.strip()
     if (text.startswith('"') and text.endswith('"')) or (text.startswith("'") and text.endswith("'")):
         text = text[1:-1]
     
-    # Remove [SUMMARY] and [CODE UPDATE] tags (keep content after)
+    # 删除 SUMMARY ]和 CODEUPDATE 标记(在之后保留内容)
     text = re.sub(r'^\s*\[SUMMARY\]\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'^\s*\[CODE UPDATE\]\s*', '', text, flags=re.MULTILINE)
     
-    # Remove Coach: prefix at start of response
+    # 删除教练： 响应开始前缀
     text = re.sub(r'^Coach:\s*', '', text, flags=re.MULTILINE)
     
-    # Remove Expert: prefix at start of response  
+    # 删除专家： 响应开始前缀
     text = re.sub(r'^Expert:\s*', '', text, flags=re.MULTILINE)
     
-    # Remove [Finish]: prefix (ReAct final answer marker)
-    # Handle various formats: [Finish]:, [Finish]: , [Finish]:\n, etc.
+    # 删除 [完成]:前缀 (ReAct 最终答案标记)
+    # 处理各种格式：[完成]:,[完成]:,[完成]:,[完成]:\n等。
     text = re.sub(r'^\s*\[Finish\]:\s*', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\[Finish\]:\s*\n*', '', text)  # Also catch mid-text occurrences
+    text = re.sub(r'\[Finish\]:\s*\n*', '', text)  # 还要抓住中文本的出现
     
-    # Detect and reject system prompt leakage
-    # These patterns indicate the model is outputting its instructions instead of a response
-    # Normalize text for detection (handle ellipsis, extra spaces, etc.)
+    # 检测和拒绝系统即时泄漏
+    # 这些模式显示模型正在输出指令，而不是响应
+    # 将文本规范化以供检测(手性椭圆、额外空格等)
     text_normalized = text.lower().replace('…', '...').replace('  ', ' ')
     
     prompt_leak_indicators = [
-        # From orchestrator/domain expert prompts
+        # 来自编排器/域专家提示
         'you must do so safely and transparently',
         'quantify uncertainty when appropriate',
         'avoid diagnosing or prescribing',
@@ -146,7 +146,7 @@ def clean_agent_response(text: str) -> str:
         'you should use the provided tools',
         'if a tool fails or required user context',
         'explicitly state the limitation',
-        # From domain expert agent
+        # 从 领域专家 Agent
         'clinically accurate, evidence-based',
         'safety-conscious guidance',
         'explicitly separate objective findings',
@@ -157,20 +157,20 @@ def clean_agent_response(text: str) -> str:
         'request only the minimum additional data',
         'wearables, labs, imaging, notes',
         'urgent/emergent evaluation when red flags',
-        # Generic instruction patterns
+        # 一般教学模式
         'you will analyze and synthesize',
         'you will avoid',
         'you will cite',
         'you will request',
         'with the goal of delivering',
         'delivering clinically accurate',
-        # Tool instruction patterns (shouldn't be in final response)
+        # 工具指令模式( 不应该在最后回复中)
         'e.g., `tool_code` for math',
         'for math, `compare_blood_test',
         '`datacommons_natural_language_query`',
         'via the `search` tool',
         'use the provided tools',
-        # Instruction-style patterns
+        # 指令式图案
         'you are tasked with',
         'as a domain expert',
         'you are a domain expert',
@@ -189,23 +189,23 @@ def clean_agent_response(text: str) -> str:
                 "or switch to a different model."
             )
     
-    # Clean up any extra whitespace
+    # 清除任何额外的空白
     text = text.strip()
     
     return text
 
 
-# Try to import onetwo components
+# 尝试导入一个 2 个组件
 _ONETWO_AVAILABLE = False
 _ONETWO_OPENAI_AVAILABLE = False
-_ONETWO_GENAI_AVAILABLE = False  # True if new GoogleGenAIAPI backend is available
+_ONETWO_GENAI_AVAILABLE = False  # 如果有新的 GoogleGenAIAPI 后端，则为真
 _ONETWO_IMPORT_ERROR = None
 
 
 # =============================================================================
-# OpenAI API Compatibility Patch
+# OpenAI API 兼容性补丁
 # =============================================================================
-# Newer OpenAI models require `max_completion_tokens` instead of `max_tokens`.
+# 较新的OpenAI型号需要`max_completion_tokens`而不是`max_tokens`.
 
 _OPENAI_PATCHED = False
 
@@ -263,9 +263,9 @@ def _patch_openai_for_compatibility():
             while i < len(text):
                 found_tool = False
                 for tool_name in tool_names:
-                    # Check for [Act]: prefix or direct tool call
+                    # 检查 [Act] :前缀或直接工具调用
                     if text[i:].startswith('[Act]:'):
-                        # Find the tool name after [Act]:
+                        # 在 [Act] 后查找工具名：
                         act_match = re.match(r'\[Act\]:\s*', text[i:])
                         if act_match:
                             prefix = act_match.group(0)
@@ -275,7 +275,7 @@ def _patch_openai_for_compatibility():
                                     arg_content, end_pos = _extract_balanced_parens(text, tool_start + len(tn))
                                     if arg_content is not None:
                                         arg_stripped = arg_content.strip()
-                                        # Check if already properly quoted
+                                        # 检查引用是否正确
                                         is_quoted = (
                                             (arg_stripped.startswith('"') and arg_stripped.endswith('"')) or
                                             (arg_stripped.startswith("'") and arg_stripped.endswith("'")) or
@@ -285,7 +285,7 @@ def _patch_openai_for_compatibility():
                                         if is_quoted:
                                             result.append(text[i:end_pos+1])
                                         else:
-                                            # Wrap in quotes, escape existing quotes
+                                            # 以引号环绕，避开已有引号
                                             escaped = arg_content.replace("'", '"')
                                             result.append(f"{prefix}{tn}('{escaped}')")
                                         i = end_pos + 1
@@ -337,30 +337,30 @@ def _patch_openai_for_compatibility():
         _original_create = completions.Completions.create
         
         def _patched_create(self, *args, **kwargs):
-            # Convert max_tokens to max_completion_tokens for newer API
+            # 将 max_tokens 转换为 max_completion_tokens 用于更新 API
             if 'max_tokens' in kwargs and 'max_completion_tokens' not in kwargs:
                 kwargs['max_completion_tokens'] = kwargs.pop('max_tokens')
             
             model = kwargs.get('model', '')
             is_gpt5 = model and 'gpt-5' in model.lower()
             
-            # Note: reasoning_effort parameter only works with Responses API, not Chat Completions
-            # For Chat Completions, we rely on explicit prompting instead
+            # 注：reasoning_effort 参数只与响应API配合，而不是聊天补全
+            # 对于聊天完成，我们依靠明确的提示代替
             
-            # Save stop sequences for backup manual truncation
+            # 保存备份手动截断的停止序列
             saved_stop_sequences = kwargs.get('stop')
 
-            # GPT-5 reasoning models reject `stop` with HTTP 400. Strip it
-            # before sending so the request succeeds, and rely on
-            # `_truncate_at_stop_sequences` below to honor the requested stop
-            # semantics on the returned content.
+            # GPT-5 推理模型拒绝 `stop` 与 HTTP 400.
+            # 在发送之前，请求是成功的，并依赖
+            # `_truncate_at_stop_sequences`下面为纪念请求的停留
+            # 返回内容上的语义。
             if is_gpt5 and 'stop' in kwargs:
                 kwargs.pop('stop')
 
-            # Call original method
+            # 调用原始方法
             result = _original_create(self, *args, **kwargs)
             
-            # Post-process the response
+            # 处理后回复
             try:
                 if hasattr(result, 'choices') and result.choices:
                     for choice in result.choices:
@@ -368,12 +368,12 @@ def _patch_openai_for_compatibility():
                             if choice.message.content:
                                 content = choice.message.content
                                 
-                                # For GPT-5: backup manual truncate at stop sequences
-                                # (in case the API didn't honor them)
+                                # GPT-5: 备份手动截断在停止序列
+                                # (以防API不尊重他们)
                                 if is_gpt5 and saved_stop_sequences:
                                     content = _truncate_at_stop_sequences(content, saved_stop_sequences)
                                 
-                                # Transform tool calls for OneTwo compatibility
+                                # 变形工具调用 OneTwo 兼容性
                                 content = _transform_tool_calls_for_onetwo(content)
                                 
                                 choice.message.content = content
@@ -394,17 +394,17 @@ try:
     from onetwo.stdlib.tool_use import llm_tool_use
     from onetwo.stdlib.tool_use import python_tool_use
     
-    # Use GoogleGenAIAPI backend (new google.genai SDK, no deprecation warning,
-    # safety defaults to OFF for Gemini 2.5+ models)
+    # 使用 GoogleGenAIAPI 后端(新google.genai SDK,无贬值警告，
+    # Gemini2.5+模型的安全默认值为OFF
     try:
         from onetwo.backends import google_genai_api
         _ONETWO_GENAI_AVAILABLE = True
     except ImportError:
-        pass  # Will error clearly at backend construction time
+        pass  # 会在后端施工时间明显出错
     
     _ONETWO_AVAILABLE = True
     
-    # Try to import OpenAI backend
+    # 尝试导入 OpenAI 后端
     try:
         from onetwo.backends import openai_api
         _ONETWO_OPENAI_AVAILABLE = True
@@ -419,7 +419,7 @@ except SyntaxError as e:
 except Exception as e:
     _ONETWO_IMPORT_ERROR = str(e)
 
-# For notebook-based exemplar parsing
+# 基于笔记本的示例解析
 try:
     import nbformat
     _NBFORMAT_AVAILABLE = True
@@ -428,7 +428,7 @@ except ImportError:
 
 
 # =============================================================================
-# PHIA Preamble - Combined expertise prompt
+# PHIA 序言 -- -- 及时提供综合专门知识
 # =============================================================================
 
 PHIA_PREAMBLE = textwrap.dedent("""\
@@ -633,7 +633,7 @@ QUESTION_PREFIX = (
 
 
 # =============================================================================
-# Tool Names
+# 工具名称
 # =============================================================================
 
 _PYTHON_TOOL_NAME = "tool_code"
@@ -642,7 +642,7 @@ _FINISH_TOOL_NAME = "finish"
 
 
 # =============================================================================
-# Helper Functions
+# 帮助函数
 # =============================================================================
 
 def _autofix_truncated_code(code: str) -> str:
@@ -660,26 +660,26 @@ def _autofix_truncated_code(code: str) -> str:
     """
     try:
         compile(code, '<string>', 'exec')
-        return code  # Already valid
+        return code  # 已经有效
     except SyntaxError as e:
         error_msg = str(e)
         if 'expected an indented block' not in error_msg:
-            return code  # Different error, don't touch
+            return code  # 不同的错误，不要碰
         error_lineno = e.lineno
     
     lines = code.split('\n')
     
-    # The error message contains the actual compound statement line:
-    # "expected an indented block after 'else' statement on line 3"
-    # e.lineno may point elsewhere (to the next code line), so
-    # parse the message for the true source line.
+    # 错误消息包含实际的复合语句行：
+    # "期待在"else"的台词后出现缩进区块3".
+    # e. lineno 可能指向别处(到下一个代码行),所以
+    # 解析消息的真实源行。
     msg_match = re.search(r'on line (\d+)', error_msg)
     stmt_lineno = int(msg_match.group(1)) if msg_match else error_lineno
     
     if not stmt_lineno or stmt_lineno < 1 or stmt_lineno > len(lines):
         return code
     
-    # Insert `pass` as the body of the empty compound statement.
+    # 插入 `pass`作为空复合语句的正文。
     offending_line = lines[stmt_lineno - 1]
     indent = len(offending_line) - len(offending_line.lstrip())
     lines.insert(stmt_lineno, ' ' * (indent + 4) + 'pass')
@@ -691,7 +691,7 @@ def _autofix_truncated_code(code: str) -> str:
               f"'{offending_line.strip()}' → added pass")
         return fixed
     except SyntaxError:
-        return code  # Fix didn't help, return original
+        return code  # 修补没用的，还原吧
 
 
 def simple_python_executor(code: str, sandbox_globals: dict) -> str:
@@ -706,9 +706,9 @@ def simple_python_executor(code: str, sandbox_globals: dict) -> str:
     """
     _log_tool_call("tool_code", {"code": code[:100] + "..." if len(code) > 100 else code})
     
-    # Auto-fix truncated code blocks (e.g., else: with no body from
-    # tool_code string truncation). Without this, the model loops on
-    # the same SyntaxError for max_steps iterations.
+    # 自动修补短路码块(如： 其它:没有来自
+    # tool_code 字符串切换。没有这个，模型循环打开
+    # 同样的SyntaxError,用于max_steps迭代。
     code = _autofix_truncated_code(code)
     
     local_scope = {}
@@ -719,7 +719,7 @@ def simple_python_executor(code: str, sandbox_globals: dict) -> str:
             code_lines = code.strip().split('\n')
             last_line = code_lines[-1].strip() if code_lines else ""
             
-            # Determine if last line is an expression
+            # 确定最后一行是否为表达式
             is_expression = (
                 last_line and 
                 not last_line.startswith(('import ', 'from ', 'def ', 'class ', 
@@ -756,12 +756,12 @@ def simple_python_executor(code: str, sandbox_globals: dict) -> str:
     except Exception as e:
         error_str = str(e)
         
-        # Inline retry: fix truncated compound statements (e.g., else: with no body).
-        # This is a second line of defense — _autofix_truncated_code above should
-        # catch this, but if it didn't for any reason, handle it here.
+        # 内线重试:固定截断的复合语句(如:其他:无躯体).
+        # 这是第二道防线——上面的_autofix_truncated_code
+        # 抓住这个，但如果它没有 任何理由，在这里处理它。
         if 'expected an indented block' in error_str:
             try:
-                # Parse the statement line from the error message
+                # 从错误消息中解析语句行
                 msg_match = re.search(r'on line (\d+)', error_str)
                 if msg_match:
                     fix_lineno = int(msg_match.group(1))
@@ -772,7 +772,7 @@ def simple_python_executor(code: str, sandbox_globals: dict) -> str:
                         fix_lines.insert(fix_lineno, ' ' * (indent + 4) + 'pass')
                         fixed_code = '\n'.join(fix_lines)
                         
-                        # Try to execute the fixed code
+                        # 尝试执行固定代码
                         fix_buffer = io.StringIO()
                         fix_scope = {}
                         with contextlib.redirect_stdout(fix_buffer):
@@ -891,14 +891,14 @@ def build_exemplars_from_notebooks(
         if not cells:
             continue
         
-        # First cell is the problem description
+        # 第一个单元格是问题描述
         description_cell = cells.pop(0)
         problem_description = "".join(description_cell.get("source", [])).strip()
         problem_description = problem_description.lstrip("#").strip()
         
         planner_updates = []
         
-        # Process cells in pairs (markdown thought + code action)
+        # 进程单元格成对( markdownthought + 代码动作)
         i = 0
         while i < len(cells):
             if (i < len(cells) - 1 and 
@@ -909,11 +909,11 @@ def build_exemplars_from_notebooks(
                 code = "".join(cells[i + 1].get("source", [])).strip()
                 code = code.replace('# @test {"skip": true}\n', "")
                 
-                # Determine function to call
+                # 确定要调用的职能
                 function_name = _SEARCH_TOOL_NAME if "search" in code.lower() else _PYTHON_TOOL_NAME
                 
                 if function_name == _SEARCH_TOOL_NAME:
-                    # Extract search query from code like: search('query')
+                    # 从代码中提取搜索查询，如： 搜索 ('query')
                     try:
                         args = (code.split("'")[1],)
                     except IndexError:
@@ -921,7 +921,7 @@ def build_exemplars_from_notebooks(
                 else:
                     args = (code,)
                 
-                # Get observation from cell outputs
+                # 从单元格输出中获取观察
                 observation = ""
                 try:
                     outputs = cells[i + 1].get("outputs", [])
@@ -954,7 +954,7 @@ def build_exemplars_from_notebooks(
             else:
                 i += 1
         
-        # Handle final step with finish tool
+        # 以完成工具处理最后一步
         if planner_updates and not planner_updates[-1].is_finished:
             last_step = planner_updates[-1]
             if (last_step.action and 
@@ -1009,7 +1009,7 @@ def _create_default_exemplars() -> List["react.ReActState"]:
     
     exemplars = []
     
-    # Example 1: Sleep analysis
+    # 实例1:睡眠分析
     exemplars.append(react.ReActState(
         inputs="How has my sleep been over the past week?",
         updates=[
@@ -1047,7 +1047,7 @@ print(f"Average REM sleep: {avg_rem:.0f} min ({rem_pct:.1f}%)")""",),
         ],
     ))
     
-    # Example 2: Activity analysis with search
+    # 实例2:活动分析与搜索
     exemplars.append(react.ReActState(
         inputs="What's a good resting heart rate for someone my age?",
         updates=[
@@ -1091,7 +1091,7 @@ print(f"Recent average RHR: {recent_rhr:.0f} bpm")""",),
         ],
     ))
     
-    # Example 3: Emotional/worried query — ALWAYS check data first
+    # 例 3:情感/痛苦查询——ALWAYS先检查数据
     exemplars.append(react.ReActState(
         inputs="I'm really worried about my health lately, been feeling tired and my heart races sometimes",
         updates=[
@@ -1146,7 +1146,7 @@ print(f"Avg daily steps: {avg_steps:.0f}")""",),
 
 
 # =============================================================================
-# Check onetwo availability
+# 请检查access-date=中的日期值 (帮助)
 # =============================================================================
 
 def is_onetwo_available() -> bool:
@@ -1160,7 +1160,7 @@ def get_onetwo_import_error() -> Optional[str]:
 
 
 # =============================================================================
-# PHIA Baseline Class
+# PHIA 基线 类
 # =============================================================================
 
 if _ONETWO_AVAILABLE:
@@ -1197,17 +1197,17 @@ if _ONETWO_AVAILABLE:
             if debug_verbose:
                 print(f"[PHIA Baseline] Version {__version__}")
             
-            # Agent state
+            # 代理状态
             self._agent = None
             self._gemini_api_key = None
             self._sandbox_globals = None
             
-            # Data
+            # 数据
             self.summary_df: Optional[pd.DataFrame] = None
             self.activities_df: Optional[pd.DataFrame] = None
             self.profile_df: Optional[pd.DataFrame] = None
             
-            # Conversation history
+            # 对话历史
             self.conversation_history: list = []
             self.last_response: str = ""
         
@@ -1216,7 +1216,7 @@ if _ONETWO_AVAILABLE:
             api_key: Optional[str] = None,
             provider: str = "gemini",
             model_name: Optional[str] = None,
-            # Legacy parameter
+            # 遗留参数
             gemini_api_key: Optional[str] = None,
         ) -> "PHIABaseline":
             """Configure the PHIA baseline with API credentials.
@@ -1232,7 +1232,7 @@ if _ONETWO_AVAILABLE:
             Returns:
                 Self for method chaining.
             """
-            # Handle legacy parameter
+            # 处理遗留参数
             if gemini_api_key and not api_key:
                 api_key = gemini_api_key
                 provider = "gemini"
@@ -1243,7 +1243,7 @@ if _ONETWO_AVAILABLE:
             self._api_key = api_key
             self._provider = provider.lower()
             
-            # Set default model based on provider
+            # 基于提供者设置默认模式
             if model_name is None:
                 if self._provider == "gemini":
                     model_name = "models/gemini-3.1-flash-lite-preview"
@@ -1254,9 +1254,9 @@ if _ONETWO_AVAILABLE:
             
             self._model_name = model_name
             
-            # Configure onetwo backend using register() pattern
+            # 使用寄存器( ) 模式配置一个 2 个后端
             if self._provider == "gemini":
-                # Add models/ prefix if needed
+                # 需要时添加模型/前缀
                 if not model_name.startswith("models/"):
                     model_name = f"models/{model_name}"
                 
@@ -1270,8 +1270,8 @@ if _ONETWO_AVAILABLE:
                 llm_engine = google_genai_api.GoogleGenAIAPI(
                     api_key=api_key,
                     generate_model_name=model_name,
-                    # Pin chat model too — OneTwo verifies both; default is
-                    # `models/gemini-2.5-flash` which not all keys have.
+                    # Pin 聊天模式也——OneTwo 验证两者;默认为
+                    # `models/gemini-2.5-flash` 并不是所有的键有。
                     chat_model_name=model_name,
                     temperature=0.0,
                     max_tokens=8192,
@@ -1284,8 +1284,8 @@ if _ONETWO_AVAILABLE:
                         "OneTwo OpenAI backend not available. "
                         "Please use Gemini or update onetwo."
                     )
-                # Reasoning / GPT-5 models only accept temperature=1.0 (their
-                # API default). Closest analog to the 0.0 we use elsewhere.
+                # 原因/ GPT-5 模型只接受温度= 1.0 (其
+                # API 默认值。我们用在其他地方的0.0最接近的模拟值。
                 openai_temp = 1.0 if model_name.startswith(("o1", "o3", "o4", "gpt-5")) else 0.0
                 print(f"[PHIA:configure] Registering OpenAI backend: model={model_name}, temp={openai_temp}")
                 llm_engine = openai_api.OpenAIAPI(
@@ -1320,7 +1320,7 @@ if _ONETWO_AVAILABLE:
             self.activities_df = activities_df
             self.profile_df = profile_df
             
-            # Set up sandbox globals for code execution
+            # 设置用于代码执行的沙盒全球
             self._sandbox_globals = {
                 "pd": pd,
                 "np": np,
@@ -1336,7 +1336,7 @@ if _ONETWO_AVAILABLE:
             if self._sandbox_globals is None:
                 raise RuntimeError("Data not loaded. Call load_data() first.")
             
-            # Create tools
+            # 创建工具
             python_tool = llm_tool_use.Tool(
                 name=_PYTHON_TOOL_NAME,
                 function=lambda code: simple_python_executor(code, self._sandbox_globals),
@@ -1357,7 +1357,7 @@ if _ONETWO_AVAILABLE:
             
             agent_tools = [python_tool, search_tool, finish_tool]
             
-            # Load exemplars
+            # 装入示例
             exemplars = []
             if self.few_shot_dir and os.path.isdir(self.few_shot_dir):
                 notebook_files = [
@@ -1370,23 +1370,23 @@ if _ONETWO_AVAILABLE:
                     verbose=self.debug_verbose,
                 )
             
-            # Fall back to default exemplars if none loaded
+            # 如果未装入，则返回到默认示例
             if not exemplars:
                 if self.debug_verbose:
                     print("Using default hardcoded exemplars")
                 exemplars = _create_default_exemplars()
             
-            # Create the agent
+            # 创建代理
             self._agent = react.ReActAgent(
                 exemplars=exemplars,
                 environment_config=python_tool_use.PythonToolUseEnvironmentConfig(
                     tools=agent_tools,
                 ),
-                max_steps=10,  # Limit to prevent runaway loops
+                max_steps=10,  # 限制以预防环路失控
                 stop_prefix="",
             )
             
-            # Set the prompt
+            # 设置提示
             self._agent.prompt = react.ReActPromptJ2(
                 text=PHIA_PREAMBLE + PHIA_REACT_PROMPT_TEXT
             )
@@ -1400,11 +1400,11 @@ if _ONETWO_AVAILABLE:
             Returns:
                 The agent's response (cleaned of internal labels).
             """
-            # Reset stats for this request
+            # 重置此请求的数据
             if _STATS_AVAILABLE:
                 request_stats.reset()
             
-            # Always log key info for diagnostics
+            # 总是记录用于诊断的密钥信息
             from pha.streaming import emit_step
             print(f"\n{'─' * 60}")
             print(f"[PHIA] Model: {getattr(self, '_model_name', 'unknown')}")
@@ -1412,24 +1412,24 @@ if _ONETWO_AVAILABLE:
             print(f"[PHIA] Query: {user_message[:80]}...")
             print(f"{'─' * 60}")
             
-            # Rebuild agent for each query to avoid state accumulation
-            # (following original PHIA pattern where agent is stateless)
+            # 为每个查询重建代理以避免状态积累
+            # (遵循代理人无国籍的原PHIA模式).
             self._build_agent()
             
             if self.debug_verbose:
                 print(f"[PHIA Baseline] Processing: {user_message[:50]}...")
             
-            # Add question prefix for better responses
+            # 添加问题前缀以更好地回答
             full_query = QUESTION_PREFIX + user_message
             
-            # Run the agent using ot.run() (following original PHIA pattern)
+            # 使用 ot.run () 运行代理( 遵循原始 PHIA 模式)
             try:
                 emit_step("PHIA", "Running ReAct agent...")
                 final_answer, final_state = ot.run(
                     self._agent(inputs=full_query, return_final_state=True)
                 )
                 
-                # Always log what ot.run() returned
+                # 总是记录返回的 ot.run ()
                 print(f"\n[PHIA] ot.run() completed")
                 print(f"[PHIA] final_answer type: {type(final_answer).__name__}")
                 print(f"[PHIA] final_answer: {repr(str(final_answer))[:300]}")
@@ -1448,11 +1448,11 @@ if _ONETWO_AVAILABLE:
                 else:
                     print(f"[PHIA] final_state: {repr(final_state)[:200]}")
                 
-                # Extract the final answer
+                # 提取最后的答案
                 emit_step("PHIA", "Extracting and cleaning response...")
                 response = self._extract_answer(final_answer, final_state)
                 
-                # If extraction failed, try to recover from OneTwo parse errors
+                # 如果提取失败，请尝试从 OneTwo 解析错误
                 _FALLBACK_INDICATORS = [
                     "Could not extract a valid answer",
                     "Response contained system prompt leakage",
@@ -1463,16 +1463,16 @@ if _ONETWO_AVAILABLE:
                         final_answer, final_state, user_message
                     )
                     if not recovered:
-                        # Try loop recovery (model repeated same tool call)
+                        # 尝试循环恢复( 模型重复了相同的工具调用)
                         recovered = self._try_recover_from_loop(
                             final_state, user_message
                         )
                     if recovered:
                         response = recovered
                 
-                # Check for truncated responses (common with 2.5 Pro)
-                # Model generates long thoughts that eat into token budget,
-                # leaving the [Finish] text cut off mid-sentence
+                # 检查截断的响应( 常见于 2.5 Pro)
+                # 模型产生长期的想法 吃到象征性的预算，
+                # 离开[结 文本断绝中刑
                 if self._is_truncated_response(response):
                     emit_step("PHIA", "Response appears truncated — generating complete answer...")
                     print(f"[PHIA] Truncated response detected ({len(response)} chars): {repr(response[:100])}")
@@ -1480,13 +1480,13 @@ if _ONETWO_AVAILABLE:
                     if direct:
                         response = direct
                 
-                # Check for low-quality responses: vague preambles or raw data dumps
-                # that passed syntactic checks but aren't actually helpful
+                # 检查低质量回复:模糊的序言或原始数据堆放
+                # 通过了综合检查但实际上没有帮助
                 if not self._is_substantive_response(response, final_state):
                     emit_step("PHIA", "Response lacks substance — generating enriched answer...")
                     print(f"[PHIA] Non-substantive response detected ({len(response)} chars): {repr(response[:100])}")
-                    # Collect ALL context from the ReAct steps: tool output, 
-                    # search results, and model's own analysis from thoughts
+                    # 从 ReAct 步骤中收集 ALL 语境:工具输出，
+                    # 搜索结果，以及模型本身对想法的分析
                     full_context = self._collect_full_step_context(final_state)
                     enriched = self._generate_enriched_answer(
                         user_message, full_context
@@ -1509,7 +1509,7 @@ if _ONETWO_AVAILABLE:
             
             self.last_response = response
             
-            # Update conversation history
+            # 更新对话历史
             self.conversation_history.append({
                 "role": "user",
                 "content": user_message,
@@ -1519,11 +1519,11 @@ if _ONETWO_AVAILABLE:
                 "content": response,
             })
             
-            # Print request summary
+            # 打印请求摘要
             if _STATS_AVAILABLE:
                 request_stats.print_summary()
             
-            # Clean internal agent labels before returning to user
+            # 返回用户前的清洁内部代理标签
             return clean_agent_response(response)
         
         def _extract_answer(self, final_answer: Any, final_state: Any) -> str:
@@ -1536,7 +1536,7 @@ if _ONETWO_AVAILABLE:
             Returns:
                 A clean response string.
             """
-            # Helper to check if text is raw search results
+            # 帮助检查文本是否为原始搜索结果
             def is_raw_search_output(text: str) -> bool:
                 text_lower = text.lower()
                 url_count = text_lower.count('url:')
@@ -1546,8 +1546,8 @@ if _ONETWO_AVAILABLE:
             
             print(f"\n[PHIA:extract] === Starting _extract_answer ===")
             
-            # ── Early detection of API errors (rate limits, auth, etc.) ──
-            # These appear as #ERROR# strings in final_answer or observations
+            # * 早期发现 API 错误( 速率限制、 认证等)***
+            # 这些显示为# ERROR# 字符串在 final_answer 或观察中
             error_sources = []
             if final_answer:
                 error_sources.append(str(final_answer))
@@ -1558,7 +1558,7 @@ if _ONETWO_AVAILABLE:
             
             for src in error_sources:
                 if '#ERROR#' in src:
-                    # Extract the actual error message
+                    # 提取实际错误消息
                     api_error_patterns = {
                         '429': 'Rate limit exceeded',
                         'Resource exhausted': 'Rate limit exceeded', 
@@ -1577,13 +1577,13 @@ if _ONETWO_AVAILABLE:
                                 f"Please wait a moment and try again, or switch to a different model."
                             )
             
-            # If we have a direct final answer, check if it's complete
+            # 如果有直接的最后答案请检查是否完整
             if final_answer:
                 answer = str(final_answer)
                 print(f"[PHIA:extract] Step 1 - Checking final_answer ({len(answer)} chars): {repr(answer[:200])}")
                 cleaned = self._clean_react_format(answer)
                 print(f"[PHIA:extract]   After _clean_react_format ({len(cleaned)} chars): {repr(cleaned[:200])}")
-                # Skip if it's raw search output
+                # 如果为原始搜索输出，请跳过
                 if is_raw_search_output(cleaned):
                     print(f"[PHIA:extract]   REJECTED: raw search output")
                 elif cleaned and self._is_complete_response(cleaned):
@@ -1593,9 +1593,9 @@ if _ONETWO_AVAILABLE:
                     print(f"[PHIA:extract]   REJECTED: _is_complete_response returned False (empty={not cleaned}, len={len(cleaned)})")
                     if cleaned:
                         self._debug_completeness_check(cleaned)
-                    # If the text is long (>500 chars), the model likely wrote
-                    # a full answer but prefixed it with planning sentences.
-                    # Try stripping the planning preamble and re-checking.
+                    # 如果文本是长的(> 500 字符),模型可能写
+                    # 完整答案，但前缀它与规划句。
+                    # 尝试剥除规划序言并重新检查。
                     if cleaned and len(cleaned) > 500:
                         salvaged = self._strip_planning_preamble(cleaned)
                         if salvaged and self._is_complete_response(salvaged):
@@ -1604,9 +1604,9 @@ if _ONETWO_AVAILABLE:
             else:
                 print(f"[PHIA:extract] Step 1 - final_answer is falsy: {repr(final_answer)}")
             
-            # Try to extract from final state
+            # 尝试从最后状态提取
             if hasattr(final_state, 'updates') and final_state.updates:
-                # Look for finished steps first (these have actual final answers)
+                # 查找完成步骤(这些步骤有实际最后的答案)
                 print(f"[PHIA:extract] Step 2 - Checking finished steps...")
                 found_finished = False
                 for step in reversed(final_state.updates):
@@ -1626,7 +1626,7 @@ if _ONETWO_AVAILABLE:
                             print(f"[PHIA:extract]   REJECTED: _is_complete_response False")
                             if cleaned:
                                 self._debug_completeness_check(cleaned)
-                            # Same salvage logic as Step 1
+                            # 与 Step 1 相同的打捞逻辑
                             if cleaned and len(cleaned) > 500:
                                 salvaged = self._strip_planning_preamble(cleaned)
                                 if salvaged and self._is_complete_response(salvaged):
@@ -1635,7 +1635,7 @@ if _ONETWO_AVAILABLE:
                 if not found_finished:
                     print(f"[PHIA:extract]   No finished steps found")
                 
-                # If no finished step, look for the last substantial observation
+                # 如果没有完成步骤，请寻找最后的实质性观察
                 print(f"[PHIA:extract] Step 3 - Checking all observations...")
                 for i, step in enumerate(reversed(final_state.updates)):
                     if step.observation:
@@ -1652,9 +1652,9 @@ if _ONETWO_AVAILABLE:
                         obs_no_backticks = obs_stripped.replace('`', '')
                         is_raw_tool_call = obs_no_backticks.startswith('tool_code(') or obs_no_backticks.startswith('search(')
                         is_onetwo_error = '#ERROR#' in obs or 'Invalid syntax for positional arguments' in obs
-                        is_raw_pandas = 'dtype:' in obs and 'Name:' in obs  # pandas Series repr
-                        is_raw_code_output = obs_stripped.startswith('(np.') or obs_stripped.startswith('np.')  # raw numpy output
-                        # Detect code content (model dumped tool call as text)
+                        is_raw_pandas = 'dtype:' in obs and 'Name:' in obs  # pandas 系列 重播
+                        is_raw_code_output = obs_stripped.startswith('(np.') or obs_stripped.startswith('np.')  # 原始数字输出
+                        # 检测代码内容( 模式倾销工具调用为文本)
                         code_indicators = ['summary_df[', 'activities_df[', 'profile[',
                                            '.mean()', '.sum()', '.max()', '.min()',
                                            'print(f"', "print(f'", '\\n']
@@ -1683,7 +1683,7 @@ if _ONETWO_AVAILABLE:
                             print(f"[PHIA:extract]     SKIP: _is_complete_response False")
                             self._debug_completeness_check(obs)
                 
-                # Try to use the last thought if it has useful content
+                # 尝试使用最后一个想法，如果它有有用的内容
                 print(f"[PHIA:extract] Step 4 - Checking thoughts...")
                 for step in reversed(final_state.updates):
                     if step.thought:
@@ -1705,10 +1705,10 @@ if _ONETWO_AVAILABLE:
             else:
                 print(f"[PHIA:extract] Step 2 - No updates in final_state")
             
-            # Fallback — surface what went wrong
+            # 退缩——表面什么出了问题
             print(f"[PHIA:extract] *** ALL EXTRACTION ATTEMPTS FAILED - returning diagnostic error ***")
             
-            # Gather diagnostic info
+            # 收集诊断信息
             n_steps = 0
             step_details = []
             if final_state and hasattr(final_state, 'updates') and final_state.updates:
@@ -1747,14 +1747,14 @@ if _ONETWO_AVAILABLE:
             4. Generate enriched answer using all context (intermediate + new)
             5. Fall back to enriched answer with just intermediate results
             """
-            # Step 1: Check if the failure was a tool call parse error
+            # 步骤 1 : 检查失败是否是一个工具调用解析错误
             has_parse_error = False
             if hasattr(final_state, 'updates'):
                 for step in final_state.updates:
                     obs = str(step.observation) if step.observation else ''
-                    # OneTwo emits different error patterns:
-                    # - "#ERROR#: Invalid syntax for call: tool_code("
-                    # - "#ERROR#: Didn't find \[Act\]:? or \[Finish\]:?"
+                    # OneTwo 发出不同的错误模式：
+                    # -##ERROR:无效的语法 呼叫：tool_code(").
+                    # - "# ERROR#:没有找到\ [Act\]:?或\[结束]:?"
                     if '#ERROR#' in obs and ('Invalid syntax' in obs or 
                                               'find' in obs.lower()):
                         has_parse_error = True
@@ -1765,7 +1765,7 @@ if _ONETWO_AVAILABLE:
             
             print(f"\n[PHIA:recover] Detected OneTwo parse error — attempting manual recovery")
             
-            # Step 2: Collect successful intermediate results from earlier steps
+            # 步骤2:从先前的步骤中收集成功的中间结果
             intermediate_results = []
             if hasattr(final_state, 'updates'):
                 for i, step in enumerate(final_state.updates):
@@ -1775,12 +1775,12 @@ if _ONETWO_AVAILABLE:
                             intermediate_results.append(obs)
                             print(f"[PHIA:recover] Collected intermediate result from step {i}: {obs[:100]}")
             
-            # Step 3: Search ALL sources for code or search queries
+            # 步骤 3:搜索 ALL 代码查询或搜索查询的来源
             sources_to_search = []
             # final_answer
             if final_answer:
                 sources_to_search.append(("final_answer", str(final_answer)))
-            # Step actions and thoughts (where the code usually lives)
+            # 步骤和想法(通常使用代码的地方)
             if hasattr(final_state, 'updates'):
                 for i, step in enumerate(final_state.updates):
                     if step.action:
@@ -1790,7 +1790,7 @@ if _ONETWO_AVAILABLE:
                     if step.observation:
                         sources_to_search.append((f"step[{i}].observation", str(step.observation)))
             
-            # 3a: Try to extract and execute code
+            # 3a: 尝试提取和执行代码
             code = None
             for source_name, source_text in sources_to_search:
                 code = self._extract_code_from_raw_output(source_text)
@@ -1813,7 +1813,7 @@ if _ONETWO_AVAILABLE:
                 else:
                     print(f"[PHIA:recover] Code execution failed: {result[:200]}")
             
-            # 3b: Try to extract and execute a search query
+            # 3b: 尝试提取并执行搜索查询
             search_result = None
             search_query = self._extract_search_from_raw_output(sources_to_search)
             if search_query:
@@ -1828,7 +1828,7 @@ if _ONETWO_AVAILABLE:
                 except Exception as search_err:
                     print(f"[PHIA:recover] Search execution failed: {search_err}")
             
-            # Step 4: Generate enriched answer with all collected context
+            # 步骤 4: 生成所有收集的上下文的丰富答案
             if intermediate_results:
                 context = "\n\n".join(intermediate_results)
                 print(f"[PHIA:recover] Generating enriched answer with {len(intermediate_results)} intermediate results")
@@ -1836,7 +1836,7 @@ if _ONETWO_AVAILABLE:
                 if enriched:
                     return enriched
             
-            # Step 5: Fall back to direct LLM answer
+            # 步骤 5:倒回直接 LLM 回答
             print(f"[PHIA:recover] Falling back to direct LLM answer")
             return self._generate_direct_answer(user_message)
         
@@ -1852,15 +1852,15 @@ if _ONETWO_AVAILABLE:
             if not hasattr(final_state, 'updates') or not final_state.updates:
                 return None
             
-            # Collect non-error observations and their associated code
+            # 收集非error 观察及其相关代码
             observations = []
-            obs_to_code = {}  # Map observation → code that produced it
+            obs_to_code = {}  # 地图观察 – 生成它的代码
             for step in final_state.updates:
                 if step.observation:
                     obs = str(step.observation)
                     if '#ERROR#' not in obs and 'Error executing code' not in obs:
                         observations.append(obs)
-                        # Try to capture the code that produced this observation
+                        # 尝试捕捉生成此观察的代码
                         if step.action and obs not in obs_to_code:
                             action_str = str(step.action)
                             if 'tool_code' in action_str:
@@ -1872,7 +1872,7 @@ if _ONETWO_AVAILABLE:
             if len(observations) < 2:
                 return None
             
-            # Check if the same observation repeats 3+ times (loop detected)
+            # 检查同一观测是否重复 3+次( 探测到的跳动)
             from collections import Counter
             obs_counts = Counter(observations)
             most_common_obs, count = obs_counts.most_common(1)[0]
@@ -1883,23 +1883,23 @@ if _ONETWO_AVAILABLE:
             print(f"\n[PHIA:recover] Detected tool call loop: same observation repeated {count}x")
             print(f"[PHIA:recover] Using repeated observation: {most_common_obs[:200]}")
             
-            # Collect ALL code context from steps for better interpretation
+            # 收集 ALL 代码上下文，从步骤中进行更好的解释
             code_context, _ = self._collect_step_context(final_state)
             
-            # Use this observation to generate a direct answer
+            # 使用此观察来生成直接的答案
             summary = self._generate_summary(
                 user_message, most_common_obs, code_context=code_context
             )
             if summary:
                 return summary
             
-            # Fallback to direct LLM answer
+            # 返回到直接 LLM 回答
             return self._generate_direct_answer(user_message)
         
         def _generate_summary(self, user_message: str, code_result: str, code_context: str = "") -> Optional[str]:
             """Generate a user-friendly summary of code execution results."""
-            # Build a prompt that includes the code context so the LLM
-            # knows what each number means (prevents hallucinated labels)
+            # 构建一个包含代码上下文的提示，因此是 LLM
+            # 知道每个数字意味着什么(预防幻觉标签)
             code_section = ""
             if code_context:
                 code_section = (
@@ -1930,7 +1930,7 @@ if _ONETWO_AVAILABLE:
             Uses the data summary (already available) to answer the question
             without going through ReAct code execution.
             """
-            # Build a data context from what's available in sandbox globals
+            # 从沙盒 Globals 中获取数据背景
             data_context = ""
             if hasattr(self, 'summary_df') and self.summary_df is not None:
                 data_context = self.summary_df.tail(14).to_string()
@@ -1940,7 +1940,7 @@ if _ONETWO_AVAILABLE:
             if not data_context:
                 return None
             
-            # Add profile info if available
+            # 如果有配置信息，则添加此信息
             profile_context = ""
             if hasattr(self, 'profile_df') and self.profile_df is not None:
                 profile_context = f"\n\nUser profile:\n{self.profile_df.to_string()}"
@@ -2025,12 +2025,12 @@ if _ONETWO_AVAILABLE:
             """
             import re
             
-            # Find tool_code( in the text
+            # 查找 tool_code (文本中)
             idx = raw_text.find('tool_code(')
             if idx == -1:
                 return None
             
-            # Track balanced parentheses to find the matching close
+            # 音轨平衡括号以找到匹配的关闭
             start = idx + len('tool_code')
             depth = 0
             i = start
@@ -2042,10 +2042,10 @@ if _ONETWO_AVAILABLE:
                     depth -= 1
                     if depth == 0:
                         code = raw_text[start + 1:i].strip()
-                        # Remove markdown backtick wrappers if present
+                        # 如果存在的话，删除下加标记的反键包装
                         code = re.sub(r'^```(?:python)?\s*', '', code)
                         code = re.sub(r'\s*```$', '', code)
-                        # Remove surrounding quotes if the whole thing is quoted
+                        # 如果引用了整件事，删除周围的引号
                         for q in ['"""', "'''", '"', "'"]:
                             if code.startswith(q) and code.endswith(q):
                                 code = code[len(q):-len(q)]
@@ -2053,8 +2053,8 @@ if _ONETWO_AVAILABLE:
                         return code if code else None
                 i += 1
             
-            # Balanced parens failed — try heuristic: grab everything between
-            # tool_code( and the next ReAct section marker
+            # 平衡剖析失败— 尝试修炼： 抓住所有之间
+            # tool_code (和下 ReAct 部分标记)
             code = raw_text[start + 1:]
             for marker in ['[Observe]', '[Thought]', '[Finish]', '[Act]']:
                 pos = code.find(marker)
@@ -2062,11 +2062,11 @@ if _ONETWO_AVAILABLE:
                     code = code[:pos]
                     break
             
-            # Strip trailing ) if present 
+            # 剥离线索(如果存在)
             code = code.rstrip().rstrip(')')
             code = code.strip()
             
-            # Remove markdown backtick wrappers
+            # 删除向下标记的反键包装
             code = re.sub(r'^```(?:python)?\s*', '', code)
             code = re.sub(r'\s*```$', '', code)
             
@@ -2086,7 +2086,7 @@ if _ONETWO_AVAILABLE:
             Returns:
                 Extracted search query string, or None.
             """
-            # Pattern 1: Explicit search() calls
+            # 模式 1:明确搜索 () 呼叫
             for source_name, source_text in sources:
                 for pattern in [
                     r"""search\(['"](.*?)['"]\)""",
@@ -2099,19 +2099,19 @@ if _ONETWO_AVAILABLE:
                             print(f"[PHIA:recover] Extracted search query from {source_name}: '{query}'")
                             return query
             
-            # Pattern 2: Search intent from thoughts
-            # "I need to search for average steps in San Francisco"
-            # "Now I should search for typical step count San Francisco"
+            # 模式 2:从思想中搜索意图
+            # "我要在旧金山寻寻寻一般的台阶"
+            # "现在我应该去寻找典型的旧金山"
             for source_name, source_text in sources:
                 text_lower = source_text.lower()
                 for trigger in ['search for ', 'look up ', 'find out about ',
                                 'search about ', 'look for ']:
                     idx = text_lower.find(trigger)
                     if idx != -1:
-                        # Extract the rest of the sentence as search query
+                        # 将句子的其余部分提取为搜索查询
                         query_start = idx + len(trigger)
                         remainder = source_text[query_start:]
-                        # Stop at sentence boundary
+                        # 句子边界停止
                         for end_marker in ['.', '!', '\n', ',', ' and ', ' to ']:
                             end_idx = remainder.find(end_marker)
                             if end_idx != -1 and end_idx > 3:
@@ -2202,7 +2202,7 @@ if _ONETWO_AVAILABLE:
             
             text = str(text)
             
-            # Remove common ReAct prefixes at start
+            # 删除开始时常见的 ReAct前缀
             prefixes_to_remove = [
                 '[Thought]:', '[Act]:', '[Observe]:', '[Finish]:',
                 'Thought:', 'Act:', 'Observe:', 'Finish:',
@@ -2211,20 +2211,20 @@ if _ONETWO_AVAILABLE:
                 if text.startswith(prefix):
                     text = text[len(prefix):].strip()
             
-            # Remove code blocks anywhere in the text
+            # 删除文本中的代码块
             import re
             text = re.sub(r'```[\w]*\n.*?```', '', text, flags=re.DOTALL)
             
-            # Remove inline [Act]: and everything after it (incomplete response)
+            # 删除内线 [行为] : 以及之后的所有内容( 不完整的响应)
             for marker in ['[Act]:', '[Thought]:', '[Observe]:']:
                 if marker in text:
                     text = text.split(marker)[0].strip()
             
-            # Remove JSON formatting artifacts
+            # 删除 JSON 格式化文物
             if text.startswith('```json') or text.strip().startswith('{'):
                 return ""
             
-            # If only code blocks remain, return empty
+            # 如果只留下代码块，返回空
             if text.startswith('```') and text.endswith('```'):
                 return ""
             
@@ -2250,7 +2250,7 @@ if _ONETWO_AVAILABLE:
             """
             import re
             
-            # Planning markers to check in individual sentences
+            # 计划标记以检查单个句子
             planning_markers = [
                 'i will now', 'i will synthesize', 'i will analyze', 'i will check',
                 'i will use', 'i will search', 'i will calculate', 'i will first',
@@ -2263,28 +2263,28 @@ if _ONETWO_AVAILABLE:
                 'now i can', 'now i will', 'now that i have',
             ]
             
-            # Split into sentences (handle ". " and ".\n")
+            # 分为句子(处理“.”和“.\n”)
             sentences = re.split(r'(?<=[.!?])\s+', text, maxsplit=5)
             
             if len(sentences) <= 1:
                 return ""
             
-            # Find how many leading sentences are planning/meta
+            # 查找有多少主要句子在规划/元数据
             skip_count = 0
-            for sent in sentences[:3]:  # Check at most first 3 sentences
+            for sent in sentences[:3]:  # 最多检查一下3句子
                 sent_lower = sent.lower()
                 if any(m in sent_lower for m in planning_markers):
                     skip_count += 1
                 else:
-                    break  # Stop at first non-planning sentence
+                    break  # 一开始停止非规划句
             
             if skip_count == 0:
-                return ""  # No planning preamble found
+                return ""  # 未找到规划序言
             
-            # Reconstruct text without the planning sentences
+            # 没有规划句子的文本重建
             remainder = ' '.join(sentences[skip_count:]).strip()
             
-            # Only return if we have substantial content left
+            # 只有我们还有实质性的内容，才能返回
             if len(remainder) < 200:
                 return ""
             
@@ -2304,25 +2304,25 @@ if _ONETWO_AVAILABLE:
             if not text:
                 return False
             
-            # Normalize text: remove backticks and extra whitespace for pattern matching
+            # 文本正常化： 取消回转和模式匹配的额外白空间
             text_normalized = text.lower().replace('`', '').replace('  ', ' ')
             
-            # Signs of incomplete response - model thinking out loud
+            # 反应不完整的迹象 - 模型大声思考
             incomplete_markers = [
                 '[act]:', '[thought]:', '```tool_code', '```python',
                 'i need to', "i'll",
-                'i need the user',  # "I need the user's average..."
-                'i need your',  # "I need your average daily steps..."
-                'then use search', 'then use tool_code', 'then use web',  # Planning statements
-                'from summary_df', 'from activities_df',  # Reference to dataframes in plans
-                'and compute the', 'and calculate the',  # Planning continuation
-                ', then use', ', then search', ', then calculate',  # Multi-step plans
+                'i need the user',  # "我需要用户的平均值..."
+                'i need your',  # "我需要你每天平均的台阶..."
+                'then use search', 'then use tool_code', 'then use web',  # 规划报表
+                'from summary_df', 'from activities_df',  # 计划中提及的数据框架
+                'and compute the', 'and calculate the',  # 规划的继续
+                ', then use', ', then search', ', then calculate',  # 多步骤计划
             ]
             
             # "let me" is a planning phrase ("let me check", "let me analyze"),
-            # but NOT when used conversationally ("just let me know", "please let me know")
-            # "i will" is planning ("I will now check"), but NOT when final ("I will be happy to")
-            # Handle these with more context:
+            # 但NOT,当用 对话("只要让我知道，"请让我知道")
+            # "I will"是计划("I will nowcheck"),但NOT当最终("I will be happy to").
+            # 以更多背景处理这些内容：
             planning_let_me = [
                 'let me check', 'let me analyze', 'let me look', 'let me calculate',
                 'let me search', 'let me get', 'let me find', 'let me pull',
@@ -2346,19 +2346,19 @@ if _ONETWO_AVAILABLE:
                 if marker in text_normalized:
                     return False
             
-            # Check for planning statements that start with "I need"
+            # 检查从“我需要”开始的规划报表
             if text_normalized.strip().startswith('i need'):
                 return False
             
-            # Detect raw tool calls (model sometimes outputs these directly,
-            # potentially wrapped in backticks)
-            # Use text_normalized which has backticks already stripped
+            # 检测原始工具呼叫(模型有时直接输出这些，
+            # 可能包裹在背影中)
+            # 使用已脱落的反光片 text_normalized
             text_norm_stripped = text_normalized.strip()
             if text_norm_stripped.startswith('tool_code(') or text_norm_stripped.startswith('search('):
                 return False
             
-            # Detect responses that are predominantly code rather than natural language
-            # This catches cases where the model dumps its intended tool call as text
+            # 检测主要为代码而不是自然语言的响应
+            # 这捕捉到模型将预定工具调用为文本的情况
             code_indicators = ['summary_df[', 'activities_df[', 'profile[', 
                                '.mean()', '.sum()', '.max()', '.min()',
                                'print(f"', 'print(f\'', '\\n']
@@ -2366,24 +2366,24 @@ if _ONETWO_AVAILABLE:
             if code_indicator_count >= 3:
                 return False
             
-            # Detect raw pandas output (Series repr, dtype info)
-            # e.g. "Age: 0    34\nName: age, dtype: int64"
+            # 检测原始 pandas 输出( 序列重排， dtypeinfo)
+            # 例如"年龄：0 34\ nName:年龄，型号:int64".
             if 'dtype:' in text and 'Name:' in text:
                 return False
             
-            # Detect raw search results being returned instead of synthesized answer
-            # GPT-5.2 sometimes outputs raw observations as final answer
+            # 检测原始搜索结果被返回而不是合成答案
+            # GPT-5. 2有时会输出原始的观察作为最后的答案。
             url_count = text_normalized.count('url:')
             relevance_count = text_normalized.count('relevance score:')
             if url_count >= 2 or relevance_count >= 2:
-                # Multiple URLs or relevance scores = raw search output, not synthesis
+                # 多重 URLs 或关联分数 = 原始搜索输出，而非合成
                 return False
             
-            # Detect OneTwo parsing errors (happens with OpenAI + PHIA)
+            # 检测 OneTwo 解析错误(发生于 OpenAI + PHIA ).
             if '#ERROR#' in text or 'Invalid syntax for positional arguments' in text:
                 return False
             
-            # A complete response should have some substance
+            # 完整的回复应具有一些实质性内容
             return len(text) > 30
         
         def _is_truncated_response(self, text: str) -> bool:
@@ -2397,18 +2397,18 @@ if _ONETWO_AVAILABLE:
             - "Of course! Here are some dietary tips to help you maintain a healthy lifestyle:"
             """
             if not text or len(text) > 500:
-                # Long responses are unlikely to be truncated
+                # 长期答复不太可能被截断
                 return False
             
             text_stripped = text.strip()
             text_lower = text_stripped.lower()
             
-            # Response ends with colon — clearly promises content that never came
+            # 回应以结肠结束——明确承诺从未出现的内容
             if text_stripped.endswith(':'):
                 print(f"[PHIA:truncation] Detected: ends with ':'")
                 return True
             
-            # Short response that promises a list/breakdown but doesn't deliver
+            # 简短的反应，承诺列表/细目，但不能提供
             promise_phrases = [
                 "here's a breakdown", "here are some", "here is a breakdown",
                 "the following", "consider the following", "these tips",
@@ -2416,7 +2416,7 @@ if _ONETWO_AVAILABLE:
             ]
             has_promise = any(p in text_lower for p in promise_phrases)
             
-            # Check if the promise is actually fulfilled (has list items or substantial content)
+            # 检查承诺是否实际实现( 列出项目或实质性内容)
             has_list = any(marker in text for marker in ['- ', '* ', '1.', '•'])
             has_paragraph = text.count('\n\n') >= 1 and len(text) > 300
             
@@ -2441,14 +2441,14 @@ if _ONETWO_AVAILABLE:
                 True if the response is substantive enough to send to the user.
             """
             if not text:
-                return True  # Let other checks handle empty
+                return True  # 让其他检查处理为空
             
-            # Skip this check for error messages (they have their own formatting)
+            # 跳过此检查错误消息(它们有自己的格式)
             if text.startswith('⚠️') or 'Could not extract' in text:
                 return True
             
-            # Check if tool_code was actually used (if no tools were used,
-            # a conversational-only response is fine)
+            # 检查是否实际使用了tool_code(如果没有使用工具，
+            # 只有对话方能做出正确反应)
             tool_code_used = False
             if hasattr(final_state, 'updates') and final_state.updates:
                 for step in final_state.updates:
@@ -2457,24 +2457,24 @@ if _ONETWO_AVAILABLE:
                         break
             
             if not tool_code_used:
-                return True  # No data was computed, conversational response is fine
+                return True  # 没有计算数据，对话反应很好
             
-            # Fix A: Detect vague preambles — short response with no data values
-            # despite tool_code having been used to compute data
+            # 修正A:检测模糊的序言——没有数据值的短答。
+            # 尽管tool_code被用于计算数据
             if len(text) < 500:
                 import re
-                # Look for actual numeric health values (e.g., "62.17 bpm", "417 min", "7.0 hrs")
+                # 查找实际健康数值(例如 " 62.17 bpm], "417 mine, "7.0 小时")
                 health_numbers = re.findall(r'\d+\.?\d*\s*(?:bpm|min|hrs?|hours?|%|steps|ms)', text.lower())
-                # Also check for standalone meaningful numbers (not just "1." list markers)
-                data_numbers = re.findall(r'\b\d{2,}\b', text)  # Numbers with 2+ digits
+                # 同时检查独立的有意义的数字( 不仅仅是 " 1]" 列表标记)
+                data_numbers = re.findall(r'\b\d{2,}\b', text)  # 带有 2+ 数字
                 
                 if not health_numbers and not data_numbers:
                     print(f"[PHIA:quality] REJECTED: short response ({len(text)} chars) with "
                           f"no health data values despite tool_code usage")
                     return False
             
-            # Fix B: Detect raw data dumps — mostly "Label: number" lines
-            # with no conversational sentences or interpretation
+            # Fix B:检测原始数据堆放——多为"标签:数字"行。
+            # 没有谈话的句子或解释
             if self._is_raw_data_dump(text):
                 print(f"[PHIA:quality] REJECTED: raw data dump with no interpretation")
                 return False
@@ -2492,21 +2492,21 @@ if _ONETWO_AVAILABLE:
                 return False
             
             import re
-            # Count lines that are "Label: number" format
+            # 计算“ 标签： 数字” 格式的行数
             data_lines = 0
             sentence_lines = 0
             for line in lines:
-                # Skip the "Based on my analysis:" prefix we add
+                # 跳过“根据我的分析”前缀
                 if line.startswith('Based on'):
                     continue
-                # "Label: number" pattern
+                # “ 标签： 数字” 模式
                 if re.match(r'^[\w\s]+:\s*[\d.]+', line):
                     data_lines += 1
-                # Actual sentences (has period, question mark, or exclamation, and >40 chars)
+                # 实际句子(有期、问号或感叹，以及> 40字符)
                 elif len(line) > 40 and any(p in line for p in ['. ', '? ', '! ']):
                     sentence_lines += 1
             
-            # If mostly data lines with no interpretation sentences, it's a dump
+            # 如果大多数数据线没有解释句子，那就是一个垃圾
             if data_lines >= 3 and sentence_lines == 0:
                 return True
             
@@ -2527,25 +2527,25 @@ if _ONETWO_AVAILABLE:
                 return "", ""
             
             for step in final_state.updates:
-                # Extract code from actions
+                # 从动作中提取代码
                 if step.action:
                     action_str = str(step.action)
                     if 'tool_code' in action_str:
-                        # Try to extract the code argument
+                        # 尝试提取代码参数
                         import re
-                        # Match args=('code_here',) or args=("code_here",)
+                        # 匹配 args= (“ code_here” 或 args= (“code_here”),
                         code_match = re.search(r"args=\(['\"](.+?)['\"],?\)", action_str, re.DOTALL)
                         if code_match:
                             code_snippets.append(code_match.group(1))
                 
-                # Extract observations (non-error tool outputs)
+                # 提取观察(非异常工具输出)
                 if step.observation:
                     obs = str(step.observation)
                     if ('#ERROR#' not in obs and 'Search Results' not in obs 
                             and len(obs) > 10):
                         data_snippets.append(obs)
             
-            # Deduplicate data snippets (loop recovery case)
+            # 重复数据片段(破获案件)
             seen = set()
             unique_data = []
             for d in data_snippets:
@@ -2553,8 +2553,8 @@ if _ONETWO_AVAILABLE:
                     seen.add(d)
                     unique_data.append(d)
             
-            code_context = '\n'.join(code_snippets[:3])  # Max 3 code blocks
-            data_context = '\n'.join(unique_data[:3])  # Max 3 unique outputs
+            code_context = '\n'.join(code_snippets[:3])  # 最大 3 代码块
+            data_context = '\n'.join(unique_data[:3])  # 最大 3 独特输出
             
             return code_context, data_context
         
@@ -2577,17 +2577,17 @@ if _ONETWO_AVAILABLE:
             for i, step in enumerate(final_state.updates):
                 step_parts = []
                 
-                # Thought: the model's analysis (often contains the real insight)
+                # 思考:模型的分析(往往包含真实的洞察力).
                 if step.thought:
                     thought = str(step.thought).strip()
-                    # Skip pure planning thoughts
+                    # 跳过纯规划思想
                     thought_lower = thought.lower()
                     if not any(p in thought_lower for p in [
                         'i need to', 'i should first', 'let me first'
                     ]):
                         step_parts.append(f"Analysis: {thought}")
                 
-                # Observation: tool output or search results
+                # 观察:工具输出或搜索结果
                 if step.observation:
                     obs = str(step.observation).strip()
                     if '#ERROR#' not in obs and len(obs) > 10:
@@ -2635,12 +2635,12 @@ if _ONETWO_AVAILABLE:
             """Reset the conversation state."""
             self.conversation_history = []
             self.last_response = ""
-            # Rebuild agent to clear any state
+            # 重建代理以清除任何状态
             self._agent = None
 
 
 else:
-    # Fallback class when onetwo is not available
+    # 无法使用一个 2 个时的后退类
     class PHIABaseline:
         """PHIA Baseline placeholder when onetwo is not available."""
         
@@ -2652,7 +2652,7 @@ else:
 
 
 # =============================================================================
-# Factory Function
+# 工厂函数
 # =============================================================================
 
 def create_phia_baseline(
@@ -2663,7 +2663,7 @@ def create_phia_baseline(
     few_shot_dir: Optional[str] = None,
     debug_verbose: bool = False,
     model_name: Optional[str] = None,
-    # Legacy parameter
+    # 遗留参数
     gemini_api_key: Optional[str] = None,
 ) -> PHIABaseline:
     """Create a fully configured PHIABaseline.
@@ -2708,26 +2708,26 @@ def create_phia_baseline(
     from config.settings import Settings
     from ..utils import load_persona
     
-    # Use provided settings or create default
+    # 使用已提供的设置或创建默认值
     if settings is None:
         settings = Settings()
     
-    # Load data
+    # 装入数据
     summary_df, activities_df, profile_df, _ = load_persona(settings=settings)
     
-    # Create and configure baseline
+    # 创建和配置 基线
     baseline = PHIABaseline(
         tavily_api_key=tavily_api_key,
         few_shot_dir=few_shot_dir,
         debug_verbose=debug_verbose,
     )
     
-    # Handle both old and new API
-    # Determine provider from api_key or legacy gemini_api_key
+    # 处理新旧两个问题API
+    # 确定来自 api_key 或 遗留 gemini_api_key 的提供者
     effective_api_key = api_key if api_key else gemini_api_key
     effective_provider = provider if api_key else "gemini"
     
-    # Configure with model (use default if not specified)
+    # 配置模型(如果未指定使用默认)
     baseline.configure(
         api_key=effective_api_key,
         provider=effective_provider,

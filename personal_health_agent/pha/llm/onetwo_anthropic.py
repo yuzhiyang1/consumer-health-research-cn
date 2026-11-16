@@ -66,10 +66,10 @@ class AnthropicAPI:
     api_key: Optional[str] = None
     model_name: str = "claude-sonnet-4-5-20250929"
     temperature: Optional[float] = None
-    # Anthropic's Messages API requires max_tokens. 4096 is generous for
-    # Domain Expert ReAct steps (which are short Thought/Act/Observe text).
+    # Anthropic的讯息API需要max_tokens. 4096是慷慨的，对于"LACEHOLDER1"来说，"LACEHOLDER1"是"非常慷慨的".
+    # 域专家ReAct步骤(这些步骤是短篇思想/法案/观察文本).
     max_tokens: int = 4096
-    # Reserved for parity with OpenAIAPI; not used in our request.
+    # 与OpenAIAPI保持对等关系;我们的请求中没有使用。
     batch_size: int = 1
 
     def __post_init__(self) -> None:
@@ -89,13 +89,13 @@ class AnthropicAPI:
             )
         self.api_key = api_key
         self._client = anthropic.Anthropic(api_key=self.api_key)
-        # Match OpenAIAPI's counters attribute so OneTwo's instrumentation
+        # 匹配 OpenAIAPI 的计数属性，所以 OneTwo 的仪器
         # path (which sometimes pokes at `_counters['generate_text'] += 1`)
-        # doesn't AttributeError if it's invoked.
+        # 如果被引用的话，不会AttributeError.
         self._counters: dict[str, int] = {}
 
     # ------------------------------------------------------------------
-    # OneTwo registration
+    # OneTwo 登记
     # ------------------------------------------------------------------
 
     def register(self, name: Optional[str] = None) -> None:
@@ -117,7 +117,7 @@ class AnthropicAPI:
         )
 
     # ------------------------------------------------------------------
-    # generate_text — the only call ReAct's prompt template makes
+    # generate_text——唯一一个呼叫ReAct的快速模板制作人。
     # ------------------------------------------------------------------
 
     def generate_text(
@@ -154,7 +154,7 @@ class AnthropicAPI:
         if effective_temp is not None:
             kwargs["temperature"] = effective_temp
         if stop:
-            # Anthropic accepts up to 4 stop sequences via stop_sequences (plural).
+            # Anthropic通过stop_sequences(平面)接受最多4的停止序列。
             kwargs["stop_sequences"] = list(stop)[:4]
         if top_p is not None:
             kwargs["top_p"] = top_p
@@ -181,7 +181,7 @@ class AnthropicAPI:
         return text
 
     # ------------------------------------------------------------------
-    # chat — minimal compatibility shim
+    # 聊天——最小兼容shim
     # ------------------------------------------------------------------
 
     def chat(
@@ -211,7 +211,7 @@ class AnthropicAPI:
             role = str(getattr(msg, "role", "user")).lower()
             content = str(getattr(msg, "content", msg))
             if "system" in role:
-                # First system message wins; subsequent ones are concatenated.
+                # 第一系统消息胜出;后续消息则被调和。
                 system_text = (system_text + "\n" + content) if system_text else content
                 continue
             anth_role = "assistant" if ("assistant" in role or "model" in role) else "user"
@@ -235,7 +235,7 @@ class AnthropicAPI:
 
 
 # ----------------------------------------------------------------------
-# Helpers
+# 帮助者
 # ----------------------------------------------------------------------
 
 
@@ -248,7 +248,7 @@ def _coerce_prompt_to_text(prompt: Any) -> str:
     """
     if isinstance(prompt, str):
         return prompt
-    # Best-effort handling of OneTwo's ChunkList: iterate, take string content.
+    # OneTwo的ChunkList的最佳处理方式： itelate, takestring 内容。
     try:
         parts: List[str] = []
         for chunk in prompt:  # type: ignore[union-attr]
@@ -257,7 +257,7 @@ def _coerce_prompt_to_text(prompt: Any) -> str:
                 parts.append(str(chunk.content))
             elif content_type is None:
                 parts.append(str(chunk))
-            # Other content types (e.g., images) silently dropped for now.
+            # 其他内容类型(如图像)暂时无声地下降。
         if parts:
             return "".join(parts)
     except TypeError:

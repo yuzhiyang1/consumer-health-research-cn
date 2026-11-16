@@ -46,15 +46,15 @@ def generate_statistical_caption(
       raise ValueError(
           f'Mask shape {mask.shape} must match input shape {x_raw.shape}.'
       )
-    # set imputed values to NaN for exclusion in computations
+    # 设定计算中排除的 NaN 估算值
     x_masked = np.where(mask == 1, np.nan, x_raw)
   else:
     x_masked = x_raw
 
-  # denormalize the sensor values (ignore mask for now)
+  # 解除传感器值的正常化(目前为不光彩面具)
   original_x = denormalize_sensor_values(x_masked, labels, norm_params)
 
-  # calculate mean, max, min, std on denormalized data
+  # 在非正常化数据上计算平均值，最大，分钟,std
   channel_stats = []
   for i in range(len(labels)):
     channel_data = original_x[:, i]
@@ -85,7 +85,7 @@ def generate_statistical_caption(
               _describe_low_level(name, mean_val, max_val, min_val, std_val)
           )
 
-    # add random features
+    # 添加随机特性
     group_random = channel_groups_random.get(category)
     if group_random:
       for _ in range(random_choose_nums[category]):
@@ -213,7 +213,7 @@ def generate_semantic_caption(
     duration = end_minute - start_minute + 1
     activity_list.append((activity, start_minute, end_minute, duration))
 
-  # sort by duration and get top k = 8
+  # 按持续时间排序并获得顶端 k = 8
   sorted_activity_list = sorted(activity_list, key=lambda x: x[3])
   for i, activity_event in enumerate(sorted_activity_list):
     activity, start_minute, end_minute, duration = activity_event
@@ -235,7 +235,7 @@ def generate_semantic_caption(
       end_minute = _get_minute_of_day(end_time)
       sleep_list.append((start_minute, end_minute, end_minute - start_minute))
 
-    # sort by duration and get top k = 2
+    # 按持续时间排序并获得顶端 k = 2
     sorted_sleep_list = sorted(sleep_list, key=lambda x: x[2])
 
     for i, sleep_event in enumerate(sorted_sleep_list):
@@ -322,14 +322,14 @@ def denormalize_sensor_values(
       The denormalized sensor values.
   """
 
-  # denormalize the sensor values
+  # 使传感器值非正常化
   original_x = np.zeros_like(x)
   for i in range(len(labels)):
     original_x[:, i] = (
         x[:, i] * norm_params[labels[i]][1] + norm_params[labels[i]][0]
     )
 
-  # make 'steps' and 'sleep_coefficient' values non-negative
+  # 制作“ 步数” 和“ sleep_coefficient ” 的数值非负数
   for i, label in enumerate(labels):
     if label in ['steps', 'sleep_coefficient']:
       original_x[:, i] = np.maximum(0, original_x[:, i])
@@ -476,13 +476,13 @@ def _update_minute_index(df, n_min=20) -> pd.DataFrame:
     and the index column named "index of minute".
   """
 
-  # Create the new index values by multiplying the existing index by 20.
+  # 通过将现有的指数乘以20来创建新的指数值。
   new_index = (df.index + 1) * n_min
 
-  # Assign the new index to the DataFrame.
+  # 将新索引指定给DataFrame.
   df.index = new_index
 
-  # Rename the index column.
+  # 重命名索引列。
   df.index.name = 'index of minute'
 
   return df
@@ -504,7 +504,7 @@ def _identify_trends_with_regression(data, downsample_scale=40, top_n=3):
   for segment_size in [6, 8, 12]:
     for i in range(
         0, len(data) - segment_size + 1, segment_size // 2
-    ):  # Overlapping segments
+    ):  # 重叠部分
       segment = data[i : i + segment_size]
       indices = np.arange(len(segment))
       slope, _, _, _, _ = scipy_stats.linregress(indices, segment)
@@ -514,7 +514,7 @@ def _identify_trends_with_regression(data, downsample_scale=40, top_n=3):
       if (
           slope > thresholds[segment_size]
           and data[i + segment_size - 1] - data[i] > 0.2 * min_max_diff
-      ):  # Threshold for increasing trend
+      ):  # 增长趋势的门槛
         trends.append((
             start_index * downsample_scale,
             end_index * downsample_scale,
@@ -526,7 +526,7 @@ def _identify_trends_with_regression(data, downsample_scale=40, top_n=3):
       elif (
           slope < -thresholds[segment_size]
           and data[i] - data[i + segment_size - 1] > 0.2 * min_max_diff
-      ):  # Threshold for decreasing trend
+      ):  # 下降趋势的门槛值
         trends.append((
             start_index * downsample_scale,
             end_index * downsample_scale,
@@ -538,7 +538,7 @@ def _identify_trends_with_regression(data, downsample_scale=40, top_n=3):
       elif (
           abs(slope) < stable_threshold
           and max(segment) - min(segment) < 0.1 * min_max_diff
-      ):  # Threshold for flat trend
+      ):  # 平稳趋势的门槛值
         trends.append((
             start_index * downsample_scale,
             end_index * downsample_scale,
@@ -569,7 +569,7 @@ def _identify_trends_with_regression(data, downsample_scale=40, top_n=3):
       break
     start1, end1, _, _, _, _ = trend
 
-    # for each selected trend, check overlap < 0.3
+    # 检查重叠< 0.3
     for start2, end2, _, _, _, _ in selected_trends:
       if max(0, min(end1, end2) - max(start1, start2)) > 0.3 * min(
           end1 - start1, end2 - start2
@@ -637,7 +637,7 @@ def _detect_significant_peaks_valleys(
       else None
   )
 
-  # Find all peaks
+  # 找到所有峰顶
   peaks_indices, _ = scipy_signal.find_peaks(
       data,
       prominence=prominence_threshold,
@@ -649,7 +649,7 @@ def _detect_significant_peaks_valleys(
   for peak in peaks_indices:
     results.append(((peak + 1) * downsample_scale, event_name))
 
-  # Find all valleys (by inverting the data)
+  # 查找所有山谷(通过反转数据)
   inverted_data = -data
   valleys_indices, _ = scipy_signal.find_peaks(
       inverted_data,

@@ -373,7 +373,7 @@ FEATURES_TO_NORMALIZE = [
 ]
 
 
-# Grouped channels for caption generation.
+# 字幕生成的分组频道。
 channel_groups_selected = {
     'Heart': {
         'members': [
@@ -451,13 +451,13 @@ channel_groups_random = {
     'Heart': {
         'members': [
             # 'HR',
-            'hr_at_rest_mean',  # high corr
-            'rr_80th',  # high corr
-            'rr_mean',  # high corr
+            'hr_at_rest_mean',  # 高圆角
+            'rr_80th',  # 高圆角
+            'rr_mean',  # 高圆角
             # 'hrv_rr_median',
             # 'hrv_shannon_entropy_rr',
-            'ShEnRRD',  # high corr
-            'rmssd0595',  # high corr
+            'ShEnRRD',  # 高圆角
+            'rmssd0595',  # 高圆角
             # 'sdnn_percentile_0595',
         ],
         'names': [

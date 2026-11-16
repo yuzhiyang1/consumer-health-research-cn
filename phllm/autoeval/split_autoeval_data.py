@@ -104,10 +104,10 @@ _OVERWRITE = flags.DEFINE_bool(
     help='Whether to overwrite existing split files if they already exist.',
 )
 
-# The random seed used when generating splits.
+# 生成分裂时使用的随机种子。
 _SPLIT_RANDOM_SEED = 42
 
-# Fractions determining the train/test/eval/holdout distributions.
+# 确定列车/测试/保值/保值分配的分数。
 _TRAIN_SPLIT_FRACTION = 0.8
 _VALIDATION_SPLIT_FRACTION = 0.2
 _TEST_SPLIT_FRACTION = 0.0
@@ -124,19 +124,19 @@ def group_case_studies_by_raters(
   if diff:
     raise ValueError(f'Unexpected mismatch of raters: {diff}')
 
-  # Map each case study ID to the list of raters associated with that ID.
+  # 将每个案例研究ID映射到与该研究有关的评分列表ID.
   id_to_raters = collections.defaultdict(set)
   for record in ratings_df.to_dict('records'):
     id_to_raters[record['case_study_id']].add(record['rater'])
 
-  # Convert the list of raters to a tuple of raters so that it's hashable. Note
-  # that the list of raters is first sorted so that pairs are ordered.
+  # 将率表转换为二乘率，使其可以散开。注意
+  # 以先排序对等的评分数列表。
   id_to_raters_tuple = {
       case_study_id: tuple(sorted(raters))
       for case_study_id, raters in id_to_raters.items()
   }
 
-  # Map each rater tuple to the set of IDs associated with that tuple.
+  # 将每个推算器的推力图映射到与该推力相关的一组IDs.
   raters_to_ids = collections.defaultdict(set)
   for case_study_id, rater_tuple in id_to_raters_tuple.items():
     raters_to_ids[rater_tuple].add(case_study_id)
@@ -242,7 +242,7 @@ def generate_splits(
       sample_ids, split_indices
   )
 
-  # Check that all individuals are in a split and that splits are unique.
+  # 请检查access-date=中的日期值 (帮助)所有个体都处于分裂状态，分裂是独一无二的。
   split_ids = [*train_ids, *validation_ids, *test_ids, *holdout_ids]
   if len(split_ids) != len(sample_ids):
     missing_ids = sorted(set(split_ids).difference(set(sample_ids)))

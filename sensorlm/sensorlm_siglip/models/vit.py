@@ -56,7 +56,7 @@ def get_posemb(self, typ, seqshape, width, name, dtype=jnp.float32):
 
 class MlpBlock(nn.Module):
   """Transformer MLP / feed-forward block."""
-  mlp_dim: Optional[int] = None  # Defaults to 4x input dim
+  mlp_dim: Optional[int] = None  # 默认为 4x 输入阴暗
   dropout: float = 0.0
   dtype_mm: str = "float32"
 
@@ -70,7 +70,7 @@ class MlpBlock(nn.Module):
 
     d = x.shape[-1]
     x = nn.Dense(self.mlp_dim or 4 * d, dtype=self.dtype_mm, **inits)(x)
-    # In some extreme batch-size cases, this is needed as of Sept 2024:
+    # 在某些极大规模的情况下，需要从9月起2024:
     x = nn.with_logical_constraint(x, ("act_batch", "act_len", "act_emb"))
     x = nn.gelu(x)
     x = nn.Dropout(rate=self.dropout)(x, deterministic)
@@ -80,7 +80,7 @@ class MlpBlock(nn.Module):
 
 class Encoder1DBlock(nn.Module):
   """Single transformer encoder block (MHSA + MLP)."""
-  mlp_dim: Optional[int] = None  # Defaults to 4x input dim
+  mlp_dim: Optional[int] = None  # 默认为 4x 输入阴暗
   num_heads: int = 12
   dropout: float = 0.0
   dtype_mm: str = "float32"
@@ -115,7 +115,7 @@ class Encoder1DBlock(nn.Module):
 class Encoder(nn.Module):
   """Transformer Model Encoder for sequence to sequence translation."""
   depth: int
-  mlp_dim: Optional[int] = None  # Defaults to 4x input dim
+  mlp_dim: Optional[int] = None  # 默认为 4x 输入阴暗
   num_heads: int = 12
   dropout: float = 0.0
   scan: bool = False
@@ -147,7 +147,7 @@ class Encoder(nn.Module):
       for lyr in range(self.depth):
         out[f"block{lyr:02d}"] = jax.tree.map(lambda o, l=lyr: o[l], scan_out)
     else:
-      # Input Encoder
+      # 输入编码器
       for lyr in range(self.depth):
         block_cur = Encoder1DBlock(
             name=f"encoderblock_{lyr}",
@@ -155,14 +155,14 @@ class Encoder(nn.Module):
             mlp_dim=self.mlp_dim, num_heads=self.num_heads,
             dropout=self.dropout)
         x, out[f"block{lyr:02d}"] = block_cur(x, deterministic)
-      out["pre_ln"] = x  # Alias for last block, but without the number in it.
+      out["pre_ln"] = x  # 最后一个街区是别的地方，但里面没有号码
 
     return nn.LayerNorm(name="encoder_norm")(x), out
 
 
 class MAPHead(nn.Module):
   """Multihead Attention Pooling."""
-  mlp_dim: Optional[int] = None  # Defaults to 4x input dim
+  mlp_dim: Optional[int] = None  # 默认为 4x 输入阴暗
   num_heads: int = 12
 
   @nn.compact
@@ -177,7 +177,7 @@ class MAPHead(nn.Module):
         num_heads=self.num_heads,
         kernel_init=nn.initializers.xavier_uniform())(probe, x)
 
-    # TODO: dropout on head?
+    # TODO: 辍学的头？
     y = nn.LayerNorm()(x)
     x = x + MlpBlock(mlp_dim=self.mlp_dim)(y)
     return x[:, 0]
@@ -190,15 +190,15 @@ class _Model(nn.Module):
   patch_size: Sequence[int] = (16, 16)
   width: int = 768
   depth: int = 12
-  mlp_dim: Optional[int] = None  # Defaults to 4x input dim
+  mlp_dim: Optional[int] = None  # 默认为 4x 输入阴暗
   num_heads: int = 12
-  posemb: str = "learn"  # Can also be "sincos2d"
+  posemb: str = "learn"  # 也可以是"银河2d"
   rep_size: Union[int, bool] = False
   dropout: float = 0.0
-  pool_type: str = "gap"  # Can also be "map" or "tok"
+  pool_type: str = "gap"  # 也可以是"地图"或"tok"
   head_zeroinit: bool = True
   scan: bool = False
-  # or "dots_with_no_batch_dims_saveable" for more speed (memory costly)
+  # 或 " dots_with_no_batch_dims_saveable] " ,以达到更高的速度(费用高昂)
   remat_policy: str = "nothing_saveable"
   dtype_mm: str = "float32"
 
@@ -208,7 +208,7 @@ class _Model(nn.Module):
 
     image = jnp.asarray(image, self.dtype_mm)
 
-    # Patch extraction
+    # 补丁提取
     x = out["stem"] = nn.Conv(
         self.width, self.patch_size, strides=self.patch_size,
         padding="VALID", name="embedding", dtype=self.dtype_mm)(image)
@@ -216,7 +216,7 @@ class _Model(nn.Module):
     n, h, w, c = x.shape
     x = jnp.reshape(x, [n, h * w, c])
 
-    # Add posemb before adding extra token.
+    # 在添加额外符号前添加假名( P)。
     x = out["with_posemb"] = x + get_posemb(
         self, self.posemb, (h, w), c, "pos_embedding", x.dtype)
 
@@ -259,8 +259,8 @@ class _Model(nn.Module):
     if self.rep_size:
       rep_size = self.width if self.rep_size is True else self.rep_size
       hid = nn.Dense(rep_size, name="pre_logits")
-      # NOTE: In the past we did not include tanh in pre_logits.
-      # For few-shot, it should not matter much, as it whitens anyways.
+      # NOTE:过去我们没有将tanh列入pre_logits.
+      # 对于少样本,它不应该有什么关系，因为它反正白化了。
       x_2d = nn.tanh(hid(x_2d))
       x = nn.tanh(hid(x))
 
@@ -286,7 +286,7 @@ def decode_variant(variant):
   if variant is None:
     return {}
 
-  # SensorLM: add support for rectangle patch sizes
+  # SensorLM: 添加矩形补丁大小支持
   parts = variant.split("/")
   v = parts[0]
   patch = {}
@@ -301,7 +301,7 @@ def decode_variant(variant):
 
   return {
       # pylint:disable=line-too-long
-      # Reference: Table 2 of https://arxiv.org/abs/2106.04560.
+      # 参考:表 2 页:1 https://arxiv.org/abs/2106.04560.
       "width": {"mu": 32, "Ti": 192, "S": 384, "M": 512, "B": 768, "L": 1024, "So400m": 1152, "H": 1280, "g": 1408, "g-opt": 1536, "G": 1664, "G-opt": 1536, "e": 1792}[v],
       "depth": {"mu": 1, "Ti": 12, "S": 12, "M": 12, "B": 12, "L": 24, "So400m": 27, "H": 32, "g": 40, "g-opt": 40, "G": 48, "G-opt": 48, "e": 56}[v],
       "mlp_dim": {"mu": 128, "Ti": 768, "S": 1536, "M": 2048, "B": 3072, "L": 4096, "So400m": 4304, "H": 5120, "g": 6144, "g-opt": 6144, "G": 8192, "G-opt": 8192, "e": 15360}[v],
@@ -313,7 +313,7 @@ def decode_variant(variant):
 
 def resample_posemb(old, new):
   """This function implements "high-res finetuning" for transformer models."""
-  # Rescale the grid of position embeddings. Param shape is (1,N,1024)
+  # 调整嵌入位置的网格。Param 形状是( ) 1 ,N, 1024 )
   if old.shape == new.shape:
     return old
 
@@ -335,21 +335,21 @@ def fix_old_checkpoints(params):
   params = flax.core.unfreeze(
       flax.training.checkpoints.convert_pre_linen(params))
 
-  # Original ViT paper variant had posemb in a module:
+  # 原ViT纸质变体在模块中摆出：
   if "posembed_input" in params["Transformer"]:
     logging.info("ViT: Loading and fixing VERY old posemb")
     posemb = params["Transformer"].pop("posembed_input")
     params["pos_embedding"] = posemb["pos_embedding"]
 
-  # Widely used version before 2022 had posemb in Encoder:
+  # 在 2022在 Encoder 中摆出假名之前被广泛使用的版本：
   if "pos_embedding" in params["Transformer"]:
     logging.info("ViT: Loading and fixing old posemb")
     params["pos_embedding"] = params["Transformer"].pop("pos_embedding")
 
-  # Old vit.py used to first concat [cls] token, then add posemb.
-  # This means a B/32@224px would have 7x7+1 posembs. This is useless and clumsy
-  # so we changed to add posemb then concat [cls]. We can recover the old
-  # checkpoint by manually summing [cls] token and its posemb entry.
+  # 旧的vit.py,用来先装配[cls]符号，然后添加假名。
+  # 这意味着一个 B/ 32@ 224px 将拥有 7x7+ 1 假名。这是无用的和笨拙的。
+  # 所以我们换了个姿势，然后把那些旧的都找回来。
+  # 检查台通过人工合成[cls]符号及其假名进入。
   if "pos_embedding" in params:
     pe = params["pos_embedding"]
     if int(np.sqrt(pe.shape[1])) ** 2 + 1 == int(pe.shape[1]):
@@ -358,7 +358,7 @@ def fix_old_checkpoints(params):
       if "cls" in params:
         params["cls"] += pe_cls
 
-  # MAP-head variants during ViT-G development had it inlined:
+  # MAP - ViT-G开发期间的头部变体有内含：
   if "probe" in params:
     params["MAPHead_0"] = {
         k: params.pop(k) for k in
@@ -370,21 +370,21 @@ def fix_old_checkpoints(params):
 
 def pyloop_to_scan(params_pyloop):
   """Converts a python for-loop ViT checkpoint to a lax.scan based one."""
-  # On a high level, they are the same except that the for loop has separate
-  # array pytrees for each encoderblock, while the scan one has just one
-  # encoderblock pytree, with all block's params concatenated.
+  # 在高层次上，它们是一样的，除了循环是分开的
+  # 每个编码器块的阵列 pytrees,而扫描器只有一个
+  # 编码器封存的pytree,所有块的参数调和。
 
-  params_scan = jax.tree.map(lambda x: x, params_pyloop)  # Structural copy
+  params_scan = jax.tree.map(lambda x: x, params_pyloop)  # 结构复制
   t = params_scan["Transformer"]
 
-  # Find highest index of encoderblocks in the checkpoint (they start at 0):
+  # 在检查站中查找编码器块的最高索引(它们始于0):
   encoderblocks = {k for k in t if k.startswith("encoderblock_")}
   depth = 1 + max({int(k.split("_")[-1]) for k in encoderblocks})
 
   def stack(*values):
     return np.stack(values)
 
-  # Stack all encoderblocks into a single one:
+  # 将所有编码器块叠成一个：
   t["encoderblock"] = jax.tree.map(
       stack, *[t[f"encoderblock_{lyr}"] for lyr in range(depth)])
 
@@ -396,15 +396,15 @@ def pyloop_to_scan(params_pyloop):
 
 def scan_to_pyloop(params_scan):
   """Converts a lax.scan ViT checkpoint to a python for-loop based one."""
-  # See comment in pyloop_to_scan.
+  # 见pyloop_to_scan中的评论。
 
-  params_scan = jax.tree.map(lambda x: x, params_scan)  # Structural copy
+  params_scan = jax.tree.map(lambda x: x, params_scan)  # 结构复制
   t = params_scan["Transformer"]
 
-  # Find out how many encoderblocks there are
+  # 找出有多少编码器块
   depth = len(t["encoderblock"]["LayerNorm_0"]["bias"])
 
-  # Create that many encoderblocks, each with their slice of their sub-pytree.
+  # 创建许多编码器，每一个都用他们的小树皮片。
   for lyr in range(depth):
     block = jax.tree.map(lambda x, lyr=lyr: x[lyr], t["encoderblock"])
     t[f"encoderblock_{lyr}"] = block
@@ -420,7 +420,7 @@ def load(init_params, init_file, model_cfg, dont_load=()):  # pylint: disable=in
 
   restored_params = fix_old_checkpoints(restored_params)
 
-  # Detect attempts to load non-scan checkpoint into scan model.
+  # 检测是否试图将非扫描检查点装入扫描模型。
   if (model_cfg.get("scan") and
       "encoderblock" not in restored_params["Transformer"]):
     restored_params = pyloop_to_scan(restored_params)
@@ -428,11 +428,11 @@ def load(init_params, init_file, model_cfg, dont_load=()):  # pylint: disable=in
       and "encoderblock" in restored_params["Transformer"]):
     restored_params = scan_to_pyloop(restored_params)
 
-  # possibly use the random init for some of the params (such as, the head).
+  # 可能对某些参数(如头)使用随机输入。
   restored_params = common.merge_params(restored_params, init_params, dont_load)
 
-  # resample posemb if needed.
-  # TODO: Take this from model_cfg to avoid need for init_params.
+  # 必要时再做个假肢
+  # TODO:取自model_cfg,以避免需要init_params.
   if init_params and "pos_embedding" in init_params:
     restored_params["pos_embedding"] = resample_posemb(
         old=restored_params["pos_embedding"],
@@ -441,11 +441,11 @@ def load(init_params, init_file, model_cfg, dont_load=()):  # pylint: disable=in
   return restored_params
 
 
-# Shortcut names for some canonical paper checkpoints:
+# 一些犬类纸质检查站的快捷键名称：
 VANITY_NAMES = {
     # pylint: disable=line-too-long
-    # Recommended models from https://arxiv.org/abs/2106.10270
-    # Many more models at https://github.com/google-research/vision_transformer
+    # https://arxiv.org/abs/2106.10270推荐的模型
+    # 更多模型在 https://github.com/google-research/vision_transformer
     "howto-i21k-Ti/16": "gs://vit_models/augreg/Ti_16-i21k-300ep-lr_0.001-aug_none-wd_0.03-do_0.0-sd_0.0.npz",
     "howto-i21k-S/32": "gs://vit_models/augreg/S_32-i21k-300ep-lr_0.001-aug_none-wd_0.1-do_0.0-sd_0.0.npz",
     "howto-i21k-S/16": "gs://vit_models/augreg/S_16-i21k-300ep-lr_0.001-aug_light1-wd_0.03-do_0.0-sd_0.0.npz",
@@ -454,13 +454,13 @@ VANITY_NAMES = {
     "howto-i21k-B/8": "gs://vit_models/augreg/B_8-i21k-300ep-lr_0.001-aug_medium2-wd_0.1-do_0.0-sd_0.0.npz",
     "howto-i21k-L/16": "gs://vit_models/augreg/L_16-i21k-300ep-lr_0.001-aug_strong1-wd_0.1-do_0.0-sd_0.0.npz",
 
-    # Better plain vit-s16 baselines from https://arxiv.org/abs/2205.01580
+    # (原始内容存档于2018-09-26). Better plain vit-s16 基线 from https://arxiv.org/abs/2205.01580.
     "i1k-s16-90ep": "gs://big_vision/vit_s16_i1k_90ep.npz",
     "i1k-s16-150ep": "gs://big_vision/vit_s16_i1k_150ep.npz",
     "i1k-s16-300ep": "gs://big_vision/vit_s16_i1k_300ep.npz",
 
-    # DeiT-3 checkpoints from https://github.com/facebookresearch/deit/blob/main/README_revenge.md
-    # First layer converted to take inputs in [-1,1]
+    # DeiT - 3 检查站 https://github.com/facebookresearch/deit/blob/main/README_revenge.md
+    # 第一层转换为在 -1,1 中接受输入
     "deit3_S_224_1k": "gs://big_vision/zoo/deit3/bv_deit_3_small_224_1k.npz",
     "deit3_S_224_21k": "gs://big_vision/zoo/deit3/bv_deit_3_small_224_21k.npz",
     "deit3_S_384_1k": "gs://big_vision/zoo/deit3/bv_deit_3_small_384_1k.npz",
@@ -474,7 +474,7 @@ VANITY_NAMES = {
     "deit3_L_384_1k": "gs://big_vision/zoo/deit3/bv_deit_3_large_384_1k.npz",
     "deit3_L_384_21k": "gs://big_vision/zoo/deit3/bv_deit_3_large_384_21k.npz",
 
-    # SigLIP image encoder checkpoints from https://arxiv.org/abs/2303.15343
+    # SigLIP来自https://arxiv.org/abs/2303.15343的图像编码检查站
     "SigLIP B/16 224": "gs://big_vision/siglip/webli_en_b16_224_63724782.npz:img",
     "SigLIP B/16 256": "gs://big_vision/siglip/webli_en_b16_256_60500360.npz:img",
     "SigLIP B/16 384": "gs://big_vision/siglip/webli_en_b16_384_68578854.npz:img",
@@ -485,7 +485,7 @@ VANITY_NAMES = {
     "SigLIP So400m/14 384": "gs://big_vision/siglip/webli_en_so400m_384_58765454.npz:img",
     "SigLIP B/16-i18n 256": "gs://big_vision/siglip/webli_i18n_b16_256_66117334.npz:img",
 
-    # SigLIP 2 image encoder checkpoints from https://arxiv.org/abs/2502.14786
+    # SigLIP 2来自https://arxiv.org/abs/2502.14786的图像编码检查站。
     "SigLIP2 B/16 224": "gs://big_vision/siglip2/siglip2_b16_224.npz:img",
     "SigLIP2 B/16 256": "gs://big_vision/siglip2/siglip2_b16_256.npz:img",
     "SigLIP2 B/16 384": "gs://big_vision/siglip2/siglip2_b16_384.npz:img",
@@ -501,9 +501,9 @@ VANITY_NAMES = {
     "SigLIP2 So400m/16 512": "gs://big_vision/siglip2/siglip2_so400m16_512.npz:img",
     "SigLIP2 g-opt/16 256": "gs://big_vision/siglip2/siglip2_g-opt16_256.npz:img",
     "SigLIP2 g-opt/16 384": "gs://big_vision/siglip2/siglip2_g-opt16_384.npz:img",
-    # SigLIP 2 NaFlex image encoder checkpoints.
-    # These need `proj.image_text.naflex_vit.py` as the image encoder model
-    # and a non-standard preprocessing, see configs/proj/image_text/README_siglip2.md.
+    # SigLIP 2 NaFlex图像编码检查站。
+    # 这些需要`proj.image_text.naflex_vit.py`作为图像编码器模型
+    # 以及非标准预处理，见configs/proj/image_text/README_siglip2.md.
     "SigLIP2 B/16 NaFlex": "gs://big_vision/siglip2/siglip2_b16_naflex.npz:img",
     "SigLIP2 So400m/16 NaFlex": "gs://big_vision/siglip2/siglip2_so400m16_naflex.npz:img",
     # pylint: enable=line-too-long

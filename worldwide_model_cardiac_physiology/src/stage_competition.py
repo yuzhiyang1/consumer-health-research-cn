@@ -66,9 +66,9 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union
 import pandas as pd
 from patsy import desc as patsy_desc
 
-# A fitter takes (formula, model_name, **kwargs) and returns
-# (fit_result_or_None, model_row_dict, vif_or_None). ``model_row_dict`` must
-# contain at least 'model', 'formula' and 'BIC'.
+# 适配器(公式，model_name,**kwargs)和返回
+# ( fit_result_or_None , model_row_dict , vif_or_None ). ``model_row_dict`` 必须
+# 包含至少“模型”、“公式”和“BIC”。
 FitFn = Callable[..., Tuple[Any, Dict[str, Any], Any]]
 CheckpointFn = Callable[[Dict[str, Any]], None]
 Override = Union[str, bool]
@@ -82,10 +82,10 @@ TEMP_VARS = (
     'avg_temp_min_sq_c',
 )
 
-# Decision points, in execution order. Candidate stages take a candidate key;
-# interaction stages take a bool (``True`` = carry the interaction forward).
-# Stage3 is diagnostic (nothing is carried forward), so it has no decision
-# point.
+# 决策点，按执行顺序排列，候选人阶段采用候选人的关键；
+# 交互阶段取一个 bul(``True``=将交互推进).
+# 第3阶段是诊断性(没有任何进展),因此没有决定
+# 点。
 CANDIDATE_STAGES = (
     'Stage1',
     'Stage2',
@@ -96,7 +96,7 @@ CANDIDATE_STAGES = (
 INTERACTION_STAGES = ('Stage4_Interaction', 'Stage5_Interaction')
 ALL_STAGES = CANDIDATE_STAGES + INTERACTION_STAGES
 
-# Notebook stage number of each decision point (``max_stage`` cut-off).
+# Notebook每个决定点的阶段编号(``max_stage`` 断开).
 _STAGE_NUMBER = {
     'Stage1': 1,
     'Stage2': 2,
@@ -236,7 +236,7 @@ def _normalise_data_key(
   """Copy of a data description that survives the JSON checkpoint round trip."""
   out: Dict[str, Any] = {}
   for k, v in sorted((data_key or {}).items()):
-    out[str(k)] = v.item() if hasattr(v, 'item') else v  # numpy scalars
+    out[str(k)] = v.item() if hasattr(v, 'item') else v  # 数字缩写
   return out
 
 
@@ -481,12 +481,12 @@ class _Competition:
         on_path=keep or not forced,
     )
     if keep:
-      # Convention: the interacted row only enters the results table
-      # when it progresses (its name then replaces the base winner's).
+      # 常规:交互行只输入结果表
+      # 当它进步时(它的名称然后取代基数的胜者).
       self.rows.append(row)
     elif forced:
-      # Forced *not* to interact although it was fitted: keep the audit row
-      # but flag it as off-path so it cannot become the overall winner.
+      # 强迫*不*虽然安装了:保留审计行
+      # 但它被标榜为离题 以免它成为总的赢家
       row['on_path'] = False
       self.rows.append(row)
     if forced and keep != bic_better:
@@ -536,9 +536,9 @@ class _Competition:
             f'{s1} + (dl_monthly_c + dl_monthly_sq_c) * ({h4})'
         )
       w, rows = self._run_candidates('Stage3', candidates)
-      # Diagnostic stage: the lowest-BIC candidate is recorded (``bic_winner``)
-      # but nothing is carried forward, so no Stage 3 row is ``progressed``
-      # or ``on_path`` and :func:`overall_winner` never picks one.
+      # 诊断阶段:最低 BIC 候选人被记录( ``bic_winner`` )
+      # 但没有任何东西被推进，所以没有阶段 3行是 ``progressed``
+      # 或 减 减 ``on_path`` 财务报告和已审计财务报表 :func: `overall_winner` 从来没有选择一个。
       for row in rows.values():
         row['progressed'] = False
         row['on_path'] = False
@@ -620,9 +620,9 @@ class _Competition:
               f'{lng_part}'
           ),
       }
-      # Candidates that expand to the same terms are fitted once. A forced
-      # candidate (``overrides['Stage6']``) is the one kept, so the override
-      # still names a fitted model.
+      # 扩大至相同条件的候选人可加装一次。
+      # 候选(``overrides['Stage6']``)是保存的，所以是覆盖
+      # 仍然命名一个适合的模型。
       forced = self.overrides.get('Stage6')
       distinct: Dict[str, str] = {}
       for key, rhs in candidates.items():

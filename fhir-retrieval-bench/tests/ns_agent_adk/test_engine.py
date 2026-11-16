@@ -59,8 +59,8 @@ class TestNeuroSymbolicAgent(unittest.TestCase):
 
   def test_load_preamble_real(self):
     """Tests that _load_preamble can actually find and render the template."""
-    # This verifies that the template file is correctly included in data dependencies
-    # and accessible via the relative path logic.
+    # 这证明模板文件被正确包含在数据依赖性中
+    # 通过相对路径逻辑可以访问。
     preamble = engine_module._load_preamble(["2023-01-01"], datetime.datetime(2024, 5, 21, tzinfo=datetime.timezone.utc), 15)
     self.assertIn("2023-01-01", preamble)
     self.assertIn("2024-05-21", preamble)

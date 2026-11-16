@@ -1,11 +1,11 @@
-# FHIR Retrieval Bench
+# FHIR 检索 法官席
 
-## Overview
-FHIR Retrieval Bench evaluates question-answering systems over patient FHIR
-(Fast Healthcare Interoperability Resources) data. 
+## 概览
+FHIR 检索 座席评价问答系统比病人FHIR.
+(快速保健互操作性资源)数据。
 
-Please check out the documentation in the `docs/` directory.
-## Project Structure
+请检查access-date=中的日期值 (帮助) `docs/`目录中的文档。
+## 项目结构
 
 ```text
 fhir_retrieval_bench/

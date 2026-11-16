@@ -52,7 +52,7 @@ from .orchestrator_prompts import (
 )
 
 __all__ = [
-    # Data Science prompts
+    # 数据科学提示
     "render_prompt",
     "RUBRIC_QUESTIONS",
     "RUBRIC_QUESTIONS_STR",
@@ -75,20 +75,20 @@ __all__ = [
     "generate_debug_prompt_v2",
     "generate_code_refinement_prompt",
     "generate_result_communication_prompt",
-    # Domain Expert prompts
+    # 域专家提示
     "DOMAIN_EXPERT_SYSTEM_PROMPT",
     "DOMAIN_EXPERT_EXAMPLES",
     "TOOL_DESCRIPTIONS",
     "generate_domain_expert_prompt",
     "check_reference_ranges",
-    # Health Coach prompts
+    # 卫生教练请示
     "HEALTH_COACH_SYSTEM_PROMPT",
     "HEALTH_COACH_SIMPLE_PROMPT",
     "GOAL_PROMPT",
     "REC_PROMPT",
     "FINISH_PROMPT",
     "SYNTHESIS_PROMPT",
-    # Orchestrator prompts
+    # 编排器 提示
     "MULTI_AGENT_COLLABORATION_EXAMPLES",
     "DATA_SCIENCE_AGENT_DATA_ACCESS_PROMPT",
     "TEAM_STRUCTURE_PROMPT",

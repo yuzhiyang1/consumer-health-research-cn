@@ -31,7 +31,7 @@ print(x)
         
         code = parse_code_output(llm_output)
         
-        # Should contain the code (may have wrapper added)
+        # 应包含代码( 可能添加了包装)
         assert "x = 1 + 1" in code or "1 + 1" in code
     
     def test_handles_raw_code_without_markers(self):

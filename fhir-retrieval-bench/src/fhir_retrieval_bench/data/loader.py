@@ -139,7 +139,7 @@ def load_fhiragentbench_qa(
     else:
       raise ValueError(f"Unsupported additional context type: {type(context)}")
 
-    # Parse Answer (String Rep of List -> Str)
+    # 解析解答( 正在修改列表 -> Str)
     ground_truth = raw_answer
 
     if isinstance(raw_answer, str) and raw_answer.startswith("[["):
@@ -147,7 +147,7 @@ def load_fhiragentbench_qa(
         parsed = ast.literal_eval(raw_answer)
       except (ValueError, SyntaxError):
         try:
-          # Fix common missing comma issues
+          # 解决常见的缺失逗号问题
           corrected = re.sub(r"\]\s*\[", "], [", raw_answer)
           parsed = ast.literal_eval(corrected)
         except (ValueError, SyntaxError) as e:
@@ -206,13 +206,13 @@ def load_ehrqa_qa(
     question = qa_item["question"]
     choices = qa_item["answer_choices"]
 
-    # Format Question
+    # 格式问题
     if choices:
       question += "\n\nOptions:\n" + "\n".join(choices)
       question += "\n\nAnswer with the correct option letter."
 
     gold_answer = qa_item.get("correct_answer", "")
-    # Expand gold_answer to full string if possible
+    # 尽可能将 gold_answer 扩展为全字符串
     if choices:
       for c in choices:
         if c.strip().startswith((f"({gold_answer})", f"{gold_answer}.")):
@@ -266,9 +266,9 @@ def load_fhirpathqa_qa(
     question = rec["question"]
     raw_answer = rec["answer"]
 
-    # Unwrap JSON-stringified list answers (e.g. '["Void"]'). The upstream
-    # ships these as JSON, so use json.loads — ast.literal_eval would
-    # choke on JSON-only literals like null/true/false.
+    # 解围 JSON - 字符串列表答案(例如“ [“ void”) ). 上游
+    # 以JSON为单位，使用Json.loads——Ast。literal_eval
+    # 窒息 JSON -只有像虚构/真实/虚假的文字。
     ground_truth = raw_answer
     if isinstance(raw_answer, str) and raw_answer.startswith("["):
       try:
@@ -328,10 +328,10 @@ def load_medagentbench_qa(
       break
     patient_id = row["eval_MRN"]
     question = str(row["instruction"])
-    # MedAgentBench's ground truth column was pre-computed in the dataset
-    # preprocessing pipeline.
+    # MedAgentBench的地面真相栏在数据集中预先计算过了。
+    # 预处理 流程.
     ground_truth = str(row["ground_truth"])
-    # -1 indicates the value is not recorded or not applicable
+    # -1 表示该值未记录或不适用
     if ground_truth == "-1":
       ground_truth = "Value not recorded or not applicable"
     context = row["context"]

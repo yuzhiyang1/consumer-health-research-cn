@@ -46,8 +46,8 @@ class FHIRResource(pydantic.BaseModel):
       # Other fields are allowed without explicit definition.
   }
   """
-  # Use extra="allow" if you want to keep all other FHIR fields without
-  # defining them one by one
+  # 使用额外=“ ALLE” ,如果您想要保留所有其他 FHIR 字段，则不使用
+  # 逐个定义它们
   model_config = pydantic.ConfigDict(extra="allow")
   resourceType: FHIRResourceTypes  # pylint: disable=invalid-name
   id: str
@@ -86,7 +86,7 @@ class FHIRBundle(pydantic.BaseModel):
 
   @pydantic.model_validator(mode="after")
   def validate_patient_count(self) -> "FHIRBundle":
-    # Count how many entries are Patients
+    # 计算病人的条目数
     patient_count = sum(
         1 for e in self.entry if e.resource.resourceType == "Patient"
     )
@@ -114,7 +114,7 @@ def verify_with_pydantic(
     True if the FHIR bundle is valid, False otherwise.
   """
   try:
-    # This parses and validates the entire dict at once
+    # 立即解析并验证整个命令
     bundle = FHIRBundle(**fhir_bundle_to_test)
     if verbose:
       logging.info("✅ Success: %d entries validated.", len(bundle.entry))

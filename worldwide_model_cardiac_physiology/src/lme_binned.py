@@ -56,13 +56,13 @@ the pre-computed likelihood and random effects; re-check the latter when
 statsmodels is upgraded.
 """
 
-# This module re-implements the random-intercept MixedLM likelihood on binned
-# sufficient statistics and fills statsmodels' results cache directly.
+# 此模块重新执行 随机截取 MixedLM 的 可能性。
+# 并直接填充 Statsmodel 的结果缓存。
 # pylint: disable=protected-access
 
-# pytype: skip-file
-# This module deliberately patches statsmodels' results cache / conf_int and
-# sets dynamic attributes on MixedLMResults.
+# pytype: 跳过文件
+# 此模块会刻意补丁 Statsmodel 的结果缓存 / conf_int 和
+# 在 MixedLMResults 上设置动态属性。
 
 from __future__ import annotations
 
@@ -83,7 +83,7 @@ import file_io as fio
 
 
 # -----------------------------------------------------------------------------
-# conf_int() patch – statsmodels returns a bare ndarray for our wrapped results
+# conf_int () 补丁 – 统计模型返回一个裸裸的ndaray 用于我们包裹的结果
 # -----------------------------------------------------------------------------
 class BinnedConfIntDescriptor:
   """Makes ``MixedLMResults.conf_int()`` return a labelled DataFrame.
@@ -115,7 +115,7 @@ if not hasattr(mlm.MixedLMResults, '_conf_int_patched'):
 
 
 # -----------------------------------------------------------------------------
-# Sufficient statistics
+# 足够的统计数据
 # -----------------------------------------------------------------------------
 def get_binned_stats(model) -> Dict[int, Dict[str, Any]]:
   """Accumulates per-group-size sufficient statistics.
@@ -217,13 +217,13 @@ def binned_loglike_and_grad(
 
   ll = 0.0
   g_b = np.zeros(k_fe)
-  g_re = 0.0  # d ll / d var_re
-  g_resid = 0.0  # d ll / d var_resid
-  a_mat = np.zeros((k_fe, k_fe))  # X' V^-1 X * var_resid
+  g_re = 0.0  # d 尔/d var_re
+  g_resid = 0.0  # d 尔/d var_resid
+  a_mat = np.zeros((k_fe, k_fe))  # X' V^ -1 X * var_resid
   for n, s in binned_data.items():
     denom = var_resid + n * var_re
     weight = var_re / denom
-    r_raw = s['XTy'] - s['XTX'] @ b  # d(-q_raw/2)/db
+    r_raw = s['XTy'] - s['XTX'] @ b  # d(- q_raw / 2 ) /db
     r_sum = s['SXy'] - s['SXX'] @ b
     q_raw = s['yTy'] - 2 * b @ s['XTy'] + b @ (s['XTX'] @ b)
     q_sum = s['Syy'] - 2 * b @ s['SXy'] + b @ (s['SXX'] @ b)
@@ -232,8 +232,8 @@ def binned_loglike_and_grad(
     ll += -0.5 * (log_det + q_eff / var_resid)
 
     g_b += (r_raw - weight * r_sum) / var_resid
-    # d weight/d var_re = var_resid/denom**2;
-    # d weight/d var_resid = -var_re/denom**2.
+    # d 重量/d var_re = var_resid/denom** 2 ;
+    # d 重量/d var_resid= - var_re/denom** 2.
     g_re += -0.5 * (s['N_groups'] * n / denom - q_sum / denom**2)
     g_resid += -0.5 * (
         s['N_groups'] * ((n - 1) / var_resid + 1.0 / denom)
@@ -250,20 +250,20 @@ def binned_loglike_and_grad(
     a_inv = np.linalg.inv(a_mat)
     for n, s in binned_data.items():
       denom = var_resid + n * var_re
-      trace = np.sum(a_inv * s['SXX'])  # tr(A^-1 SXX), both symmetric.
+      trace = np.sum(a_inv * s['SXX'])  # tr(A^ -1 SXX),两者对称。
       g_re += 0.5 * var_resid / denom**2 * trace
       g_resid += -0.5 * var_re / denom**2 * trace
     g_resid += 0.5 * k_fe / var_resid
   if not np.isfinite(ll):
     return np.inf, grad
   grad[:k_fe] = -g_b
-  grad[k_fe] = -g_re * var_re  # chain rule for log-variance
+  grad[k_fe] = -g_re * var_re  # 日志变量链规则
   grad[k_fe + 1] = -g_resid * var_resid
   return -ll, grad
 
 
 # -----------------------------------------------------------------------------
-# Hessian / GLS solve
+# 黑森 / GLS 解析
 # -----------------------------------------------------------------------------
 def binned_hessian(self, params):
   """Closed-form Hessian of the profile log-likelihood for random intercepts.
@@ -297,8 +297,8 @@ def binned_hessian(self, params):
   d_accum = 0.0
   hess_re_trace_theta = 0.0
   grad_theta_trace = 0.0
-  x_theta = np.zeros((k_fe, k_fe))  # -dA/dtheta with A = X' V^-1 X.
-  f_theta = np.zeros((k_fe, k_fe))  # -d x_theta/dtheta.
+  x_theta = np.zeros((k_fe, k_fe))  # - dA/与A=X'V^ -1X.
+  f_theta = np.zeros((k_fe, k_fe))  # -d x_theta - 迪塔 - 迪塔 - 迪塔 迪塔
 
   for n, s in self.binned_data.items():
     w_n = theta / (1.0 + n * theta)
@@ -325,7 +325,7 @@ def binned_hessian(self, params):
   )
   grad_theta_reml = 0.0
   if self.reml:
-    # Derivatives of -1/2 log|A|: 1/2 tr(A^-1 X_theta) and
+    # -1/2日志的衍生词：1/2 tr(A^ -1 X_theta) 和
     # 1/2 [tr((A^-1 X_theta)^2) - tr(A^-1 F_theta)].
     a_inv_x = np.linalg.solve(xtvix, x_theta)
     grad_theta_reml = 0.5 * np.trace(a_inv_x)
@@ -354,7 +354,7 @@ def binned_hessian(self, params):
 
 def binned_get_fe_params(self, cov_re, vcomp, tol=1e-8):
   """GLS solve for the fixed effects given the relative RE variance."""
-  del vcomp, tol  # Unused for random-intercept models.
+  del vcomp, tol  # 未用于随机截取模型。
   theta = cov_re[0, 0]
   if not hasattr(self, 'binned_data'):
     self.binned_data = get_binned_stats(self)
@@ -372,7 +372,7 @@ def binned_get_fe_params(self, cov_re, vcomp, tol=1e-8):
 
 
 # -----------------------------------------------------------------------------
-# Results wrapper and fit
+# 成果的总结和适用
 # -----------------------------------------------------------------------------
 def wrap_binned_results(
     model, optimize_res, hessian_matrix, resid_var, hessian_skipped=False
@@ -416,7 +416,7 @@ def wrap_binned_results(
     except np.linalg.LinAlgError:
       pcov = np.linalg.pinv(-hessian_matrix)
     if getattr(model, 'use_sqrt', False):
-      # Delta method: the reported parameter is theta, not sqrt(theta).
+      # 三角洲方法:报告参数为sita,而不是sqrt(theta).
       jac = np.ones(fe_len + 1)
       jac[-1] = 2.0 * np.sqrt(rel_var)
       pcov = pcov * np.outer(jac, jac)
@@ -446,17 +446,17 @@ def wrap_binned_results(
   k = len(result_params) + 1
   result._cache['llf'] = llf
   if reml:
-    # Restricted likelihoods are not comparable across fixed-effect
-    # structures; statsmodels reports NaN for the same reason.
+    # 限制的可能性在固定效应之间不具有可比性
+    # 结构;统计模型报告NaN,原因相同。
     result._cache['aic'] = np.nan
     result._cache['bic'] = np.nan
   else:
     result._cache['aic'] = -2 * llf + 2 * k
     result._cache['bic'] = -2 * llf + k * np.log(model.nobs)
-  # bse / tvalues / pvalues are deliberately NOT injected: statsmodels derives
-  # them from ``cov_params() = normalized_cov * scale = pcov`` (the correct
-  # fixed-effects covariance). Injecting ``sqrt(diag(pcov / resid_var))``
-  # would understate every SE by a factor of sqrt(scale).
+  # bse /tvalues / pvalues 被刻意 NOT 注入:statsmodels 生成
+  # 他们来自 ``cov_params() = normalized_cov * scale = pcov`` (正确的
+  # 固定效应共变。注入 ``sqrt(diag(pcov / resid_var))``
+  # 将按 sqrt( 比例) 的系数，低估每个 SE。
 
   result.method = 'Binned-BFGS'
   result.converged = optimize_res.success
@@ -547,8 +547,8 @@ def binned_fit(
   if not np.isfinite(res.fun):
     res.fun = binned_loglike(res.x, *objective_args)
   if analytic_gradient and not res.success and method != 'BFGS':
-    # L-BFGS-B line searches can stall at the precision floor; full-memory
-    # BFGS stops on the gradient norm instead and converges there.
+    # L - BFGS-B 线路搜索可以在精密的地板上拖延； 完整的记忆
+    # BFGS 停止在梯度规范上相反，并在那里汇合。
     retry = optimize.minimize(
         binned_loglike_and_grad,
         init_params,
@@ -621,7 +621,7 @@ class BinnedMixedLM(sm.MixedLM):
     self.k_vc = 0
     self.exog_vc = mlm.VCSpec([], [], [])
 
-    # Skip MixedLM.__init__ (which splits the data per group).
+    # 跳过 MixedLM. __init__ (它将数据分成每个组).
     super(sm.MixedLM, self).__init__(
         endog, exog, groups=groups, exog_re=exog_re, missing=missing, **kwargs
     )
@@ -659,7 +659,7 @@ class BinnedMixedLM(sm.MixedLM):
 
 
 # -----------------------------------------------------------------------------
-# Fast BLUPs
+# 快 BLUPs (英语).
 # -----------------------------------------------------------------------------
 def inject_fast_random_effects(result: MixedLMResults) -> pd.Series:
   """Vectorised random intercepts; fills the results cache in place.
@@ -703,7 +703,7 @@ def inject_fast_random_effects(result: MixedLMResults) -> pd.Series:
 
 
 # -----------------------------------------------------------------------------
-# Checkpointing
+# 检查
 # -----------------------------------------------------------------------------
 def _json_default(obj):
   """JSON encoder for numpy scalars / arrays (keeps ints and bools typed)."""

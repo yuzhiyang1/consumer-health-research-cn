@@ -36,8 +36,8 @@ import cohort_io as cio
 import file_io as fio
 import seasonality_lib as sl
 
-# ISO-2 -> (latitude, longitude, UN region) of a handful of countries spanning
-# both hemispheres and most latitude bands.
+# ISO-2 ->(经纬度，经纬度，UN区域) 少数国家
+# 两个半球和大多数纬度带。
 COUNTRY_CENTROIDS = {
     'US': (38.0, -97.0, 'americas'),
     'CA': (56.0, -106.0, 'americas'),
@@ -59,7 +59,7 @@ COUNTRY_CENTROIDS = {
     'AU': (-25.0, 134.0, 'oceania'),
     'NZ': (-41.0, 174.0, 'oceania'),
 }
-# Column order of the written CSVs (the metric column and ``region`` follow).
+# 所写 CSVs (以下为公制列和``region``)的列顺序。
 PUBLIC_HEADER_ORDER = [
     'id',
     'month',
@@ -142,7 +142,7 @@ def make_dummy_cohort(
   m = df['_m'].to_numpy()
   lat_arr = df['_lat'].to_numpy()
   hemisphere = np.where(lat_arr >= 0, 1.0, -1.0)
-  season = np.cos(2 * np.pi * (m - 6) / 12.0) * hemisphere  # +1 in local summer
+  season = np.cos(2 * np.pi * (m - 6) / 12.0) * hemisphere  # +1 当地夏季
   df['dl_monthly'] = sl.mid_month_day_length_hours(lat_arr, m + 1)
   temp = (
       27.0

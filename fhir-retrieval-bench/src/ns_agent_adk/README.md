@@ -1,20 +1,20 @@
-# Graph-Aligned Clinical Reasoning: Budget-Constrained Agent Implementation
+# 与临床相协调:预算受限制的制剂实施
 
-The `ns_agent_adk` package provides a Neuro-Symbolic LLM agent designed for reasoning over longitudinal electronic health records, structured as FHIR bundles. The agent operates over a chronological hypergraph, extracting context through semantic search, taking budgeted reasoning steps, and utilizing graph-traversal tools to create comprehensive clinical summaries.
+`ns_agent_adk` 包提供了一种用于纵向电子健康记录的推理的神经系统LLM剂，其结构为FHIR捆绑.该剂通过语义搜索，提取上下文，采取预算推理步骤，并使用图传工具来制作全面的临床摘要。
 
-This implementation is built using the Google Agent Development Kit (ADK) and the `google-genai` library.
+这个执行是使用Google代理开发工具包(ADK)和`google-genai`库构建的。
 
-## Key Features
+## 关键特性
 
-- **Chronological Hypergraphs**: Transforms standard FHIR JSON bundles into interconnected `ChronologicalHypergraph` structures to seamlessly resolve references, temporal events, and categorical data.
-- **Causal Saliency Linearization**: Embeddings and temporal logic are used to construct a constrained subset of the FHIR data (a "skeleton view") that strictly guarantees fitting within the model's context window.
-- **Custom Tool Execution**: The agent is equipped with a suite of custom Graph Traversal tools logic to incrementally explore the "hidden" areas of the patient graph:
-    - **`inspect_node`**: Read detailed clinical descriptions of specific FHIR resources.
-    - **`search_graph`**: Run semantic searches utilizing vector embeddings to find specific conditions or symptoms.
-    - **`follow_links`**: Traverse structural FHIR referenced links.
-    - **`filter_graph_by_time`**: Query sub-graphs based on specific date constraints.
+- **编年史超图**:变形标准 FHIR JSON 捆绑成互联`ChronologicalHypergraph`结构，无缝地解决引用，时间事件，以及断然的数据。
+- ** Causal Salienity Linearization**:嵌入式和时间逻辑用于构造FHIR数据(一个"skeleton view")的受限子集，严格保证与模型上下文窗口相匹配。
+- **海关工具执行**:代理机配备了一套自定义图轨工具逻辑，以渐进探索患者图的"隐藏"区域：
+    - ** `inspect_node`**:读取具体FHIR资源的详细临床描述。
+    - ** `search_graph`**:使用矢量嵌入物进行语义搜索，以发现特定的条件或症状。
+    - ** `follow_links`**:Traversestructure FHIR 引用链接。
+    - ** `filter_graph_by_time`**:基于具体日期限制的查询子图。
     
-## Project Structure
+## 项目结构
 
 ```text
 ns_agent_adk/
@@ -42,29 +42,29 @@ ns_agent_adk/
     └── test_time_handling.py
 ```
 
-## Getting Started
+## 开始
 
-### Prerequisites
+### 先决条件
 
-To test the agent with Gemini models, ensure you have the appropriate environment variables set:
+要测试该代理机使用 Gemini 模型，请确保您有适当的环境变量集：
 
 ```bash
 export GENAI_API_KEYS="your_api_key_here"
 ```
 
-You can change the backend LLM and embedding model via modifying `config/config.py`. By default, `gemini-3-flash-preview` is used for LLM and `gemini-embedding-001` is used for embeddings.
+您可以通过修改 `config/config.py` 更改后端 LLM 和嵌入模型。默认情况下，`gemini-3-flash-preview` 用于 LLM 和 `gemini-embedding-001` 用于嵌入。
 
-### Running the Example
+### 运行示例
 
-Execute the python script to instantiate the graph, compute embeddings, initialize the `NeuroSymbolicAgent`, and run a general diagnostic query.
+执行python脚本以即时化图，计算嵌入，初始化`NeuroSymbolicAgent`,并运行一般诊断查询。
 
 ```bash
 PYTHONPATH=src/ python src/ns_agent_adk/test_run.py
 ```
 
-By default, the script asks the agent to _"Summarize the patient's medical history over the past 5 years."_ The script will dump both the LLM's final generated output and the full ADK reasoning step trace, including tool calls made during graph traversal.
+默认情况下，剧本要求代理商_"在过去5年中放大病人的病史记录"_ 剧本将同时丢弃LLM最终生成的输出和完整的ADK推理步骤跟踪，包括图中转录过程中所做的工具调用。
 
-### Evaluate on Benchmarks
+### 评估 基准测试
 
 ```bash
 python scripts/run_evals.py \

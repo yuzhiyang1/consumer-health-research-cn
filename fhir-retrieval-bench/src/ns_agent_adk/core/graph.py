@@ -60,7 +60,7 @@ class ChronologicalHypergraph:
         if 'resource' in entry
     ]
 
-    # Add all resources to the node map first
+    # 首先将所有资源添加到节点映射中
     for res in resources:
       ts = self._get_timestamp(res)
       node = FHIRNode(
@@ -78,7 +78,7 @@ class ChronologicalHypergraph:
         key=lambda r: self._get_timestamp(r) or datetime.datetime.min,
     )
 
-    # Create Hypernodes from Encounters
+    # 从相遇中创建超节点
     for enc in encounters:
       ct = fhir_time.get_clinical_time(enc)
       start_time = ct.start_time
@@ -87,10 +87,10 @@ class ChronologicalHypergraph:
       hypernode = Hypernode(
           id=enc['id'], start_time=start_time, end_time=end_time
       )
-      # NOTE: Encounter resource itself is NOT added to hypernode.nodes
+      # NOTE:相遇资源本身是NOT 添加到超节点。
       self.spine.append(hypernode)
 
-    # Process other resources
+    # 处理其他资源
     other_resources = [
         r for r in resources if r.get('resourceType') != 'Encounter'
     ]
@@ -100,7 +100,7 @@ class ChronologicalHypergraph:
     for res in other_resources:
       node = self._node_map.get(res.get('id', ''))
       if not node:
-        continue  # Should not happen if all resources are added above
+        continue  # 如果上面增加了所有资源，则不应发生
 
       encounter_ref = res.get('encounter', {}).get('reference', '')
       matched = False
@@ -125,7 +125,7 @@ class ChronologicalHypergraph:
           missing_timestamp_counts[node.resource_type] = count + 1
     print(f'Resources with missing timestamp: {missing_timestamp_counts}')
 
-    # Latent Episode Inference (LEI)
+    # 晚清诗词推论(LEI).
     for node in unmatched_timestamped_resources:
 
       placed = False
@@ -136,7 +136,7 @@ class ChronologicalHypergraph:
           break
 
       if not placed:
-        # Create Phantom Episode
+        # 创建幽灵集
         phantom_id = f'phantom-{node.id}'
         start_time = node.timestamp.replace(
             hour=0, minute=0, second=0, microsecond=0
@@ -155,7 +155,7 @@ class ChronologicalHypergraph:
             is_phantom=True,
         )
 
-        # Insert into sorted spine
+        # 插入到排序的脊椎
         insert_idx = 0
         for i, hn in enumerate(self.spine):
           if hn.start_time and phantom_hn.start_time < hn.start_time:
@@ -165,7 +165,7 @@ class ChronologicalHypergraph:
             insert_idx = i + 1
         self.spine.insert(insert_idx, phantom_hn)
 
-    # Sort nodes within each hypernode
+    # 在每个超节点内排序节点
     for hn in self.spine:
       hn.nodes.sort(
           key=lambda n: n.timestamp
@@ -204,8 +204,8 @@ def extract_references(resource: dict[str, Any]) -> list[str]:
     if isinstance(data, dict):
       for key, value in data.items():
         if key == 'reference' and isinstance(value, str):
-          # Valid references are internal, relative links (e.g., "Patient/123").
-          # We ignore absolute URLs or paths.
+          # 有效的参考文献是内部的，相对的链接(如"Patient/123").
+          # 我们忽略了绝对的URLs或路径。
           if '/' in value and not value.startswith(('http:', 'https:', '/')):
             references.add(value)
         else:

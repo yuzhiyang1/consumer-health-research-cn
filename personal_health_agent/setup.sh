@@ -3,30 +3,30 @@
 conda_setup() {
     echo "Setting up pha_framework environment using conda..."
     
-    # Remove existing pha_framework environment if it exists
+    # 删除已有的 pha_framework 环境(如果存在)
     conda env remove -n pha_framework -y || echo "No existing pha_framework environment found"
     
-    # Create and activate initial pha_framework environment with Python 3.12
+    # 创建和激活初始 pha_framework 环境，并使用 Python 3.12
     conda create -n pha_framework python=3.12 pip -y || exit 1
     
-    # Source conda to ensure 'conda activate' works within the script
+    # 源 conda,以确保在脚本中‘conda激活'的作品
     source "$(conda info --base)/etc/profile.d/conda.sh" || exit 1
     conda activate pha_framework || exit 1
     
-    # Verify pip and python info for debugging
+    # 校验 pip 和用于调试的蟒蛇信息
     echo "Using pip from: $(which pip)"
     echo "Python version: $(python --version)"
     
-    # Install standard packages from requirements.txt
+    # 从 requirements.txt 安装标准包
     echo "Installing dependencies from requirements.txt..."
     python -m pip install -r requirements.txt || exit 1
     
-    # Install OneTwo from the official Google DeepMind repo
-    # Using --no-deps to prevent it from overwriting our specific versions of shared libs (like numpy)
+    # 从官方GoogleDeepMind重播中安装 OneTwo
+    # 使用 --no-deps 防止它覆盖我们共享的 libs(如 numpy) 的特定版本
     echo "Installing OneTwo..."
     python -m pip install --no-deps git+https://github.com/google-deepmind/onetwo || exit 1
     
-    # Register the kernel with Jupyter
+    # 用 Jupyter 注册内核
     echo "Registering Jupyter kernel..."
     python -m ipykernel install --user --name pha_framework --display-name "pha_framework (Python 3.12)" || exit 1
     

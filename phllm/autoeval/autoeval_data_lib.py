@@ -27,12 +27,12 @@ from ..protos import conversation_pb2
 import sstable
 
 
-# ▼ Constants ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+# * 常数******************
 
 ASOF_DATESTR = '2024-04-04'
 ASOF_DATE = datetime.date.fromisoformat(ASOF_DATESTR)
 
-# A base enumeration class type.
+# 基本计数类类型。
 EnumBaseT = TypeVar('EnumBaseT', bound='EnumBase')
 
 
@@ -77,25 +77,25 @@ class Vertical(EnumBase):
   FITNESS = 'fitness'
 
 
-#  Denotes the unique user ID.
+#  说明唯一用户ID.
 USER_ID = 'user_id'
 
-# Denotes the case study ID in case studies for data splitting.
+# 说明在数据分割案例研究中的案例研究ID。
 CASE_STUDY_ID = 'case_study_id'
 
-# Denotes the case study conversation ID.
+# 说明案例研究谈话ID.
 CONVERSATION_ID = 'conversation_id'
 
 
-# Mapping from vertical to id column name.
-# Used for loading train/val/test/holdout splits based on the column name.
+# 从垂直到id列名称的映射。
+# 用于根据列名加载列车/val/测试/挂载拆分。
 VERTICAL_TO_ID_COL = immutabledict.immutabledict({
     Vertical.SLEEP: CASE_STUDY_ID,
     Vertical.FITNESS: CASE_STUDY_ID,
 })
 
 
-# A mapping of vertical to the expected set of raters.
+# 垂直与预期的一套测评仪的映射。
 VERTICAL_TO_RATERS: immutabledict.immutabledict[Vertical, tuple[str, ...]] = (
     immutabledict.immutabledict({
         Vertical.SLEEP: (
@@ -118,7 +118,7 @@ VERTICAL_TO_RATERS: immutabledict.immutabledict[Vertical, tuple[str, ...]] = (
     })
 )
 
-# A mapping of vertical to the evaluation tags/categories.
+# 绘制与评价标签/类别垂直的地图。
 VERTICAL_TO_EVAL_TAGS: immutabledict.immutabledict[
     Vertical, tuple[str, ...]
 ] = immutabledict.immutabledict({
@@ -137,7 +137,7 @@ VERTICAL_TO_EVAL_TAGS: immutabledict.immutabledict[
     ),
 })
 
-# A mapping of vertical to evaluation princples/criteria.
+# 绘制垂直到评价的棱镜/标准图。
 PRINCIPLES: tuple[str, ...] = (
     'important_domain_knowledge',
     'important_interpretations',
@@ -156,15 +156,15 @@ PRINCIPLES: tuple[str, ...] = (
     'readable',
 )
 
-# A tuple of conversation sources.
+# 一连串的谈话来源
 CONVERSATION_SOURCES: tuple[str, ...] = (
     'expert',
     'base',
     'finetune',
 )
 
-# A mapping of vertical to conversation source to conversation sstable. These
-# SSTables correspond to the conversations that were rated by experts.
+# 垂直到对话源的分布图以稳定对话。这些
+# SSTables 对应被专家评为对话。
 _SLEEP_SSTABLE_DIR = '/path/to/sleep/sstable/dir'
 _FITNESS_SSTABLE_DIR = '/path/to/fitness/sstable/dir'
 VERTICAL_TO_SOURCE_TO_CONVERSATION_SSTABLE: immutabledict.immutabledict[
@@ -183,7 +183,7 @@ VERTICAL_TO_SOURCE_TO_CONVERSATION_SSTABLE: immutabledict.immutabledict[
 })
 
 
-# ▼ Generic utilities ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+# * 通用公用事业
 
 
 def _tsv_to_df(filepath: str) -> pd.DataFrame:
@@ -289,7 +289,7 @@ def write_splits(
       )
       for split in splits
   }
-  # Note: We check whether files exist first to make this an atomic(ish) write.
+  # 注意:我们检查文件是否先存在，才能使它成为原子( ish) 写入。
   for split, filepath in split_to_filepath.items():
     if os.path.isfile(filepath) and not overwrite:
       raise FileExistsError(f'Split {split} already exists: {filepath}.')
@@ -325,7 +325,7 @@ def load_splits(
   return split_dict
 
 
-# ▼ Conversations ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+# * 交谈****************************************************************************************************************************************************************************************************************
 
 
 def load_conversation_sstable(filename: str) -> sstable.SSTable:
@@ -361,7 +361,7 @@ def load_all_graded_conversations(
 # ▼ TFRecords ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
 
 
-# AutoEval TFRecord TF example feature descriptors.
+# AutoEval TFRecord TF 实例描述符。
 AUTOEVAL_TFRECORD_FEATURES = {
     'vertical': tf.io.FixedLenFeature(
         shape=[],

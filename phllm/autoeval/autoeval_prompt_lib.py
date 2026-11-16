@@ -32,8 +32,8 @@ class LikertOptions:
   option_5: str
 
 
-# Note: There is no official objective for the "overall" tag. This version
-# summarizes the principles comprising the "overall" tag.
+# 注意："总体"标签没有官方目标，本版本
+# 总结包含"整体"标记的原则。
 _OVERALL_OBJECTIVE: str = (
     "Provide recommendations related to a user's sleep health. Ensure the"
     ' quality of recommendations is high and that recommendations are easy to'
@@ -41,7 +41,7 @@ _OVERALL_OBJECTIVE: str = (
     ' that recommendations do not contain information that could lead to harm.'
 )
 
-# A mapping of vertical to tags to human-readable tag text labels.
+# 绘制垂直到标记的图示，以图示人类可读标记文字标签。
 VERTICAL_TO_TAG_TO_LABEL: immutabledict.immutabledict[
     autoeval_data_lib.Vertical, immutabledict.immutabledict[str, str]
 ] = immutabledict.immutabledict({
@@ -60,7 +60,7 @@ VERTICAL_TO_TAG_TO_LABEL: immutabledict.immutabledict[
     }),
 })
 
-# A mapping of vertical to tags to objectives.
+# 绘制垂直到标记的目标图。
 VERTICAL_TO_TAG_TO_OBJECTIVE: immutabledict.immutabledict[
     autoeval_data_lib.Vertical, immutabledict.immutabledict[str, str]
 ] = immutabledict.immutabledict({
@@ -134,7 +134,7 @@ VERTICAL_TO_TAG_TO_OBJECTIVE: immutabledict.immutabledict[
     }),
 })
 
-# A mapping of principles to their criteria.
+# 制定符合其标准的原则。
 PRINCIPLE_TO_CRITERIA: immutabledict.immutabledict[str, str] = (
     immutabledict.immutabledict({
         'important_domain_knowledge': (
@@ -203,7 +203,7 @@ PRINCIPLE_TO_CRITERIA: immutabledict.immutabledict[str, str] = (
     })
 )
 
-# A mapping of principles to their corresponding likert options.
+# 将原则与相应的类似侵权选择进行摸底。
 PRINCIPLE_TO_OPTIONS: immutabledict.immutabledict[str, LikertOptions] = (
     immutabledict.immutabledict({
         'important_domain_knowledge': LikertOptions(
@@ -380,7 +380,7 @@ PRINCIPLE_TO_OPTIONS: immutabledict.immutabledict[str, LikertOptions] = (
     })
 )
 
-# The prompt format.
+# 即时格式。
 _PROMPT_V0 = """<special>user
 You are a {VERTICAL} expert rater assessing the quality of health suggestions made by another personal health expert using the criteria below.
 
@@ -418,7 +418,7 @@ Criteria: {PRINCIPLE_CRITERIA}
 State only the numeric score and option text when providing your rating. The formatting of your response must match that of the Likert scale statement.<ctrl100>
 <special>model\n"""
 
-# The target format.
+# 目标格式。
 _TARGET_V0 = '{OPTION_NUMBER}. {OPTION_TEXT}<stop>'
 
 
@@ -456,7 +456,7 @@ def read_tagged_message(
     role: conversation_pb2.Message.Role = conversation_pb2.Message.Role.ASSISTANT,
 ) -> tuple[str | None, int]:
   """Returns first matching conversation message and index by tag and role."""
-  # Ensure the (tag, role) values are all unique within the conversation.
+  # 确保(tag,角色)价值观在对话中都是独一无二的。
   num_msgs = len(conversation.messages)
   if len({(m.tag, m.role) for m in conversation.messages}) != num_msgs:
     raise ValueError(f'Duplicate (tag, role) messages in {conversation}.')

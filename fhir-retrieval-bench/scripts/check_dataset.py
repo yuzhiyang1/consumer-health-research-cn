@@ -93,7 +93,7 @@ def _check_one_dataset(name: str, limit: int, config_dir: str) -> bool:
     fhir_bundle = loader.get_fhir_bundle_for_instance(record, bundles)
     if fhir_bundle is None:
       print("  FAILED: no FHIR bundle found for patient %s", record.patient_id)
-      # Consider this a failure for the overall check of this dataset.
+      # 认为这是对本数据集进行总体检查的失败。
       return False
     else:
       print(f"  Bundle keys: {fhir_bundle.keys()}")

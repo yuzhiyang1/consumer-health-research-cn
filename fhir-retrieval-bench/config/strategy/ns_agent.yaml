@@ -3,14 +3,14 @@ strategy:
   max_linearization_tokens: 4000
 
   # ==========================================
-  # Ablation Strategy Configs
+  # 调试策略配置
   # ==========================================
-  # Choice of linearization algorithm:
-  # - 'greedy' (default saliency packed)
-  # - 'chronological' (sequential timeline packed)
+  # 线性化算法的选择：
+  # - “ greedy” (默认显著性包)
+  # - 时间学( 时间顺序已打包)
   linearization_strategy: "greedy"
 
-  # Selectively disable agent functions:
+  # 选择性禁用代理函数：
   enabled_tools:
     - "inspect_node"
     - "search_graph"

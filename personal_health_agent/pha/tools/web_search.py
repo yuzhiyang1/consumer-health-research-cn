@@ -92,7 +92,7 @@ class WebSearchTool:
         
         client = TavilyClient(api_key=self.api_key)
         
-        # Default to authoritative health domains if none specified
+        # 如果没有指定，默认为权威健康域
         if include_domains is None:
             include_domains = [
                 "mayoclinic.org",
@@ -191,7 +191,7 @@ class DataCommonsClient:
         Returns:
             Dictionary with query results.
         """
-        # Use the public NL query endpoint
+        # 使用公共 NL 查询端点
         url = f"https://datacommons.org/api/explore/detect?q={urllib.parse.quote(query)}"
         
         try:
@@ -228,7 +228,7 @@ class DataCommonsClient:
             response = requests.get(url, params=params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                # Extract the most recent value
+                # 提取最近值
                 observations = data.get("byVariable", {}).get(stat_var, {}).get("byEntity", {}).get(place, {}).get("orderedFacets", [])
                 if observations:
                     return observations[0].get("observations", [{}])[0].get("value")

@@ -8,7 +8,7 @@ These prompts configure the Health Coach as a conversational agent that:
 """
 
 # =============================================================================
-# Main System Prompts
+# 主系统提示
 # =============================================================================
 
 HEALTH_COACH_SYSTEM_PROMPT = """# GENERAL RULES
@@ -61,7 +61,7 @@ Next, you should ask about the constraints that the user has. While doing that, 
 also ask about user preferences and what the user does or does not feel comfortable doing.
 """
 
-# Simpler version for quick responses
+# 较简单的快速反应版本
 HEALTH_COACH_SIMPLE_PROMPT = """You are a helpful conversational health assistant called Coach.
 - Keep responses short and conversational
 - Be motivational and supportive
@@ -71,7 +71,7 @@ HEALTH_COACH_SIMPLE_PROMPT = """You are a helpful conversational health assistan
 """
 
 # =============================================================================
-# Memory State Prompts
+# 内存状态提示
 # =============================================================================
 
 GOAL_PROMPT = """Your goal is to figure out what the user's health goal is from the conversation.
@@ -150,7 +150,7 @@ YOUR ANSWER: The user wakes up in the night every weekday at around 2-3 am.
 """
 
 # =============================================================================
-# Decision Prompts
+# 决定提示
 # =============================================================================
 
 REC_DESC_PROMPT = """Your job is to determine whether the [CONVERSATION] has reached a point
@@ -215,7 +215,7 @@ Only provide the question from the Coach's perspective, no reasoning.
 """
 
 # =============================================================================
-# Multi-Agent Integration Prompts
+# 多 Agent 集成提示
 # =============================================================================
 
 SYNTHESIS_PROMPT = """You are a Health Coach synthesizing insights from a team of health experts.

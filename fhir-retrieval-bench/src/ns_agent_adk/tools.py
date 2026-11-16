@@ -39,7 +39,7 @@ class ClinicalGraphTools:
     logging.info(f"calling inspect_node(resource_id={resource_id})")
     node = self.graph.get_node_by_id(resource_id)
     if not node and "/" in resource_id:
-      # Try stripping the resource type prefix
+      # 尝试剥离资源类型前缀
       node = self.graph.get_node_by_id(resource_id.split("/")[-1])
     if not node:
       return (
@@ -72,7 +72,7 @@ class ClinicalGraphTools:
     matches = []
     top_k = 5
 
-    # Use Semantic Search if Embeddings are available
+    # 如果可以使用嵌入式语言，则使用语义搜索
     if self.embedder and self.node_embeddings:
       try:
         keyword_emb = self.embedder.embed([keywords])[0]
@@ -98,8 +98,8 @@ class ClinicalGraphTools:
       except Exception as e:  # pylint: disable=broad-except
         print(f"Embedding search failed, falling back to keywords: {e}")
 
-    # Fallback to naive keyword search if semantic search found nothing
-    # or is disabled
+    # 如果语义搜索找不到任何内容，则会回到天真的关键字搜索中
+    # 或已禁用
     if not matches:
       for node in self.graph.get_all_nodes():
         node_text = json.dumps(node.data).lower()
@@ -140,7 +140,7 @@ class ClinicalGraphTools:
 
     node = self.graph.get_node_by_id(resource_id)
     if not node and "/" in resource_id:
-      # Try stripping the resource type prefix
+      # 尝试剥离资源类型前缀
       node = self.graph.get_node_by_id(resource_id.split("/")[-1])
     if not node:
       return json.dumps({"error": f"Node {resource_id} not found."})
@@ -198,12 +198,12 @@ class ClinicalGraphTools:
           datetime.datetime.fromisoformat(start_date) if start_date else None
       )
       end_dt = datetime.datetime.fromisoformat(end_date) if end_date else None
-      # Add time zone info if necessary, assuming naive datetimes for now
+      # 必要时增加时区信息，假设目前日期太幼稚
       if start_dt:
         start_dt = start_dt.replace(tzinfo=datetime.timezone.utc)
       if end_dt:
         # end_dt = end_dt.replace(tzinfo=datetime.timezone.utc)
-        # Shift end_dt to the very end of the day so it is inclusive
+        # 将 end_dt 移到一天的末尾，这样它就具有包容性
         end_dt = end_dt.replace(
             hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc
         )

@@ -232,7 +232,7 @@ def main(argv: list[str]):
   logger.info(
       "All %d run(s) complete. Total time: %.1fs", len(configs), total_elapsed
   )
-  # Set execute permissions for all files in the output directory.
+  # 设置输出目录中所有文件的执行权限。
   chmod_command = ["/usr/bin/fileutil", "chmod", "755", "-R", _OUTPUT_DIR.value]
   results = subprocess.run(
       chmod_command,

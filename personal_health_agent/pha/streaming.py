@@ -27,16 +27,16 @@ from typing import Optional, Dict, Any, Generator
 
 
 # =============================================================================
-# Thread-safe emitter registry
+# 线条安全发射器登记册
 # =============================================================================
 
-# Map thread_id -> emitter_id for auto-routing from agent code
+# 地图thread_id -> emitter_id,用于自动调用代理代码
 _thread_to_emitter: Dict[int, str] = {}
 
-# Map emitter_id -> Queue for event storage
+# 映射 emitter_id -> 事件存储队列
 _emitter_queues: Dict[str, Queue] = {}
 
-# Lock for registry operations
+# 用于登记册操作的锁定
 _registry_lock = threading.Lock()
 
 
@@ -73,7 +73,7 @@ def destroy_emitter(emitter_id: str) -> None:
     """Clean up an emitter and its queue."""
     with _registry_lock:
         _emitter_queues.pop(emitter_id, None)
-        # Also clean up any thread bindings pointing to this emitter
+        # 同时清理指向这个发射器的任何线条绑定
         to_remove = [tid for tid, eid in _thread_to_emitter.items() if eid == emitter_id]
         for tid in to_remove:
             del _thread_to_emitter[tid]
@@ -98,13 +98,13 @@ def emit_step(tag: str, message: str, detail: str = "") -> None:
     """
     ts = datetime.now().strftime("%H:%M:%S")
     
-    # Always print to terminal
+    # 总是打印到终端
     if detail:
         print(f"[{tag}:{ts}] {message} | {detail[:150]}")
     else:
         print(f"[{tag}:{ts}] {message}")
     
-    # Route to SSE queue if this thread has a bound emitter
+    # 如果此线程有绑定的发射器，则前往 SSE 队列的路线
     tid = threading.get_ident()
     emitter_id = _thread_to_emitter.get(tid)
     if emitter_id:
@@ -169,5 +169,5 @@ def get_events(emitter_id: str, timeout: float = 1.0) -> Generator[Dict[str, Any
             if event.get("type") in ("result", "error"):
                 return
         except Empty:
-            # Yield a keepalive so the connection doesn't drop
+            # 保持联络，以免联系下降
             yield {"type": "keepalive", "timestamp": datetime.now().strftime("%H:%M:%S")}

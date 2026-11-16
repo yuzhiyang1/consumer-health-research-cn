@@ -24,7 +24,7 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional, Dict, Any, List, Literal
 
-# Try to import LLM backends
+# 尝试导入 LLM 后端
 _GENAI_AVAILABLE = False
 _LANGFUN_AVAILABLE = False
 
@@ -93,11 +93,11 @@ class HealthCoachAgent:
         )
         self.simple_mode = simple_mode
         
-        # Conversation state
+        # 对话状态
         self.conv_context = ""
         self.conv_utterances = ""
         
-        # Memory states
+        # 内存状态
         self.prompts = {
             "goal": GOAL_PROMPT,
             "constraints": CONSTRAINTS_PROMPT,
@@ -124,16 +124,16 @@ class HealthCoachAgent:
         }
         self.memory: Dict[str, str] = {key: "" for key in self.prompts.keys()}
         
-        # Conversation statistics
+        # 对话统计
         self.num_turns = 0
         self.avg_user_words_per_turn = 0.0
         self.avg_coach_words_per_turn = 0.0
         
-        # Flags
+        # 旗帜
         self.finish_flag = False
         self.rec_flag = False
         
-        # LLM configuration
+        # LLM 配置
         self._client = None
         self._model_name = "models/gemini-3.1-flash-lite-preview"
         self._temperature = 0.7
@@ -147,7 +147,7 @@ class HealthCoachAgent:
         model_name: Optional[str] = None,
         temperature: float = 0.7,
         use_langfun: bool = False,
-        # Legacy parameter for backwards compatibility
+        # 向后兼容的遗留参数
         gemini_api_key: Optional[str] = None,
     ) -> "HealthCoachAgent":
         """Configure the LLM backend.
@@ -163,19 +163,19 @@ class HealthCoachAgent:
         Returns:
             Self for chaining.
         """
-        # Handle legacy parameter
+        # 处理遗留参数
         if gemini_api_key and not api_key:
             api_key = gemini_api_key
             if not provider:
                 provider = "gemini"
         
-        # If provider not specified, get from global config
+        # 如果未指定提供者，请从全局配置中获取
         from ..llm.config import get_config
         config = get_config()
         if not provider:
             provider = config.provider
             
-        # Update global configuration
+        # 更新全球配置
         from ..llm.config import configure_global
         configure_global(
             provider=provider,
@@ -193,14 +193,14 @@ class HealthCoachAgent:
         self._client = None
         self._lm = None
         
-        # Use langfun for Gemini if requested
+        # 如果请求，则对 Gemini 使用 langfun
         if use_langfun and _LANGFUN_AVAILABLE and provider == "gemini":
             self._lm = lf.llms.GenAI(
                 model=model_name,
                 api_key=api_key,
             )
         else:
-            # Use unified backend for all providers (including Gemini)
+            # 对所有提供者使用统一的后端(包括Gemini)
             from ..llm.backend_multimodel import get_llm_backend
             self._backend = get_llm_backend(
                 backend_type=provider,
@@ -227,7 +227,7 @@ class HealthCoachAgent:
                     response = lf.query(prompt, lm=self._lm)
                     return str(response)
                 elif self._backend:
-                    # Use the multi-provider backend
+                    # 使用多提供者后端
                     return self._backend.generate(prompt)
                 else:
                     return "Error: LLM not configured. Call configure() first."
@@ -299,13 +299,13 @@ class HealthCoachAgent:
         results = [None] * len(prompts)
         
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            # Submit all tasks with their index
+            # 以索引提交所有任务
             future_to_idx = {
                 executor.submit(self._call_llm, prompt): idx 
                 for idx, prompt in enumerate(prompts)
             }
             
-            # Collect results as they complete
+            # 完成后收集结果
             for future in as_completed(future_to_idx):
                 idx = future_to_idx[future]
                 try:
@@ -326,7 +326,7 @@ class HealthCoachAgent:
         conv_history = self.get_conversation_history()
         
         if mode == "SIMPLE":
-            # Quick update: goal, follow-up, recommendation check (in parallel)
+            # 快速更新:目标、后续行动、建议检查(并行)
             prompts = [
                 self.prompts["goal"] + conv_history,
                 self.prompts["follow_desc"] + conv_history,
@@ -338,7 +338,7 @@ class HealthCoachAgent:
             self._overwrite_memory("follow_desc", results[1])
             self._overwrite_memory("rec_desc", results[2])
         else:
-            # Full update: goal, recommendation check, finish check (in parallel)
+            # 全面更新:目标、建议检查、完成检查(并行)
             prompts = [
                 self.prompts["goal"] + conv_history,
                 self.prompts["rec_desc"] + conv_history,
@@ -394,12 +394,12 @@ class HealthCoachAgent:
         if self.simple_mode:
             return self._take_turn_simple()
         
-        # Update memory states
+        # 更新内存状态
         self._update_memory(mode="GOAL")
         
         conv_history = self.get_conversation_history()
         
-        # Check if conversation should end
+        # 检查对话是否结束
         if "FINISH" in self.memory.get("finish_desc", ""):
             if not self.finish_flag:
                 self.finish_flag = True
@@ -411,7 +411,7 @@ class HealthCoachAgent:
             else:
                 self.finish_flag = False
         
-        # Check if it's time for a recommendation
+        # 检查一下是不是该推荐了
         elif "YESREC" in self.memory.get("rec_desc", ""):
             if not self.rec_flag:
                 self.rec_flag = True
@@ -423,7 +423,7 @@ class HealthCoachAgent:
             else:
                 self.rec_flag = False
         
-        # Regular response
+        # 定期回应
         input_prompt = (
             self.system_prompt + 
             "\n\n*[[CONVERSATION]]*:" + conv_history
@@ -441,21 +441,21 @@ class HealthCoachAgent:
         self._update_memory(mode="SIMPLE")
         conv_history = self.get_conversation_history()
         
-        # Check for recommendation
+        # 检查建议
         if "YESREC" in self.memory.get("rec_desc", ""):
             rec_response = self._call_llm(
                 self.prompts["rec"] + conv_history
             )
             return rec_response
         
-        # Check for follow-up
+        # 检查后续
         elif "YESFOLLOW" in self.memory.get("follow_desc", ""):
             follow_response = self._call_llm(
                 self.prompts["follow"] + conv_history
             )
             return follow_response
         
-        # Regular response
+        # 定期回应
         input_prompt = self.system_prompt + "\n[CONVERSATION]:\n" + conv_history
         return self._call_llm(input_prompt)
     
@@ -500,7 +500,7 @@ class HealthCoachAgent:
         print(f"[Coach:{ts}] Analysis ({len(analysis)} chars): {analysis[:200]}...")
         self.add_user_message(user_message)
         
-        # Build prompt with analysis
+        # 以分析方式建立快捷键
         input_prompt = (
             self.system_prompt +
             self.get_conversation_history() +

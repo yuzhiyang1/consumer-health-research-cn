@@ -59,7 +59,7 @@ def load_persona(
   Returns:
     Tuple of (summary_df, activities_df, profile_df, population_df)
   """
-  # If settings provided, use paths from settings
+  # 如果提供了设置，请使用设置中的路径
   if settings is not None:
     summary_path = summary_path or settings.summary_path
     activities_path = activities_path or settings.activities_path
@@ -68,7 +68,7 @@ def load_persona(
     if temporally_localize is True:
       temporally_localize = settings.temporally_localize
 
-  # Validate that we have all required paths
+  # 验证我们所有必要的路径
   if not all([summary_path, activities_path, profile_path, population_path]):
     raise ValueError(
         "All data paths must be provided either directly or via Settings. "
@@ -82,7 +82,7 @@ def load_persona(
         ])
     )
 
-  # Convert to Path objects
+  # 转换为路径对象
   summary_path = Path(summary_path)
   activities_path = Path(activities_path)
   profile_path = Path(profile_path)
@@ -90,18 +90,18 @@ def load_persona(
 
   print(f"Loading data from {summary_path.parent}")
 
-  # Load CSVs
+  # 装入 CSVs
   summary = pd.read_csv(summary_path)
   activities = pd.read_csv(activities_path)
   profile = pd.read_csv(profile_path)
   population = pd.read_csv(population_path)
 
-  # Convert to PhdaDataFrame for .during() support
+  # 转换为 PhdaDataFrame ,用于 during () 支持
   summary = PhdaDataFrame(summary)
   activities = PhdaDataFrame(activities)
   population = PhdaDataFrame(population)
 
-  # Handle population column renaming if needed
+  # 必要时重新命名人口栏
   population_renames = {
       "age_group": "age",
       "resting_heart_rate_bpm": "resting_heart_rate",
@@ -116,18 +116,18 @@ def load_persona(
       "sleep_awake_minute_cnt": "awake_minutes",
       "stress_management_score": "stress_management_score",
   }
-  # Only rename columns that exist
+  # 只重命名已存在的列
   rename_cols = {k: v for k, v in population_renames.items() if k in population.columns}
   if rename_cols:
     population = population.rename(columns=rename_cols)
 
-  # Enforce schema (dtypes and column filtering)
+  # 强制计划(dtypes和列过滤)
   if enforce_schema:
     summary, activities, population = enforce_persona_schema(
         summary, activities, population
     )
 
-  # Temporally localize (shift dates so data appears to end "today")
+  # 临时本地化( 变换日期导致数据似乎结束“今天 )
   if temporally_localize:
     if isinstance(temporally_localize, bool):
       temporally_localize = "today"
@@ -148,8 +148,8 @@ def localize_to_date(
   This also updates the index to stay in sync with the datetime columns.
   """
 
-  # Identify the most recent date in both dataframes
-  # Use datetime columns, not index (index may be integer)
+  # 在两个数据框中指明最近的日期
+  # 使用日期时间栏，而非索引(索引可以是整数)
   if "start_time" in activities_df.columns:
     latest_activity_date = pd.to_datetime(activities_df["start_time"]).max().date()
   elif isinstance(activities_df.index, pd.DatetimeIndex):
@@ -168,13 +168,13 @@ def localize_to_date(
     
   latest_date = max(latest_activity_date, latest_summary_date)
 
-  # Calculate the difference in days from today
+  # 计算从今天算起的天数差异
   date_zero = pd.to_datetime(date).date()
   days_difference = (date_zero - latest_date).days
 
-  # Process `summary_df`. Pandas 4 is stricter about assigning a DatetimeArray
-  # (e.g., the result of a Series + Timedelta) directly into a column slot, so
-  # we extract the underlying numpy values before assigning.
+  # `summary_df`. 熊猫4更严格地指定DatetimeArray.
+  # (例如，一个系列+Timedelta的结果)直接进入一个列槽，所以
+  # 我们先提取下限值，然后再分配。
   delta = pd.Timedelta(days=days_difference)
   time_columns_summary = [
       "bed_time",
@@ -187,7 +187,7 @@ def localize_to_date(
       shifted = pd.to_datetime(summary_df[col]) + delta
       summary_df[col] = shifted.values
 
-  # Also update the index to stay in sync with datetime column
+  # 同时更新索引以保持与日期时间列同步
   if isinstance(summary_df.index, pd.DatetimeIndex):
     summary_df.index = summary_df.index + delta
 
@@ -196,12 +196,12 @@ def localize_to_date(
   for col in time_columns_activity:
     if col in activities_df.columns:
       shifted = pd.to_datetime(activities_df[col]) + delta
-      # Use plain df[col] = ... (not .loc[:, col] = ...) so pandas 4 allows
-      # the column dtype to change from str to datetime64. The .loc setter
-      # tries to preserve dtype and would reject the datetime assignment.
+      # 使用plain df[col]=(不是.loc[:,col]=.),所以pandas 4允许。
+      # 从str到 日期时 64 的列 Dtype 更改。.loc 设置器
+      # 试图保留 dtype 并拒绝日期性任务。
       activities_df[col] = shifted.values
   
-  # Also update the index to stay in sync with start_time column
+  # 同时更新索引以保持与 start_time 列的同步
   if isinstance(activities_df.index, pd.DatetimeIndex):
     activities_df.index = activities_df.index + pd.Timedelta(days=days_difference)
 

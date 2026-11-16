@@ -31,11 +31,11 @@ class ModelInfo:
 
 
 # =============================================================================
-# Curated Model Lists (fallback when API unavailable)
+# 被破解的模型列表(当API不可用时返回)
 # =============================================================================
 
 CURATED_GEMINI_MODELS = [
-    # Gemini 3.1 series — current default (May 2026)
+    # Gemini 3.1系列——当前默认(5月2026).
     ModelInfo(
         id="models/gemini-3.1-flash-lite-preview",
         name="Gemini 3.1 Flash Lite (Preview)",
@@ -43,7 +43,7 @@ CURATED_GEMINI_MODELS = [
         description="Default Gemini model",
         supports_vision=True,
     ),
-    # Gemini 2.5 series — shutdown October 16, 2026
+    # Gemini 2.5系列——10月停产16,2026.
     ModelInfo(
         id="models/gemini-2.5-pro",
         name="Gemini 2.5 Pro",
@@ -108,7 +108,7 @@ CURATED_ANTHROPIC_MODELS = [
 
 
 # =============================================================================
-# Dynamic Model Fetching
+# 动态模型获取
 # =============================================================================
 
 def fetch_gemini_models(api_key: Optional[str] = None) -> List[ModelInfo]:
@@ -130,7 +130,7 @@ def fetch_gemini_models(api_key: Optional[str] = None) -> List[ModelInfo]:
         
         models = []
         for model in client.models.list():
-            # Filter to generative models only
+            # 只过滤到基因模型
             if hasattr(model, 'supported_generation_methods'):
                 if 'generateContent' in model.supported_generation_methods:
                     models.append(ModelInfo(
@@ -141,7 +141,7 @@ def fetch_gemini_models(api_key: Optional[str] = None) -> List[ModelInfo]:
                         supports_vision='vision' in model.name.lower() if hasattr(model, 'name') else False,
                     ))
         
-        # Sort by name, preferring newer models
+        # 按名称排序，更喜欢新模型
         models.sort(key=lambda m: m.id, reverse=True)
         return models if models else CURATED_GEMINI_MODELS
         
@@ -169,9 +169,9 @@ def fetch_openai_models(api_key: Optional[str] = None) -> List[ModelInfo]:
         
         models = []
         for model in client.models.list():
-            # Filter to chat models only (gpt-4, gpt-3.5)
+            # 过滤到聊天模式( gpt- 4, gpt- 3.5)
             if 'gpt-4' in model.id or 'gpt-3.5' in model.id:
-                # Skip fine-tuned models
+                # 跳过微调模型
                 if ':' not in model.id:
                     models.append(ModelInfo(
                         id=model.id,
@@ -180,7 +180,7 @@ def fetch_openai_models(api_key: Optional[str] = None) -> List[ModelInfo]:
                         supports_vision='vision' in model.id or 'gpt-4o' in model.id,
                     ))
         
-        # Sort, preferring gpt-4o models
+        # 排序，偏爱 gpt-4o 模型
         models.sort(key=lambda m: (0 if 'gpt-4o' in m.id else 1, m.id), reverse=False)
         return models if models else CURATED_OPENAI_MODELS
         
@@ -200,13 +200,13 @@ def fetch_anthropic_models(api_key: Optional[str] = None) -> List[ModelInfo]:
     Returns:
         List of available ModelInfo objects.
     """
-    # Anthropic doesn't have a list models endpoint
-    # Return curated list
+    # Anthropic没有列表模型终点
+    # 返回目录
     return CURATED_ANTHROPIC_MODELS
 
 
 # =============================================================================
-# Public API
+# 公众 API
 # =============================================================================
 
 ProviderType = Literal["gemini", "openai", "anthropic"]
@@ -228,7 +228,7 @@ def get_available_models(
         List of ModelInfo objects.
     """
     if use_cache:
-        # Return curated lists (faster, no API call)
+        # 退回管理清单(较快，无API呼叫)
         if provider == "gemini":
             return CURATED_GEMINI_MODELS
         elif provider == "openai":
@@ -236,7 +236,7 @@ def get_available_models(
         elif provider == "anthropic":
             return CURATED_ANTHROPIC_MODELS
     
-    # Fetch from API
+    # 从 API
     if provider == "gemini":
         return fetch_gemini_models(api_key)
     elif provider == "openai":

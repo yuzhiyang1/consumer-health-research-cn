@@ -22,7 +22,7 @@ from enum import Enum
 
 import pandas as pd
 
-# Import shared request stats
+# 导入共享请求数据
 try:
     from ..utils.request_stats import request_stats
     _STATS_AVAILABLE = True
@@ -31,7 +31,7 @@ except ImportError:
 
 
 # =============================================================================
-# Tool Call Logging
+# 工具调用日志
 # =============================================================================
 
 def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str = None):
@@ -43,13 +43,13 @@ def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str 
         output: The tool output (will be truncated for display).
         error: Error message if the tool failed.
     """
-    # Record stats
+    # 记录数据
     if _STATS_AVAILABLE:
         request_stats.record_tool(tool_name, had_error=error is not None)
     
     timestamp = datetime.now().strftime("%H:%M:%S")
     
-    # Format inputs
+    # 格式输入
     input_str = ", ".join(f"{k}={repr(v)[:50]}" for k, v in inputs.items())
     
     print(f"\n{'─' * 60}")
@@ -59,7 +59,7 @@ def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str 
     if error:
         print(f"   ❌ Error: {error[:200]}")
     elif output is not None:
-        # Truncate output for display
+        # 显示的截断输出
         output_str = str(output)
         if len(output_str) > 300:
             output_str = output_str[:300] + "..."
@@ -69,7 +69,7 @@ def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str 
 
 
 # =============================================================================
-# Constants
+# 常数
 # =============================================================================
 
 ERROR_STRING = "[ERROR]"
@@ -83,7 +83,7 @@ class ExecutionStatus(Enum):
 
 
 # =============================================================================
-# Data classes
+# 数据类别
 # =============================================================================
 
 @dataclasses.dataclass
@@ -97,7 +97,7 @@ class ExecutionResult:
 @dataclasses.dataclass
 class PhdaPythonRequest:
     """Request class for the PHDA Python engine."""
-    request: str  # The code to execute
+    request: str  # 要执行的代码
     include_traceback_for_errors: bool = True
 
 
@@ -116,7 +116,7 @@ class PhdaPythonReply:
 
 
 # =============================================================================
-# Code manipulation utilities
+# 代码操纵公用事业
 # =============================================================================
 
 def _normalize_indentation(code: str) -> str:
@@ -127,11 +127,11 @@ def _normalize_indentation(code: str) -> str:
     2. Windows line endings (CRLF) -> Unix line endings (LF)
     3. Trailing whitespace on lines
     """
-    # Normalize line endings first (Windows CRLF -> Unix LF)
+    # 将线段的结尾调整为第一(Windows CRLF -> Unix LF).
     code = code.replace('\r\n', '\n').replace('\r', '\n')
-    # Convert tabs to spaces
+    # 将标签转换为空格
     code = code.replace('\t', '    ')
-    # Remove trailing whitespace from each line (but preserve blank lines)
+    # 从每行中删除后缀的空白(但保留空白行)
     lines = code.split('\n')
     lines = [line.rstrip() for line in lines]
     return '\n'.join(lines)
@@ -145,12 +145,12 @@ def _add_call_analysis_line(code: str) -> str:
     
     Also normalizes indentation to fix mixed tabs/spaces issues.
     """
-    # First normalize tabs to spaces
+    # 第一个普通标签到空格
     code = _normalize_indentation(code)
     
     lines = code.rstrip().split('\n')
     
-    # If last line already assigns to result at top level, we're good
+    # 如果最后一行已经指定了最高一级的结果，我们就可以了
     last_line = lines[-1] if lines else ''
     if last_line.lstrip().startswith('result = ') and not last_line.startswith((' ', '\t')):
         return '\n'.join(lines)
@@ -158,7 +158,7 @@ def _add_call_analysis_line(code: str) -> str:
     call_line = ('result = analysis(summary_df=summary_df, activities_df=activities_df,'
                  ' profile_df=profile_df, population_df=population_df)')
     
-    # Add blank line for readability, then the call at top level
+    # 添加可读性空行，然后在顶层调用
     lines.append('')
     lines.append(call_line)
     return '\n'.join(lines)
@@ -180,7 +180,7 @@ def _wrap_code_for_execution(
     include_traceback_for_errors: bool = True,
 ) -> str:
     """Wraps code in try-except with stdout redirection."""
-    # Indent code by 8 spaces (inside try + inside with)
+    # 缩进码由 8 空格( 内部尝试 + 与)
     content = textwrap.indent(code, '        ')
     wrapped_code = f'''\
 import contextlib, io, traceback, sys
@@ -202,7 +202,7 @@ except Exception as e:
 
 
 # =============================================================================
-# Preamble generation
+# 序言生成
 # =============================================================================
 
 def df_to_csv_string(df: pd.DataFrame, **kwargs) -> str:
@@ -231,10 +231,10 @@ def make_preamble(
 
 
 # =============================================================================
-# Preamble templates (from python_preambles.py, with PhdaDataFrame inlined)
+# 序言模板(来自python_preambles.py,内含PhdaDataFrame)
 # =============================================================================
 
-# This includes the PhdaDataFrame class and enforce_persona_schema inline
+# 包括PhdaDataFrame级和enforce_persona_schema内置。
 PREAMBLE_TEMPLATE: str = '''\
 import io
 import re
@@ -442,7 +442,7 @@ summary_df, activities_df, population_df = enforce_persona_schema(summary_df, ac
 
 
 # =============================================================================
-# Autofix for truncated code
+# 切换代码的自动修补
 # =============================================================================
 
 def _autofix_truncated_code(code: str) -> str:
@@ -460,13 +460,13 @@ def _autofix_truncated_code(code: str) -> str:
     """
     try:
         compile(code, '<string>', 'exec')
-        return code  # Already valid
+        return code  # 已经有效
     except SyntaxError as e:
         error_msg = str(e)
         
-        # Fix 1: Unclosed delimiters
+        # 固定 1:未关闭的分隔器
         if "was never closed" in error_msg:
-            # Count unmatched openers
+            # 计算未匹配的打开器
             stack = []
             match_map = {'(': ')', '[': ']', '{': '}'}
             in_string = False
@@ -478,7 +478,7 @@ def _autofix_truncated_code(code: str) -> str:
                         in_string = False
                     continue
                 if ch in ('"', "'"):
-                    # Check for triple quotes
+                    # 检查三重引号
                     if code[i:i+3] in ('"""', "'''"):
                         string_char = code[i:i+3]
                         in_string = True
@@ -499,11 +499,11 @@ def _autofix_truncated_code(code: str) -> str:
                 except SyntaxError:
                     pass
         
-        # Fix 2: Empty compound block (truncated at if:/else:/try:/except:)
+        # Fix 2:空复合块(如果：/else:/try:/except:)
         if "expected an indented block" in error_msg:
             lines = code.split('\n')
             if hasattr(e, 'lineno') and e.lineno is not None:
-                insert_at = e.lineno  # 1-indexed, insert after this line
+                insert_at = e.lineno  # 1 - 已索引，在本行之后插入
                 if 0 < insert_at <= len(lines):
                     prev_line = lines[insert_at - 1]
                     indent = len(prev_line) - len(prev_line.lstrip()) + 4
@@ -515,11 +515,11 @@ def _autofix_truncated_code(code: str) -> str:
                     except SyntaxError:
                         pass
         
-        return code  # Couldn't fix
+        return code  # 无法修复
 
 
 # =============================================================================
-# Main sandbox class
+# 主沙盒类
 # =============================================================================
 
 class PythonSandbox:
@@ -550,7 +550,7 @@ class PythonSandbox:
         if self._initialized:
             return
             
-        # Execute preamble in namespace
+        # 执行命名空间中的序言
         exec(self.preamble, self._namespace)
         self._initialized = True
     
@@ -568,42 +568,42 @@ class PythonSandbox:
         orig_code = request.request
         _log_tool_call("tool_code (DataScience)", {"code": orig_code[:100] + "..." if len(orig_code) > 100 else orig_code})
         
-        # Autofix truncated code before processing
+        # 处理前自动修补切换代码
         orig_code = _autofix_truncated_code(orig_code)
         
         code = _remove_final_print(orig_code)
         code = _add_call_analysis_line(code)
         
-        # Wrap code for execution
+        # 用于执行的环绕代码
         wrapped_code = _wrap_code_for_execution(
             code,
             include_traceback_for_errors=request.include_traceback_for_errors,
         )
         
-        # Create a fresh namespace copy with the preamble variables
+        # 创建带有序言变量的新命名空间副本
         exec_namespace = dict(self._namespace)
         
-        # Capture stdout/stderr
+        # 抓取结晶/结晶
         stdout_capture = io.StringIO()
         stderr_capture = io.StringIO()
         
         try:
-            # Execute the wrapped code
+            # 执行包裹的代码
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
                 exec(wrapped_code, exec_namespace)
             
-            # Get result and captured output
+            # 获取结果和抓取输出
             result = exec_namespace.get('_result', None)
             stdout_from_code = exec_namespace.get('_stdout_capture', io.StringIO()).getvalue()
             stderr_from_code = exec_namespace.get('_stderr_capture', io.StringIO()).getvalue()
             
-            # Determine output
+            # 确定输出
             if result is not None:
                 output = str(result)
             else:
                 output = stdout_from_code
             
-            # Determine status
+            # 确定状态
             if stderr_from_code:
                 status = ExecutionStatus.ERROR
                 _log_tool_call("tool_code (DataScience)", {"code": "..."}, error=stderr_from_code[:200])
@@ -618,7 +618,7 @@ class PythonSandbox:
             )
             
         except Exception as e:
-            # Handle execution errors
+            # 处理执行错误
             error_msg = traceback.format_exc()
             _log_tool_call("tool_code (DataScience)", {"code": "..."}, error=str(e)[:200])
             execution_result = ExecutionResult(

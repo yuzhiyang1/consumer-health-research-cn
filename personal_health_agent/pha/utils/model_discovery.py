@@ -39,24 +39,24 @@ class ModelInfo:
 
 
 # =============================================================================
-# Known Models (fallback when API is unavailable)
+# 已知模型(当 API 无法使用时返回)
 # =============================================================================
 
-# Known models when dynamic discovery isn't available
-# Note: Original PHIA paper only tested with Gemini models.
-# PHIA baseline works best with Gemini due to OneTwo ReAct parser compatibility.
-# OpenAI support works well with PHA/Parallel baselines.
-# Last updated: January 2026
+# 动态发现时已知的模型
+# 注:原件PHIA纸仅用Gemini型号进行测试。
+# PHIA 基线由于OneTwoReAct 解析器兼容性，因此与Gemini合作最好。
+# OpenAI支持与PHA/PARALLEL基线合作良好。
+# 最后更新： 1月 2026
 
 KNOWN_GEMINI_MODELS = [
-    # Gemini 3.1 series — current default (May 2026)
+    # Gemini 3.1系列——当前默认(5月2026).
     ModelInfo(
         id="models/gemini-3.1-flash-lite-preview",
         name="Gemini 3.1 Flash Lite (Preview)",
         provider="gemini",
         description="Default Gemini model",
     ),
-    # Gemini 2.5 series — shutdown scheduled October 16, 2026
+    # Gemini 2.5系列——计划10月停产 16, 2026.
     ModelInfo(
         id="models/gemini-2.5-pro",
         name="Gemini 2.5 Pro",
@@ -71,8 +71,8 @@ KNOWN_GEMINI_MODELS = [
     ),
 ]
 
-# OpenAI models — curated chat-completion set
-# Note: "Pro" variants require Responses API (not Chat Completions) and are excluded.
+# OpenAI模型——全程聊天-完成集
+# 注："Pro"变体需要响应API(不是Chat补全),并被排除在外。
 KNOWN_OPENAI_MODELS = [
     ModelInfo(
         id="gpt-5-mini",
@@ -104,7 +104,7 @@ KNOWN_OPENAI_MODELS = [
     ),
 ]
 
-# Anthropic models — Sonnet 4.5 only for now
+# Anthropic模型——索内4.5目前仅限。
 KNOWN_ANTHROPIC_MODELS = [
     ModelInfo(
         id="claude-sonnet-4-5-20250929",
@@ -117,7 +117,7 @@ KNOWN_ANTHROPIC_MODELS = [
 
 
 # =============================================================================
-# Dynamic Model Discovery
+# 动态模型发现
 # =============================================================================
 
 def _annotate_availability(

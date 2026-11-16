@@ -12,7 +12,7 @@ import big_vision.configs.common as bvcc
 
 sensorlm_data_dir = PATH_TO_DATA_DIR
 
-TOKENS_CAPTION_BANK = {  # actual number of tokens 
+TOKENS_CAPTION_BANK = {  # 实际编号
     'low_level_caption': 512,
     'middle_level_caption': 512,
     'high_level_summary_caption': 256,
@@ -67,7 +67,7 @@ def get_config(arg=None):
   c.ckpt_steps = 500
   # c.keep_ckpt_steps = 20_000
 
-  # Model section
+  # 示范部分
   c.model_name = 'proj.image_text.two_towers'
   c.model = dict(
       image_model='vit', text_model='proj.image_text.text_transformer'
@@ -81,10 +81,10 @@ def get_config(arg=None):
   c.model.text = dict(variant='B', vocab_size=voc, scan=True)
   c.model.bias_init = -10.0
   c.model.temperature_init = 10.0
-  # Remember to update text_out_dim to match the image embedding size.
-  c.model.out_dim = (None, 768)  # (image_out_dim, text_out_dim)
+  # 记得更新text_out_dim,以匹配图像嵌入大小。
+  c.model.out_dim = (None, 768)  # ( image_out_dim , text_out_dim )
 
-  # FSDP strategy.
+  # FSDP 战略。
   if c.num_slices:
     c.mesh = [('slice', c.num_slices), ('data', -1)]
     c.sharding_strategy = [('.*', 'fsdp(axis="data")')]

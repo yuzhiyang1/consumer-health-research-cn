@@ -25,18 +25,18 @@ from .models import (
 )
 
 __all__ = [
-    # Configuration
+    # 配置
     "LLMConfig",
     "config",
     "get_config",
     "configure_global",
-    # Backends
+    # 后端
     "LLMBackend",
     "GeminiBackend",
     "OpenAIBackend",
     "AnthropicBackend",
     "get_llm_backend",
-    # Model discovery
+    # 模型发现
     "ModelInfo",
     "get_available_models",
     "get_model_options",

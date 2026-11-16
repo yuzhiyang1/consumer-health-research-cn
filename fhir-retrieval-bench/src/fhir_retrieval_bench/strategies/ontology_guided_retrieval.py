@@ -158,7 +158,7 @@ def _score_resource(
   score = 0
   text_lower = text.lower()
 
-  # 1. Type Boosting
+  # 1. 踢踏型
   type_map = {
       "MedicationRequest": [
           "medication",
@@ -188,7 +188,7 @@ def _score_resource(
   if any(k in base_tokens for k in keywords):
     score += 5
 
-  # 2. Text Matching
+  # 2. 文本匹配
   matches = 0
   for token in base_tokens:
     if token in text_lower:
@@ -200,7 +200,7 @@ def _score_resource(
       score += 4
       matches += 1
 
-  # 3. Recency Heuristic
+  # 3 . 静态热力主义
   if matches > 0 and not any(
       t in base_tokens for t in ["history", "first", "oldest", "previous"]
   ):
@@ -237,8 +237,8 @@ class OntologyGuidedRetrievalStrategy(base.RAGStrategy):
       raise ValueError("Failed to parse FHIR bundle with pydantic validation.")
     fhir_bundle = copy.deepcopy(fhir_bundle)
     base_tokens, expanded_tokens = _expand_query_terms(record.question)
-    scored_items = []  # (Date, Text, Score)
-    all_parsed_items = []  # (Date, Text, Score) - Backup for fallback
+    scored_items = []  # (日期，文本，分数)
+    all_parsed_items = []  # (日期、文本、分数) - 倒计时备份
 
     entries = fhir_bundle.get("entry", [])
 
@@ -279,8 +279,8 @@ class OntologyGuidedRetrievalStrategy(base.RAGStrategy):
             or res.get("code", {}).get("coding", [{}])[0].get("display")
             or "Unknown Condition"
         )
-        # For fhiragentbench, clinicalStatus might be missing, don't default to
-        # active to prevent context bloat
+        # 对于fhiragentbench, clinicalStatus 可能缺失，不要默认为
+        # 积极防止上下文 bloat
         status_default = (
             "unknown" if self.dataset_name == "fhiragentbench" else "active"
         )
@@ -348,8 +348,8 @@ class OntologyGuidedRetrievalStrategy(base.RAGStrategy):
         date_str = res.get("authoredOn") or res.get("effectiveDateTime")
         date_obj = fhir_utils.parse_fhir_date(date_str)
 
-        # Additional specific parsing for medagentbench (which might include
-        # dosageInstruction)
+        # 用于甲胺碱的其他具体分析(其中可包括：
+        # dosageInstruction )
         dosage = ""
         if r_type == "MedicationRequest" and res.get("dosageInstruction"):
           timing = (
@@ -402,7 +402,7 @@ class OntologyGuidedRetrievalStrategy(base.RAGStrategy):
         if not val_str:
           continue
 
-        # Interpretation Flags
+        # 口译旗
         interp = (
             res.get("interpretation", [{}])[0]
             .get("coding", [{}])[0]
@@ -582,7 +582,7 @@ class OntologyGuidedRetrievalStrategy(base.RAGStrategy):
         )
 
       elif r_type == "Patient":
-        # Always include Patient demographics
+        # 总是包括病人人口统计
         names = res.get("name", [])
         name_str = "Unknown"
         if names:
@@ -603,7 +603,7 @@ class OntologyGuidedRetrievalStrategy(base.RAGStrategy):
       else:
         continue
 
-      # Score item if not mandatory
+      # 非强制性的记分项目
       if not is_mandatory:
         score = _score_resource(
             text, r_type, date_obj, base_tokens, expanded_tokens
@@ -613,12 +613,12 @@ class OntologyGuidedRetrievalStrategy(base.RAGStrategy):
       if score > 0:
         scored_items.append((date_obj, text, score))
 
-    # Fallback if no match
+    # 如果没有匹配，则倒置
     if not scored_items:
       if all_parsed_items:
         all_parsed_items.sort(key=lambda x: x[0], reverse=True)
         return "\n".join(x[1] for x in all_parsed_items[:50])
 
-    # Sort by date (Newest First)
+    # 按日期排序( 最新第一)
     scored_items.sort(key=lambda x: x[0], reverse=True)
     return "\n".join(x[1] for x in scored_items)

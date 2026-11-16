@@ -7,10 +7,10 @@ the active LLM provider, API keys, and model settings globally.
 import os
 from typing import Optional, Dict, Any, Literal
 
-# Provider types
+# 提供者类型
 ProviderType = Literal["gemini", "openai", "anthropic"]
 
-# Default models
+# 默认模式
 DEFAULT_MODELS = {
     "gemini": "models/gemini-3.1-flash-lite-preview",
     "openai": "gpt-4o",
@@ -39,17 +39,17 @@ class LLMConfig:
         self._temperature: float = 0.0
         self._initialized = True
         
-        # Load defaults from environment variables
+        # 从环境变量装入默认值
         self._load_from_env()
 
     def _load_from_env(self):
         """Load configuration from environment variables."""
-        # Check for provider override
+        # 检查提供者覆盖
         env_provider = os.environ.get("PHA_LLM_PROVIDER")
         if env_provider and env_provider.lower() in ["gemini", "openai", "anthropic"]:
             self._provider = env_provider.lower()
             
-        # Try to find API key for the current provider
+        # 尝试为当前提供者找到 API 密钥
         self._api_key = self._get_env_api_key(self._provider)
 
     def _get_env_api_key(self, provider: str) -> Optional[str]:
@@ -81,7 +81,7 @@ class LLMConfig:
             if provider not in ["gemini", "openai", "anthropic"]:
                 raise ValueError(f"Unknown provider: {provider}")
             
-            # If switching providers, we should re-fetch API key from env unless provided
+            # 如果切换提供者，我们应该重新绘制 API 密钥从env 调用，除非提供
             if provider != self._provider and not api_key:
                 api_key = self._get_env_api_key(provider)
             
@@ -113,7 +113,7 @@ class LLMConfig:
         return self._temperature
 
 
-# Global instance
+# 全球实例
 config = LLMConfig()
 
 

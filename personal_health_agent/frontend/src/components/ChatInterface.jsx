@@ -20,7 +20,7 @@ const TAG_LABELS = {
 function ThinkingIndicator({ steps, isActive, elapsed }) {
   const [expanded, setExpanded] = useState(false)
 
-  // For live display, skip LLM "Calling..." steps — show only what's happening
+  // 对于现场展示，跳过LLM"呼叫..."步骤——只显示正在发生的事情。
   const displaySteps = steps.filter(s => !s.message.startsWith('Calling '))
   const lastDisplayStep = displaySteps[displaySteps.length - 1]
 
@@ -33,7 +33,7 @@ function ThinkingIndicator({ steps, isActive, elapsed }) {
     )
   }
 
-  // Nothing displayable yet (only LLM calls so far)
+  // 还没有可以显示(目前仅LLM 呼叫)
   if (!lastDisplayStep && isActive) {
     return (
       <div className="thinking-indicator active">
@@ -49,7 +49,7 @@ function ThinkingIndicator({ steps, isActive, elapsed }) {
 
   return (
     <div className={`thinking-indicator ${isActive ? 'active' : 'done'}`}>
-      {/* Main row — clickable to expand when done */}
+      {/* 主行——完成后可点击扩展 */}
       <button className="thinking-row" onClick={() => !isActive && setExpanded(!expanded)}>
         {isActive ? (
           <>
@@ -73,7 +73,7 @@ function ThinkingIndicator({ steps, isActive, elapsed }) {
         )}
       </button>
 
-      {/* Expanded steps list — shows ALL steps including LLM calls */}
+      {/* 扩展步骤列表——显示ALL步骤，包括LLM调用 */}
       {expanded && !isActive && steps.length > 1 && (
         <div className="thinking-expanded">
           {steps.map((step, i) => {
@@ -102,16 +102,16 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
   const [elapsed, setElapsed] = useState(0)
   const messagesEndRef = useRef(null)
 
-  // Function to format timestamp for display in conversation log
+  // 用于格式化对话日志中显示的时间戳的函数
   const formatTimestampForLog = (timestamp) => {
     if (!timestamp) return ''
     const date = new Date(timestamp)
     return date.toLocaleString()
   }
 
-  // Function to save conversation log as txt file
+  // 将对话日志保存为txt文件的函数
   const saveConversationLog = async () => {
-    // Format the conversation log
+    // 格式化对话日志
     let logContent = ''
     messages.forEach(msg => {
       const role = msg.role === 'user' ? '**User**' : '**Agent**'
@@ -119,7 +119,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
       logContent += `${role} [${timestamp}]: ${msg.content}\n\n`
     })
 
-    // Create filename: [user id]-[agent name]-[hh-mm]-[MM-DD-YYYY].txt
+    // 创建文件名：[用户 id] - [代理名称] - [hh-mm] - [MM-DD-YYYY].txt
     const now = new Date()
     const hours = String(now.getHours()).padStart(2, '0')
     const minutes = String(now.getMinutes()).padStart(2, '0')
@@ -131,10 +131,10 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
     const agentName = session.config.baseline
     const filename = `${userId}-${agentName}-${hours}-${minutes}-${seconds}-${month}-${day}-${year}.txt`
 
-    // (raw_conversation.log + summary.json) handles all persistence.
+    // (raw_conversation.log + summary.json) 处理所有的持久性。
   }
 
-  // Handle end session - save log then call parent callback
+  // 处理结束会话 - 保存日志然后调用父调用
   const handleEndSession = async () => {
     await saveConversationLog()
     onEndSession()
@@ -182,7 +182,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
     }
   }, [apiBase, session.session_id, userStudyMode])
 
-  // Elapsed timer
+  // 倾斜计时器
   useEffect(() => {
     if (loading) {
       setElapsed(0)
@@ -196,7 +196,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
   }, [loading])
 
   const getWelcomeMessage = () => {
-    // Use anonymous names (Agent A/B/C) in user study mode
+    // 在用户学习模式下使用匿名姓名( A/B/C 代理)
     const baselineNames = userStudyMode
       ? {
           pha: 'Agent A',
@@ -340,7 +340,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
           {msg.role === 'user' ? '👤' : '🤖'}
         </div>
         <div className="message-content">
-          {/* Completed thinking summary */}
+          {/* 已完成的思考摘要 */}
           {msg.thinkingSteps && msg.thinkingSteps.length > 0 && (
             <ThinkingIndicator
               steps={msg.thinkingSteps}
@@ -411,7 +411,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
       <div className="chat-messages">
         {messages.map((msg, i) => renderMessage(msg, i))}
 
-        {/* Live thinking indicator while streaming */}
+        {/* 流线时的实时思维指示器 */}
         {isStreaming && (
           <div className="message assistant">
             <div className="message-avatar">🤖</div>
@@ -425,7 +425,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
           </div>
         )}
 
-        {/* Fallback dots if loading but stream hasn't started */}
+        {/* 如果装入后退点，溪流尚未开始 */}
         {loading && !isStreaming && thinkingSteps.length === 0 && (
           <div className="message assistant loading">
             <div className="message-avatar">🤖</div>

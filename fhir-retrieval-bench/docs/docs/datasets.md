@@ -1,10 +1,8 @@
-# Dataset setup
+# 数据集配置
 
+## 概览
 
-## Overview
-
-This document contains the detailed dataset layout reference for FHIR
-Retrieval Bench. Each dataset fragment under `config/dataset/` points at a local dataset root:
+每个数据集的配置文件位于 `config/dataset/`，指定本地问答数据和 FHIR 数据的路径。
 
 ```yaml
 dataset:
@@ -13,120 +11,71 @@ dataset:
   fhir_path: /path/to/fhiragentbench/fhir_path
 ```
 
-After editing a fragment, validate it by running the `check_dataset` script
-(see "Sanity check" below).
+编辑后可运行 `scripts/check_dataset.py`，检查能否正确加载。
 
-## Preprocessing code
+## 预处理代码
 
-The preprocessing notebook is available: `notebooks/preprocess_data.ipynb`
+[预处理 Notebook](../../notebooks/preprocess_data.ipynb)可以验证 FHIR JSON Schema，并检查每条问答是否都有对应的 FHIR Bundle。新增数据集时建议运行它。
 
-It includes code for performing sanity checks (e.g., validating FHIR JSON schema, ensuring the FHIR bundle covers all the QA pairs). Whenever you add a dataset, it is recommended to run the notebook to check for any potential issues.
+各数据集的问答条数如下。
 
-We obtained the following number of QA pairs for each dataset: 
+| 数据集 | 问答条数 |
+| --- | ---: |
+| EHRQA | 5,133 |
+| FHRAgentBench | 2,931 |
+| MedAgentBench | 148 |
+| FHIRPath-QA | 2,095 |
 
-* EHRQA: 5,133
-* FHRAgentBench: 2,931
-* MedAgentBench: 148
-* FHIRPath-QA: 2,095
-
-The preprocessed the FHIR Parquet files have the following columns:
-
-- `Patient ID`
-- `FHIR Bundle`
-
-In case you add a new dataset, you can verify the formatting of the FHIR bundle, using `verify_with_pydantic` function implemented in `src/fhir_retrieval_bench/data/fhir_utils.py`
+预处理后的 FHIR Parquet 文件包含 `Patient ID` 和 `FHIR Bundle` 两列。新增数据集时，可用 `src/fhir_retrieval_bench/data/fhir_utils.py` 中的 `verify_with_pydantic` 验证 Bundle 的格式。
 
 ## `fhiragentbench`
 
-[https://arxiv.org/abs/2509.19319](https://arxiv.org/abs/2509.19319)
+[论文](https://arxiv.org/abs/2509.19319)
 
-### Expected fields
-
-The QA CSV should use the following columns:
-
-- `patient_fhir_id`
-- `question`
-- `true_answer`
+问答 CSV 需包含 `patient_fhir_id`、`question` 和 `true_answer`。
 
 ## `ehrqa`
 
-### Expected fields
+加载器使用 `patient_id`、`question`、`correct_answer` 和 `answer_choices`。
 
-The QA dicts should provide the fields the loader uses:
+## `medagentbench`
 
-- `patient_id`
-- `question`
-- `correct_answer`
-- `answer_choices`
+[论文](https://ai.nejm.org/doi/full/10.1056/AIdbp2500144)
 
-## `medagentbench` 
-
-[https://ai.nejm.org/doi/full/10.1056/AIdbp2500144](https://ai.nejm.org/doi/full/10.1056/AIdbp2500144)
-
-### Expected fields
-
-The QA dataframe should include the following columns:
-
-- `eval_MRN`
-- `instruction`
-- `sol`
+问答 DataFrame 需包含 `eval_MRN`、`instruction` 和 `sol`。
 
 ## `fhirpathqa`
 
-[https://arxiv.org/abs/2602.23479](https://arxiv.org/abs/2602.23479)
+[论文](https://arxiv.org/abs/2602.23479)
 
-The QA pickle is the staged FHIRPath-QA Benchmark (2,095 records) produced
-by `scripts/fhirpathqa/convert_to_pickle`. The FHIR bundle parquet is built
-by `scripts/fhirpathqa/build_bundles_parquet` from per-patient
-`$everything` exports against MIMIC-IV on FHIR Demo loaded into HAPI
-(see the upstream `setup/` pipeline at
-https://github.com/mooshifrew/fhirpath-qa).
+`scripts/fhirpathqa/convert_to_pickle` 将 FHIRPath-QA 基准的 2,095 条记录转换为 pickle。项目将 MIMIC-IV on FHIR Demo 装入 HAPI，按患者进行 `$everything` 导出，再由 `scripts/fhirpathqa/build_bundles_parquet` 将 Bundle 写入 Parquet。部署方法见[上游仓库](https://github.com/mooshifrew/fhirpath-qa)的 `setup/`。
 
-### Expected fields
+### 问答字段
 
-The QA pickle is a list of dicts with the following keys:
+| 字段 | 说明 |
+| --- | --- |
+| `patient_id` | MIMIC 数字标识符，用于查询 Parquet 中对应的 Bundle。 |
+| `question` | 问题。 |
+| `answer` | 序列化为 JSON 的列表，加载器将其转为字符串。 |
+| `now` | 当前日期时间的基准值，会注入 `question_context`。 |
 
-- `patient_id`            (MIMIC numeric ID, used as the key into the bundle parquet)
-- `question`
-- `answer`                (JSON-stringified list; the loader unwraps to a string)
-- `now`                   (current-datetime anchor; injected into `question_context`)
+`source_meta` 原样保存以下可选字段。\
+`query`、`perspective`、`split`、`question_template_id`、`question_template`、`patient_id_hash`、`s_placeholders`、`op_placeholders`、`t_placeholders`、`id`、`index`、`holdout`。
 
-Optional metadata kept verbatim in `source_meta`:
+### 问题措辞
 
-- `query`, `perspective`, `split`, `question_template_id`,
-  `question_template`, `patient_id_hash`, `s_placeholders`,
-  `op_placeholders`, `t_placeholders`, `id`, `index`, `holdout`
+`clinical` 使用医学术语，共 1,239 条。 `patient` 使用日常语言，共 856 条。加载器会读入两种措辞，可按 `source_meta["perspective"]` 分开分析。
 
-### Perspectives
+### 数据划分
 
-Each question template is rendered in two phrasings:
+上游对不同改写版本分层，将数据划分为 `train`（1,629 条）、`val`（193 条）和 `test`（273 条），用于监督微调实验。本基准加载全部划分。如果要与仅使用测试集的上游论文对比，可用 `source_meta["split"] == "test"` 进行筛选。
 
-- `clinical` (1,239 records) — formal medical terminology
-- `patient` (856 records) — conversational layperson language
+### 患者过滤
 
-Both perspectives are loaded together; slice on `source_meta["perspective"]`
-to analyse them separately.
+MIMIC-IV on FHIR Demo v2.1.0 的导出覆盖了问答中 100 名患者中的 96 名。缺少 Bundle 的四名患者（`10002430`、`10004113`、`10010058` 和 `10012438`）对应 70 条记录。预处理命令 `scripts/fhirpathqa/convert_to_pickle --fhir_path=...` 会去除这些记录，确保生成的 pickle 仅含可在 Parquet 中找到对应 Bundle 的问答。
 
-### Splits
+## 相关文件
 
-The upstream stratifies records across paraphrases as
-`train` (1,629), `val` (193), `test` (273) for SFT experiments. The bench
-loads all splits — there is no fine-tuning here, so the partition is
-informational only. Filter on `source_meta["split"] == "test"` if you want
-to compare numbers against the upstream paper, which evaluates on the
-test split alone.
-
-### Patient filtering
-
-Our MIMIC-IV on FHIR Demo v2.1.0 export covers 96 of the 100 patients
-referenced by the QA records. The four missing patients
-(`10002430`, `10004113`, `10010058`, `10012438`) account for 70 records;
-these are dropped at preprocessing time by
-`scripts/fhirpathqa/convert_to_pickle --fhir_path=...`, so the staged
-pickle contains only records whose patient has a bundle in the parquet.
-
-## Related Files
-
-- Dataset fragments: `config/dataset/*.yaml`
-- Loader implementation: `src/fhir_retrieval_bench/data/loader.py`
-- Smoke test script: `scripts/check_dataset.py`
+- 数据集配置 `config/dataset/*.yaml`
+- 加载器 `src/fhir_retrieval_bench/data/loader.py`
+- 数据集检查脚本 `scripts/check_dataset.py`

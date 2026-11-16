@@ -37,10 +37,10 @@ import pandas as pd
 
 
 # =============================================================================
-# Configuration
+# 配置
 # =============================================================================
 
-# Default data directory (relative to project root)
+# 默认数据目录( 相对于项目根)
 DEFAULT_DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
 
@@ -52,13 +52,13 @@ class PersonaInfo:
     description: str = ""
     data_dir: Optional[Path] = None
     
-    # Profile demographics (loaded from profile.csv)
+    # 人口概况(载自profile.csv).
     age: Optional[int] = None
     gender: Optional[str] = None
     height: Optional[float] = None
     weight: Optional[float] = None
     
-    # Data summary
+    # 数据摘要
     days_of_data: Optional[int] = None
     num_activities: Optional[int] = None
 
@@ -75,13 +75,13 @@ def _load_persona_metadata(persona_dir: Path) -> PersonaInfo:
     persona_id = persona_dir.name
     display_name = persona_id.replace('_', ' ').replace('-', ' ').title()
     
-    # Load description if available
+    # 可用时装入描述
     description = ""
     desc_file = persona_dir / "description.txt"
     if desc_file.exists():
         description = desc_file.read_text().strip()
     
-    # Create base info
+    # 创建基础信息
     info = PersonaInfo(
         id=persona_id,
         name=display_name,
@@ -89,7 +89,7 @@ def _load_persona_metadata(persona_dir: Path) -> PersonaInfo:
         data_dir=persona_dir,
     )
     
-    # Try to load profile demographics
+    # 尝试装入剖面人口统计
     profile_path = persona_dir / "profile.csv"
     if profile_path.exists():
         try:
@@ -101,9 +101,9 @@ def _load_persona_metadata(persona_dir: Path) -> PersonaInfo:
                 info.height = float(row.get('height', row.get('Height', None))) if 'height' in row or 'Height' in row else None
                 info.weight = float(row.get('weight', row.get('Weight', None))) if 'weight' in row or 'Weight' in row else None
         except Exception:
-            pass  # Metadata is optional
+            pass  # 元数据是可选的
     
-    # Try to get data summary
+    # 尝试获取数据摘要
     summary_path = persona_dir / "summary.csv"
     if summary_path.exists():
         try:
@@ -124,7 +124,7 @@ def _load_persona_metadata(persona_dir: Path) -> PersonaInfo:
 
 
 # =============================================================================
-# Persona Discovery
+# 发现者
 # =============================================================================
 
 def discover_personas(data_dir: Optional[Path] = None) -> List[PersonaInfo]:
@@ -155,11 +155,11 @@ def discover_personas(data_dir: Optional[Path] = None) -> List[PersonaInfo]:
         if not subdir.is_dir():
             continue
         
-        # Skip hidden and cache directories
+        # 跳过隐藏和缓存目录
         if subdir.name.startswith('.') or subdir.name == '__pycache__':
             continue
         
-        # Check for required files
+        # 检查所需文件
         has_required = all((subdir / f).exists() for f in required_files)
         
         if has_required:
@@ -221,7 +221,7 @@ def get_default_persona() -> str:
 
 
 # =============================================================================
-# Persona Loading
+# 正在装入
 # =============================================================================
 
 def load_persona_data(
@@ -259,11 +259,11 @@ def load_persona_data(
             f"Available personas: {available}"
         )
     
-    # Find population percentiles file
-    # First check in persona dir, then look for shared one
+    # 查找人口百分数文件
+    # 先在个人目录中检查，然后寻找共享的目录
     population_path = persona_dir / "population_percentiles.csv"
     if not population_path.exists():
-        # Look for shared population file in other persona dirs
+        # 寻找其他人的共享人口文件a dirs
         for other_dir in data_dir.iterdir():
             if other_dir.is_dir():
                 other_pop = other_dir / "population_percentiles.csv"
@@ -296,7 +296,7 @@ def validate_persona_directory(persona_dir: Path) -> Tuple[bool, List[str]]:
 
 
 # =============================================================================
-# Persona Creation Helpers
+# 创建者
 # =============================================================================
 
 def create_persona_template(
@@ -329,10 +329,10 @@ def create_persona_template(
     if persona_dir.exists():
         raise ValueError(f"Persona '{persona_id}' already exists at {persona_dir}")
     
-    # Create directory
+    # 创建目录
     persona_dir.mkdir(parents=True)
     
-    # Create summary.csv template
+    # 创建 summary.csv 模板
     summary_columns = [
         "datetime", "resting_heart_rate", "heart_rate_variability",
         "steps", "active_zone_minutes", "sleep_minutes", 
@@ -343,7 +343,7 @@ def create_persona_template(
         persona_dir / "summary.csv", index=False
     )
     
-    # Create activities.csv template
+    # 创建 activities.csv 模板
     activities_columns = [
         "start_time", "end_time", "activity_name", "activityName",
         "duration", "calories", "average_heart_rate", "steps", "distance"
@@ -352,7 +352,7 @@ def create_persona_template(
         persona_dir / "activities.csv", index=False
     )
     
-    # Create profile.csv template
+    # 创建 profile.csv 模板
     profile_data = {
         "age": [30],
         "sex": ["unknown"],
@@ -364,7 +364,7 @@ def create_persona_template(
         persona_dir / "profile.csv", index=False
     )
     
-    # Create description.txt
+    # 创建 description.txt
     if description:
         (persona_dir / "description.txt").write_text(description)
     else:
@@ -411,7 +411,7 @@ def copy_persona(
     
     shutil.copytree(source_dir, new_dir)
     
-    # Update description
+    # 更新说明
     desc_file = new_dir / "description.txt"
     desc_file.write_text(f"Copy of {source_id} persona.\nEdit this description.")
     
