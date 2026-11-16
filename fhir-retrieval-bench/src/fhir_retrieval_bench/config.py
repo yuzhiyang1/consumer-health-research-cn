@@ -160,7 +160,7 @@ def _deep_merge(
   for key, value in override.items():
     key_path = f"{path}.{key}" if path else key
     if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-      # Recurse; nested keys are combined.
+      # Recurse; 嵌入式密钥组合在一起。
       _deep_merge(base[key], value, path=key_path)
       continue
     if key in base and (isinstance(base[key], list) or isinstance(value, list)):

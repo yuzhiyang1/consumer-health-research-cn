@@ -9,7 +9,7 @@ import jinja2
 
 
 # =============================================================================
-# Prompt rendering utility
+# 快速渲染工具
 # =============================================================================
 
 def render_prompt(template: str, **kwargs) -> str:
@@ -23,7 +23,7 @@ def render_prompt(template: str, **kwargs) -> str:
 
 
 # =============================================================================
-# Rubric for approach evaluation
+# 方法评价的Rubric
 # =============================================================================
 
 RUBRIC_QUESTIONS: Dict[str, Dict[str, str]] = {
@@ -218,7 +218,7 @@ RUBRIC_QUESTIONS_STR: Final[str] = _serialize_rubric_questions()
 
 
 # =============================================================================
-# Few-shot examples (from few_shots/approach.py)
+# 少样本示例(来自few_shots/approach.py).
 # =============================================================================
 
 APPROACH_EXEMPLARS: List[Dict[str, str]] = [
@@ -264,7 +264,7 @@ APPROACH_EXEMPLARS: List[Dict[str, str]] = [
 
 
 # =============================================================================
-# APPROACH PROMPTS (from approach_preamble.py)
+# APPROACH PROMPTS(来自approach_preamble.py).
 # =============================================================================
 
 APPROACH_PREAMBLE_BASELINE: Final[str] = """\
@@ -346,7 +346,7 @@ Begin!
 # CODEGEN PROMPTS
 # =============================================================================
 
-# DataFrame schemas embedded in prompt
+# DataFrame 嵌入在即时的图案
 DATAFRAME_SCHEMAS: Final[str] = """
 # summary_df: Summary DataFrame
 This is a summary of the user's activity, sleep, and personal health records data. Each row in the summary dataframe represents a single day.
@@ -410,7 +410,7 @@ The dataframe has the following columns:
 - stress_management_score: Stress management score for the percentile (float64).
 """
 
-# V2 codegen prompt
+# V2 代码提示
 CODEGEN_PREAMBLE_V2: Final[str] = """
 # Role and Goal
 You are an expert Python data scientist specializing in analyzing Fitbit health and fitness time series data using the pandas library. Your goal is to write the **functional body** of a Python script that performs a specific analysis task.
@@ -458,7 +458,7 @@ def analysis(summary_df: pd.DataFrame | None = None,
     population_df: pd.DataFrame | None = None,) -> Dict[str, Any]:
 """
 
-# V1 codegen prompt (not used by default)
+# V1 代码提示( 默认情况下没有使用)
 CODEGEN_PREAMBLE: Final[str] = """\
 {#- Preamble: Instructions for generating the code given the user's query and approach -#}
 You are an expert python data programmer skilled in working with Fitbit time series health data and writing code given a specific analysis approach.
@@ -636,7 +636,7 @@ Fixed Python code:
 
 
 # =============================================================================
-# INTERPRETATION PROMPT (from interpretation_preamble.py)
+# INTERPRETATION PROMPT(来自interpretation_preamble.py).
 # =============================================================================
 
 INTERPRETATION_PREAMBLE: Final[str] = """\
@@ -674,7 +674,7 @@ Response:
 
 
 # =============================================================================
-# Prompt generation functions (simplified from build_prompt.py)
+# 即时生成函数(简化自build_prompt.py)
 # =============================================================================
 
 def generate_approach_prompt_baseline(

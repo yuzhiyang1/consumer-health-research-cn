@@ -14,7 +14,7 @@ from pha.llm.config import get_config, DEFAULT_MODELS, ProviderType
 
 
 # =============================================================================
-# Backend Interface
+# 后端接口
 # =============================================================================
 
 class LLMBackend(ABC):
@@ -37,7 +37,7 @@ class LLMBackend(ABC):
 
 
 # =============================================================================
-# Gemini Backend
+# Gemini 后端
 # =============================================================================
 
 class GeminiBackend(LLMBackend):
@@ -59,11 +59,11 @@ class GeminiBackend(LLMBackend):
                 "pip install google-genai"
             )
         
-        # Use config if not explicitly provided
+        # 如果没有明确规定则使用配置
         config = get_config()
         self.api_key = api_key or config.api_key
         
-        # Only check config if provider matches, otherwise fallback to env
+        # 仅在提供者匹配时检查配置，否则会掉回内嵌
         if not self.api_key and config.provider == "gemini":
              self.api_key = config.api_key
         
@@ -103,12 +103,12 @@ class GeminiBackend(LLMBackend):
             return result
         except Exception as e:
             print(f"[LLM:Gemini] *** ERROR: {e}")
-            # Wrap error for consistent handling
+            # 连续处理的环绕错误
             raise RuntimeError(f"Gemini API error: {e}")
 
 
 # =============================================================================
-# OpenAI Backend
+# OpenAI 后端
 # =============================================================================
 
 class OpenAIBackend(LLMBackend):
@@ -132,7 +132,7 @@ class OpenAIBackend(LLMBackend):
         config = get_config()
         self.api_key = api_key or config.api_key
         
-        # fallback to env
+        # 返回到掩体
         if not self.api_key:
             self.api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -147,8 +147,8 @@ class OpenAIBackend(LLMBackend):
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-        # Reasoning / GPT-5 models require `max_completion_tokens` and reject
-        # any non-default temperature (only 1 is supported).
+        # 原因/GPT-5模型需要`max_completion_tokens`并拒绝
+        # 任何非默认温度(仅支持1).
         self._is_reasoning_model = (
             self.model_name.startswith("o1")
             or self.model_name.startswith("o3")
@@ -165,12 +165,12 @@ class OpenAIBackend(LLMBackend):
         try:
             from pha.streaming import emit_step
             emit_step("LLM", f"Calling {self.model_name}...", detail=f"prompt={len(prompt)} chars")
-            # Reasoning models (o1/o3/o4/gpt-5) get the temperature kwarg
-            # omitted entirely — show that in the log to avoid the misleading
-            # impression that we're sending a value the model rejects.
+            # 合理模型(o1/o3/o4/gpt-5)得到温度夸克
+            # 完全省略——在日志中显示以避免误导
+            # 给人一种印象，我们发送了一个价值该模型拒绝。
             shown_temp = "default" if self._is_reasoning_model else self.temperature
             print(f"[LLM:OpenAI] Calling model={self.model_name}, prompt_len={len(prompt)}, temp={shown_temp}")
-            # Basic message structure
+            # 基本消息结构
             messages = [{"role": "user", "content": prompt}]
             
             kwargs = {
@@ -178,12 +178,12 @@ class OpenAIBackend(LLMBackend):
                 "messages": messages,
             }
 
-            # Reasoning models reject non-default temperature; omit the kwarg
-            # so the API uses its default (1).
+            # 理由模型拒绝非默认温度； 省略 kwarg
+            # 因此API使用它的默认(1).
             if not self._is_reasoning_model:
                 kwargs["temperature"] = self.temperature
 
-            # Handle token limit parameter
+            # 处理令牌限制参数
             if self.use_max_completion_tokens:
                 kwargs["max_completion_tokens"] = self.max_tokens
             else:
@@ -199,7 +199,7 @@ class OpenAIBackend(LLMBackend):
 
 
 # =============================================================================
-# Anthropic Backend
+# Anthropic 后端
 # =============================================================================
 
 class AnthropicBackend(LLMBackend):
@@ -223,7 +223,7 @@ class AnthropicBackend(LLMBackend):
         config = get_config()
         self.api_key = api_key or config.api_key
         
-        # fallback to env
+        # 返回到掩体
         if not self.api_key:
             self.api_key = os.environ.get("ANTHROPIC_API_KEY")
             
@@ -262,7 +262,7 @@ class AnthropicBackend(LLMBackend):
 
 
 # =============================================================================
-# Factory Function
+# 工厂函数
 # =============================================================================
 
 def get_llm_backend(
@@ -279,17 +279,17 @@ def get_llm_backend(
     """
     config = get_config()
     
-    # Use config if not overridden
+    # 如果未覆盖则使用配置
     backend_type = backend_type or config.provider
     backend_type = backend_type.lower()
     
-    # Model name resolution: Argument > Config if provider matches > Default
+    # 模型名称分辨率:如果提供者匹配> 默认，参数> 配置
     curr_model_name = model_name
     if not curr_model_name and backend_type == config.provider:
         curr_model_name = config.model_name
     
-    # API Key resolution is handled by the backend classes mostly, 
-    # but we can pass it if explicitly provided here.
+    # API 密钥解析器主要由后端类处理，
+    # 但是，如果在这里有明确规定，我们可以通过它。
     
     if backend_type == "gemini":
         return GeminiBackend(

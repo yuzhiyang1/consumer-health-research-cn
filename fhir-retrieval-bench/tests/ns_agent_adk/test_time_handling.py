@@ -28,8 +28,8 @@ class TestFHIRTimeExtraction(unittest.TestCase):
         ct.start_time,
         datetime.datetime(2023, 1, 1, 10, 0, 0, tzinfo=datetime.timezone.utc),
     )
-    # period.start populates range.start; period.end is not extracted, so
-    # range.end is None and end_time falls back to start_time.
+    # probulates.start; production.end 是不提取的，所以
+    # 范围.end is None and end_time 返回 start_time.
     self.assertIsNone(ct.range.end)
     self.assertEqual(ct.end_time, ct.start_time)
 
@@ -51,7 +51,7 @@ class TestFHIRTimeExtraction(unittest.TestCase):
         ct.start_time,
         datetime.datetime(2022, 11, 1, 0, 0, 0, tzinfo=datetime.timezone.utc),
     )
-    # End of month
+    # 月底
     expected_end = datetime.datetime(
         2022, 11, 30, 23, 59, 59, 999999, tzinfo=datetime.timezone.utc
     )
@@ -84,7 +84,7 @@ class TestGraphConstruction(unittest.TestCase):
     graph.build_from_bundle(bundle)
 
     self.assertEqual(len(graph.spine), 1)
-    # The Observation should be in the Encounter's nodes
+    # 观测结果应该在交点上
     self.assertEqual(len(graph.spine[0].nodes), 1)
     self.assertEqual(graph.spine[0].nodes[0].id, 'obs1')
 
@@ -94,14 +94,14 @@ class TestAnchorTime(unittest.TestCase):
   def setUp(self):
     self.graph = graph_module.ChronologicalHypergraph()
     self.config = config_module.Config()
-    # Mock embedder
+    # 嵌入器
     self.embedder_mock = mock.MagicMock()
     self.embedder_mock.embed.return_value = [[0.1, 0.2]]
     self.embedder_mock.similarity.return_value = 0.9
     self.config.get_embedder = mock.MagicMock(return_value=self.embedder_mock)
     self.config.get_llm_model = mock.MagicMock(return_value="test_model")
 
-    # Add some nodes
+    # 添加一些节点
     node1 = graph_module.FHIRNode(
         id='obs1',
         resource_type='Observation',
@@ -109,19 +109,19 @@ class TestAnchorTime(unittest.TestCase):
         data={'code': {'text': 'Test Obs'}},
     )
     self.graph._node_map['obs1'] = node1
-    # Mock get_all_nodes to return this node
+    # 返回此节点的模 get_all_nodes
     self.graph.get_all_nodes = mock.MagicMock(return_value=[node1])
 
   def test_linearizer_anchor_date_recency(self):
-    # Anchor date way in the future -> Node is old -> Low recency?
-    # Or Anchor date is close -> Node is recent -> High recency.
+    # 未来定点日期方式 -> 节点是旧的 -> 低复用度？
+    # 或 Anchor 日期接近 -> 节点是最近的 -> 高度复发性。
 
     anchor_date = datetime.date(2020, 1, 2)
     linearizer = linearizer_module.CausalSaliencyLinearizer(
         self.graph, self.config, anchor_date=anchor_date
     )
 
-    # Mock temporal parser to return 'recent' query type
+    # 移动时间解析器以返回“最近” 查询类型
     with mock.patch(
         'ns_agent_adk.core.linearizer.temporal_parser'
     ) as mock_tp:
@@ -129,9 +129,9 @@ class TestAnchorTime(unittest.TestCase):
       mock_tp.get_temporal_intent.return_value.anchor_event = None
 
       scores = linearizer.calculate_saliency('recent labs')
-      # delta is 1 day. Recency score should be high.
+      # 三角洲是1天，静态分数应该很高。
       # score = semantic + temporal_mask + anchor_mask + recency * weight + always_include
-      # Just check it runs without error and returns score
+      # 只要检查它运行时没有出错并返回分数
       self.assertIn('obs1', scores)
 
   def test_engine_pass_anchor_date(self):
@@ -142,7 +142,7 @@ class TestAnchorTime(unittest.TestCase):
       agent = engine_module.NeuroSymbolicAgent(
           self.config, self.graph, anchor_date=anchor_date
       )
-      # Check if preamble was loaded with 2025-01-01
+      # 检查前导是否装入 2025-01-01
       mock_preamble.assert_called_with(
           user_context=None,
           current_time=datetime.datetime(2025, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),

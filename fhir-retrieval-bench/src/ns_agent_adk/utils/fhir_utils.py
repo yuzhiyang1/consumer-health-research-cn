@@ -27,7 +27,7 @@ def strip_fhir_data(data, max_string_len=200):
       ]:
         continue
 
-      # Explicitly drop base64 encoded attachment data useless to the LLM
+      # 明确投放基础64 编码附件数据无用 LLM
       if k == "data" and isinstance(v, str) and len(v) > 100:
         continue
 

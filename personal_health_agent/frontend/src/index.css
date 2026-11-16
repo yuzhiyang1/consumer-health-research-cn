@@ -38,7 +38,7 @@ input, select, textarea {
   font-family: inherit;
 }
 
-/* Shared disclaimer banner (used on splash and chat) */
+/* 共享的免责标语(在喷洒和聊天时使用) */
 .pha-disclaimer {
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid rgba(245, 158, 11, 0.25);
@@ -58,7 +58,7 @@ input, select, textarea {
   margin-right: 0.25rem;
 }
 
-/* Scrollbar */
+/* 滚动栏 */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

@@ -19,7 +19,7 @@ def render_prompt(template: str, **kwargs) -> str:
 
 
 # =============================================================================
-# Main Domain Expert System Prompt
+# 主域专家系统提示
 # =============================================================================
 
 DOMAIN_EXPERT_SYSTEM_PROMPT: Final[str] = """\
@@ -100,7 +100,7 @@ List URLs from search results used in the analysis.
 
 
 # =============================================================================
-# Tool Descriptions
+# 工具描述
 # =============================================================================
 
 TOOL_DESCRIPTIONS: Dict[str, str] = {
@@ -123,7 +123,7 @@ Returns: Whether each value is within range and proximity to boundaries.""",
 
 
 # =============================================================================
-# Few-shot Examples for Domain Expert
+# 少样本示例 域专家
 # =============================================================================
 
 DOMAIN_EXPERT_EXAMPLES: List[Dict[str, str]] = [
@@ -175,7 +175,7 @@ Regular aerobic exercise can gradually lower RHR by 1-2 bpm per month of consist
 
 
 # =============================================================================
-# Query Prompt Template
+# 查询提示模板
 # =============================================================================
 
 DOMAIN_EXPERT_QUERY_PROMPT: Final[str] = """\
@@ -206,7 +206,7 @@ Provide a comprehensive, personalized response following the guidelines above.
 
 
 # =============================================================================
-# Reference Range Checking Logic
+# 引用范围检查逻辑
 # =============================================================================
 
 def check_reference_ranges(
@@ -234,7 +234,7 @@ def check_reference_ranges(
     results = []
     for value, interval_start, interval_end in values_and_intervals:
         if interval_start is None:
-            # One-sided interval (upper bound only)
+            # 单侧间隔( 仅绑上)
             delta_to_end = abs(value - interval_end)
             within_interval = value <= interval_end
             if delta_to_end <= threshold_factor * abs(interval_end) if interval_end != 0 else delta_to_end < threshold_factor:
@@ -244,7 +244,7 @@ def check_reference_ranges(
             else:
                 proximity = "Within interval"
         elif interval_end is None:
-            # One-sided interval (lower bound only)
+            # 单边间隔( 仅下方绑定)
             delta_to_start = abs(value - interval_start)
             within_interval = value >= interval_start
             if delta_to_start <= threshold_factor * abs(interval_start) if interval_start != 0 else delta_to_start < threshold_factor:
@@ -254,7 +254,7 @@ def check_reference_ranges(
             else:
                 proximity = "Within interval"
         else:
-            # Two-sided interval
+            # 双面间隔
             within_interval = interval_start <= value <= interval_end
             delta_to_start = abs(value - interval_start)
             delta_to_end = abs(value - interval_end)
@@ -277,7 +277,7 @@ def check_reference_ranges(
 
 
 # =============================================================================
-# Prompt Generation Functions
+# 快速生成函数
 # =============================================================================
 
 def generate_domain_expert_prompt(

@@ -32,8 +32,8 @@ import statsmodels.formula.api as smf
 
 import file_io as fio
 
-# UN regions / countries with fewer distinct users are left out of the grouped
-# seasonal-trend plots (``plot_seasonal_trends``).
+# UN 区域/不同用户较少的国家被排除在外。
+# 季节性趋势地块( ``plot_seasonal_trends`` ).
 MIN_USERS_PER_GROUP = 500
 
 
@@ -56,23 +56,23 @@ def compute_r2(result, df):
     R2 the share explained by fixed plus random effects, and the ICC the
     intraclass correlation of the random intercept.
   """
-  del df  # Unused.
-  # 1. Get predicted values from Fixed Effects only
-  # We use the design matrix from the result to be more robust
+  del df  # 未用过。
+  # 1. 仅从固定效果获取预测值
+  # 我们用结果中的设计矩阵 来更加坚固
   fe_values = np.dot(result.model.exog, result.fe_params)
   var_fixed = np.var(fe_values)
 
-  # 2. Extract Variance Components
+  # 2 提取差异部分
   if hasattr(result.cov_re, 'iloc'):
     var_random = float(result.cov_re.iloc[0, 0])
   else:
     var_random = float(result.cov_re[0, 0])
   var_resid = result.scale
 
-  # 3. Total Variance
+  # 3 差异共计
   total_var = var_fixed + var_random + var_resid
 
-  # 4. Calculations
+  # 4。计算
   r2_marginal = var_fixed / total_var
   r2_conditional = (var_fixed + var_random) / total_var
   icc = var_random / (var_random + var_resid)
@@ -96,7 +96,7 @@ def compute_r2(result, df):
 
 def plot_residuals(result, col_name, df=None):
   """Plots residuals vs fitted values to check for homoscedasticity."""
-  # Looking for an egg shape.
+  # 寻找一个鸡蛋形状。
 
   fig = plt.figure(figsize=(8, 5))
 
@@ -183,13 +183,13 @@ def plot_random_effects(result, col_name):
   Returns:
     A matplotlib figure with the two subplots.
   """
-  # 1. Extract the random effects (it returns a dict of {user_id: [value]})
+  # 1. 提取随机效果(它返回了{user_id的指令：[值]])
   random_effects = [val[0] for val in result.random_effects.values()]
 
-  # 2. Create a side-by-side plot: Histogram and Q-Q Plot
+  # 2. 创建侧面图:直方图和Q-Q图
   fig, ax = plt.subplots(1, 2, figsize=(15, 5))
 
-  # Subsample for histogram as well if there are too many to avoid slow plotting
+  # 直方图的子样本，如果有太多，以避免缓慢的图谋
   if len(random_effects) > 50000:
     print(
         '  [Plot Random Effects] Subsampling random effects to 50,000 for'
@@ -200,12 +200,12 @@ def plot_random_effects(result, col_name):
   else:
     hist_sample = random_effects
 
-  # Histogram
+  # 直方图
   sns.histplot(hist_sample, kde=True, ax=ax[0], color='skyblue')
   ax[0].set_title('Distribution of Random Intercepts (Users)')
   ax[0].set_xlabel(f'Deviation from Mean {col_name}')
 
-  # Q-Q Plot (Points should follow the red line)
+  # Q- Q Plot( 点数应该跟随红线)
   if len(random_effects) > 10000:
     re_sample = np.random.choice(random_effects, 10000, replace=False)
     stats.probplot(re_sample, dist='norm', plot=ax[1])
@@ -285,13 +285,13 @@ def get_gvif_groups(column_names):
   Returns:
     A list of lists of column names, one inner list per term family.
   """
-  # Clean out intercept if present
+  # 如果有的话，清除拦截
   cols = [c for c in column_names if c != 'Intercept']
 
   groups = []
   processed = set()
 
-  # 1. Identify and group monthly harmonics (1st and 2nd order sin/cos) together
+  # 1. 识别和组合每月口琴(第1次和第2次顺序罪/科)
   month_harmonics = [
       c
       for c in cols
@@ -301,7 +301,7 @@ def get_gvif_groups(column_names):
     groups.append(month_harmonics)
     processed.update(month_harmonics)
 
-  # 2. Identify and group other isolated harmonic pairs (e.g. sin/cos_lng)
+  # 2. 识别和组合其他孤立的口音对(如罪/cos_lng).
   for col in cols:
     if col in processed:
       continue
@@ -319,14 +319,14 @@ def get_gvif_groups(column_names):
         groups.append(pair)
         processed.update(pair)
 
-  # 3. Group everything else by its exact term string structure
-  #    (handling dummy encodings)
+  # 3. 将其它所有东西按其确切的术语字符串结构分组。
+  #    (处理假编码)
   for col in cols:
     if col in processed:
       continue
 
     if '[T.' in col:
-      # Example: 'un_region[T.Europe]' -> base term 'un_region'
+      # 示例：'un_region [T. Europe]' -> 基词 'un_region"
       base_term = col.split('[')[0]
       term_group = []
       for c in cols:
@@ -371,12 +371,12 @@ def compute_model_gvif(result):
 
   col_indices = [cols_all.index(c) for c in cols_vif]
 
-  # Sample for speed on large datasets
+  # 大数据集速度样本
   sample_n = min(len(result.model.exog), 100000)
   rng = np.random.default_rng(42)
   sample_idx = rng.choice(len(result.model.exog), size=sample_n, replace=False)
 
-  # Slice directly on numpy array, then build the small DataFrame
+  # 直接在数字阵列上切片，然后构建小 DataFrame
   x_sample = pd.DataFrame(
       result.model.exog[sample_idx][:, col_indices], columns=cols_vif
   ).astype(float)
@@ -384,7 +384,7 @@ def compute_model_gvif(result):
   groups = get_gvif_groups(cols_vif)
 
   gvif_list = []
-  # Add a tiny amount of jitter (1e-9) to the diagonal for numerical stability
+  # 在对角上添加少量的焦点(1e- 9),以图数值稳定性
   corr_matrix = x_sample.corr().values + np.eye(x_sample.shape[1]) * 1e-9
 
   try:
@@ -437,7 +437,7 @@ def extract_model_stats(
     are stored with their true signs.
   """
 
-  # 1. Basic Metrics & Variance Components
+  # 1. 基本计量和差异部分
   aic, bic, llf = result.aic, result.bic, result.llf
   var_resid = result.scale
 
@@ -446,7 +446,7 @@ def extract_model_stats(
 
   icc = var_random_effect / (var_random_effect + var_resid)
 
-  # 2. Fixed Effects Variance & Nakagawa R-squared
+  # 2. 固定效应 差异与中川 R-平方
   fixed_pred = result.predict()
   var_fixed = np.var(fixed_pred)
 
@@ -457,7 +457,7 @@ def extract_model_stats(
   # RMSE (Absolute Accuracy)
   rmse = np.sqrt((result.resid**2).mean())
 
-  # 3. Calibration Metric: Within-Person R2 (vectorised via np.bincount)
+  # 3. 校准度量衡:个人内部 R2(通过np.bincount认证).
 
   group_codes = data['user_id_n'].values.astype(np.int64)
   counts = np.bincount(group_codes)
@@ -480,7 +480,7 @@ def extract_model_stats(
   del actual_centered, preds_centered, group_codes, counts
   gc.collect()
 
-  # 4. Parameter Dictionary Preparation
+  # 4. 参数词典编写。
   params = result.params.to_dict()
   hessian_skipped = getattr(result, 'hessian_skipped', False)
   conf_int = None if hessian_skipped else result.conf_int()
@@ -503,7 +503,7 @@ def extract_model_stats(
       'r2_within': r2_within,
   }
 
-  # 5. Fixed Effects & Gelman Back-calculation
+  # 5. 固定效应& Gelman 后计算
   for name, val in params.items():
     if hessian_skipped or conf_int is None:
       ci_low, ci_high = np.nan, np.nan
@@ -517,7 +517,7 @@ def extract_model_stats(
     row[f'ci_low_raw_{name}'] = ci_low / denom
     row[f'ci_high_raw_{name}'] = ci_high / denom
 
-  # 6. GVIF Analysis (Collinearity Check)
+  # 6. GVIF 分析(汇编检查).
   vif_df = compute_model_gvif(result)
 
   return row, vif_df
@@ -528,7 +528,7 @@ def plot_seasonal_trends(
     result,
     col='hrv_log',
     col_name='HRV',
-    group_col=None,  # Now defaults to None
+    group_col=None,  # 现在默认为无
     use_random_effects=False,
     boxcox_lambda=None,
     title_fontsize=14,
@@ -573,7 +573,7 @@ def plot_seasonal_trends(
     df = df[df[group_col].isin(keep_groups)]
 
   # --- 1. Handle Population Level Logic ---
-  # If group_col is None, create a dummy group for the whole population
+  # 如果group_col是无，则为全体人口创建一个假组
   actual_group_col = group_col if group_col is not None else 'Population'
   if group_col is None:
     df[actual_group_col] = 'All Users'
@@ -582,7 +582,7 @@ def plot_seasonal_trends(
   is_log = (boxcox_lambda == 0) or ('log' in col)
 
   if is_log and result is not None:
-    # Ensure we have predicted_val and fitted_values
+    # 保证我们有 predicted_val 财务报告和已审计财务报表 fitted_values
     if 'predicted_val' not in df.columns:
       df['predicted_val'] = result.predict(df)
     if 'fitted_values' not in df.columns:
@@ -594,9 +594,9 @@ def plot_seasonal_trends(
 
     df['re'] = df['fitted_values'] - df['predicted_val']
 
-    # Calculate residuals: e = y - fitted_values
+    # 计算残值:e=y - fitted_values
     log_residuals = df[col] - df['fitted_values']
-    # Duan's Smearing Estimator: mean(exp(residuals))
+    # 杜安的"沉思估测器":表示(表示(剩余)).
     smearing_factor = np.mean(np.exp(log_residuals))
     print(
         "  [Duan's Smearing Estimator] Calculated correction factor:"
@@ -609,21 +609,21 @@ def plot_seasonal_trends(
           ' Level (Duan Smearing Corrected)'
       )
       df['plot_pred_final'] = np.exp(df['fitted_values']) * smearing_factor
-      df['plot_actual_final'] = np.exp(df[col])  # Raw HRV
+      df['plot_actual_final'] = np.exp(df[col])  # 原始内容 HRV
       y_label = f'{col_name} (ms)'
     else:
       print(
           f'Using fixed effects only (Calibration Mode) - {actual_group_col}'
           ' Level (Duan Smearing Corrected, Population-Adjusted)'
       )
-      # Remove random effects from actuals to show clean population
-      # calibration in absolute units.
+      # 从实际中去除随机效果以显示干净的人口
+      # 绝对单位的校准。
       df['plot_actual_adj'] = df[col] - df['re']
       df['plot_actual_final'] = np.exp(df['plot_actual_adj'])
       df['plot_pred_final'] = np.exp(df['predicted_val']) * smearing_factor
       y_label = f'{col_name} (ms)'
   else:
-    # Original logic for non-log or if result is None
+    # 非日志的原始逻辑或结果为无
     if use_random_effects:
       print(
           f'Using random effects (Total Accuracy Mode) - {actual_group_col}'
@@ -648,9 +648,9 @@ def plot_seasonal_trends(
             else df[col]
         )
 
-      # Centre predictions and observations on the same key (per user when
-      # available, else per group) so that partial-year panels do not shrink
-      # the observed swing relative to the predicted one.
+      # 将同一密钥上的预测和观测(每个用户何时)
+      # (每组有其他可用数据),以便部分年份的面板不会缩小。
+      # 相对于预测的摇摆。
       if 'user_id_n' in df.columns:
         centre_key = df['user_id_n']
       else:
@@ -662,7 +662,7 @@ def plot_seasonal_trends(
           'mean'
       )
 
-    # Handle Back-Transformation (Log or Box-Cox)
+    # 处理后变形( 日志或框- Cox)
     if boxcox_lambda is not None:
       if boxcox_lambda == 0:
         df['plot_pred_final'] = np.exp(df['plot_pred'])
@@ -686,7 +686,7 @@ def plot_seasonal_trends(
 
   # --- 3. Summarize for Plotting ---
   # observed=True: with pd.cut groups and a small cohort, unobserved age bins
-  # would otherwise appear in the summary but not in the colour map.
+  # 否则将出现在摘要中，但不出现在彩色图中。
   monthly_summary = (
       df.groupby([actual_group_col, 'month'], observed=True)
       .agg({
@@ -716,7 +716,7 @@ def plot_seasonal_trends(
   # --- 4. Setup Plot ---
   fig = plt.figure(figsize=(12, 7))
   if monthly_summary.empty:
-    # No group reached min_users_per_group: return an annotated empty figure.
+    # 未到达 min_users_per_group 组： 返回一个注解的空图。
     msg = f'No {actual_group_col} group with enough users to plot.'
     print(f'  [plot_seasonal_trends] {msg}')
     plt.text(0.5, 0.5, msg, ha='center', va='center')
@@ -726,7 +726,7 @@ def plot_seasonal_trends(
   palette = sns.color_palette('husl', len(unique_groups))
   color_map = dict(zip(unique_groups, palette))
 
-  # A. Observed Means
+  # A. 观察手段
   for grp in unique_groups:
     grp_data = monthly_summary[monthly_summary[actual_group_col] == grp]
     if not grp_data.empty:
@@ -742,21 +742,21 @@ def plot_seasonal_trends(
           label=f'{grp} n={int(grp_data["n"].mean())}',
       )
 
-  # B. Model Trajectory
-  # Plot using the aggregated data to avoid slow bootstrapping on full data
+  # B. 模型轨迹
+  # 利用汇总数据进行绘图，以避免在完整数据上拖曳缓慢
   sns.lineplot(
       data=monthly_summary,
       x='month',
       y='predicted_mean',
       hue=actual_group_col,
-      hue_order=list(unique_groups),  # categorical hue: only observed levels
+      hue_order=list(unique_groups),  # 绝对色调： 仅观测到的级别
       palette=color_map,
       linewidth=3,
       errorbar=None,
       legend=False,
   )
 
-  # Add CI band manually
+  # 手动添加 CI 带
   for grp in unique_groups:
     grp_data = monthly_summary[monthly_summary[actual_group_col] == grp]
     if not grp_data.empty:
@@ -839,11 +839,11 @@ def save_aggregate_validation(
     ``(None, 0, 0, None)`` if no group passes the user-count threshold.
   """
   df = df.copy()
-  # Ensure we use fixed effects only for calibration testing
+  # 确保我们只使用固定效果进行校准测试
   if 'predicted_val' not in df.columns:
     df['predicted_val'] = result.predict(df)
 
-  # 1. Flexible Grouping
+  # 1. 灵活分组
   grouping_dims = [group_col]
   if include_month and 'month' in df.columns:
     grouping_dims.append('month')
@@ -861,7 +861,7 @@ def save_aggregate_validation(
   agg_df = agg_df[agg_df['n_users'] >= threshold]
 
   if agg_df.empty:
-    return None, 0, 0, None  # Added extra returns for slope and df
+    return None, 0, 0, None  # 添加了坡度和 df 的额外返回
 
   if boxcox_lambda is not None:
     if boxcox_lambda == 0:
@@ -878,17 +878,17 @@ def save_aggregate_validation(
     agg_df['actual_mean'] = np.exp(agg_df['actual_mean'])
     agg_df['predicted_mean'] = np.exp(agg_df['predicted_mean'])
 
-  # 2. Metrics: Pearson R AND Calibration Slope
+  # 2. 量子:皮尔逊R AND校准螺旋桨
   # Correlation (how tight the dots are)
   r_val, _ = stats.pearsonr(agg_df['predicted_mean'], agg_df['actual_mean'])
 
-  # Calibration Slope (the angle of the dots)
+  # 校准斜坡( 点的角度)
   # y = actual_mean, x = predicted_mean
   slope, _, _, _, _ = stats.linregress(
       agg_df['predicted_mean'], agg_df['actual_mean']
   )
 
-  # 3. Plotting
+  # 3 绘图
   fig = plt.figure(figsize=(8, 6))
   sns.scatterplot(
       data=agg_df,
@@ -899,7 +899,7 @@ def save_aggregate_validation(
       alpha=0.6,
   )
 
-  # 45-degree Line (Perfect Calibration)
+  # 45 - 度线(完美校准)
   limit_min = min(agg_df['actual_mean'].min(), agg_df['predicted_mean'].min())
   limit_max = max(agg_df['actual_mean'].max(), agg_df['predicted_mean'].max())
   plt.plot(
@@ -951,10 +951,10 @@ def plot_global_residuals(
   """
   df_plot = df_validation.copy()
 
-  # Calculate Residuals
+  # 计算残存
   df_plot['residual'] = df_plot[obs_col] - df_plot[pred_col]
 
-  # Aggregate over months if present to have one row per country
+  # 如果各国有一行，则数月内合计数
   if 'month' in df_plot.columns:
     df_plot = (
         df_plot.groupby(iso_col)
@@ -962,19 +962,19 @@ def plot_global_residuals(
             'residual': 'mean',
             obs_col: 'mean',
             pred_col: 'mean',
-            'n_users': 'mean',  # Average users per month
+            'n_users': 'mean',  # 每月平均用户数
         })
         .reset_index()
     )
 
-  # Keep only countries with at least 10 users (average per month).
+  # 仅保留至少有10用户的国家(平均每月).
   if 'n_users' in df_plot.columns:
     df_plot = df_plot[df_plot['n_users'] >= 10]
 
   var_name = 'HRV' if is_hrv else 'RHR'
   unit_name = 'ms' if is_hrv else 'BPM'
 
-  # 3. Determine symmetric color scale limits (robust to extreme outliers)
+  # 3. 确定对称的色度尺度限制(robust to external outliers).
   if not df_plot['residual'].empty:
     max_val = np.percentile(df_plot['residual'].abs(), 99)
     if is_hrv:
@@ -988,7 +988,7 @@ def plot_global_residuals(
   if 'n_users' in df_plot.columns:
     hover_dict['n_users'] = ':,d'
 
-  # 4. Create the Choropleth
+  # 4. 创建Choroplex(英语:Choropleth)
   title = 'Global Residuals: Observed - Predicted'
   fig = px.choropleth(
       df_plot,
@@ -1006,13 +1006,13 @@ def plot_global_residuals(
       title=title,
   )
 
-  # 5. Refine Layout & Map Projection
+  # 5. 精细布局和地图投影
   fig.update_geos(
       showframe=False,
       showcoastlines=True,
       coastlinecolor='#d9c2af',
       showland=True,
-      landcolor='#ebd8c8',  # Warm beige for countries with no data
+      landcolor='#ebd8c8',  # 没有数据的国家的暖酒
       showocean=True,
       oceancolor='#ffffff',
       projection_type='equirectangular',
@@ -1088,16 +1088,16 @@ def get_create_output_path(formula, r_folder, colname, varname):
   )
 
   model_id = f'{dt.datetime.now().strftime("%Y%m%d_%H%M%S")}_{model_id}'
-  output_path = os.path.join(r_folder, model_id, '')  # keeps a trailing '/'
+  output_path = os.path.join(r_folder, model_id, '')  # 保持跟踪“/”
 
-  # Create folder
+  # 创建文件夹
   fio.make_dirs(output_path)
 
   return output_path
 
 
 # -----------------------------------------------------------------------------
-# Density-based thinning of the age-22 reporting artefact
+# 基于密度的变薄年龄——22 报告人工活性
 # -----------------------------------------------------------------------------
 THINNING_LAT_BANDS = [
     'Mid South',
@@ -1317,15 +1317,15 @@ def apply_density_based_thinning(
 
 
 # ---------------------------------------------------------------------------
-# Model feature engineering (shared by notebooks/02_modelling.ipynb and
-# publication_figures.py) and fixed-effects prediction from saved coefficients
+# 模型特征工程(由notebooks/02_modelling.ipynb和
+# publication_figures.py)和从节省的系数中预测的固定效应
 # ---------------------------------------------------------------------------
 
 METRIC_TARGET_COLS: Dict[str, str] = {
     'rhr': 'avg_resting_heart_rate_bpm',
     'hrv': 'avg_hrv',
 }
-# Continuous predictors that are Gelman-standardised (centre, divide by 2 SD).
+# 连续的预测器是Gelman标准化的(中心，除以2SD.
 MODEL_CONTINUOUS_COLS: List[str] = [
     'age',
     'lat_e7',
@@ -1336,12 +1336,12 @@ MODEL_CONTINUOUS_COLS: List[str] = [
     'dl_monthly',
 ]
 TEMP_VARS_C: List[str] = ['avg_temp_mean_c', 'avg_temp_max_c', 'avg_temp_min_c']
-# Temperature residualised on latitude x season (Stage 6 of the competition).
+# 温度在纬度x赛季(比赛的Stage 6)剩余。
 TEMP_RESIDUAL_FORMULA = (
     '{temp} ~ abs_lat_e7_c + (month_sin + month_cos + month_sin_2 +'
     ' month_cos_2) * lat_e7_c'
 )
-# Day of year of the 15th of each month (index 0 = January).
+# 每月15日(索引0=1月).
 MID_MONTH_DAY_OF_YEAR = np.array(
     [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349]
 )

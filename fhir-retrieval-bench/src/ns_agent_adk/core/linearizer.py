@@ -57,7 +57,7 @@ def _serialize_node_for_embedding(node: graph_module.FHIRNode) -> str:
           [f'Encounter Class: {enc_class}', f'Start: {start}', f'End: {end}']
       )
     else:
-      # Generic fallback
+      # 通用后退
       name = data.get('code', {}).get('text', data.get('id', 'N/A'))
       time = node.timestamp.isoformat() if node.timestamp else 'N/A'
       parts.extend([f'Name: {name}', f'Time: {time}'])
@@ -94,18 +94,18 @@ class CausalSaliencyLinearizer:
     if not nodes_to_embed:
       return saliency_scores
 
-    # Determine max_timestamp first for temporal intent extraction
+    # 确定max_timestamp 时间意图提取
     max_timestamp = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
     if self.anchor_date:
       if isinstance(self.anchor_date, datetime.datetime):
         max_timestamp = self.anchor_date
       else:
-        # Convert date to datetime
+        # 转换日期至日期
         max_timestamp = datetime.datetime.combine(
             self.anchor_date, datetime.time.min
         ).replace(tzinfo=datetime.timezone.utc)
     else:
-      # Fallback to graph max logic
+      # 倒转到图最大逻辑
       for node in nodes_to_embed:
         if node.timestamp and node.timestamp > max_timestamp:
           max_timestamp = node.timestamp
@@ -119,7 +119,7 @@ class CausalSaliencyLinearizer:
       except Exception:  # pylint: disable=broad-except
         pass
 
-    # Embed nodes
+    # 嵌入节点
     if self.node_embeddings is not None:
       node_embeddings_dict: dict[str, np.ndarray] = self.node_embeddings
       node_embeddings = np.array([
@@ -134,7 +134,7 @@ class CausalSaliencyLinearizer:
       if not hasattr(self.embedder, 'vector_size') and node_embeddings.size > 0:
         self.embedder.vector_size = node_embeddings[0].shape[0]
 
-    # Resolve Anchor Event (e.g., "after the surgery")
+    # 解析Anchor事件(如"手术后").
     anchor_time = None
     if time_range.anchor_event:
       anchor_embedding = self.embedder.embed([time_range.anchor_event])[0]
@@ -151,7 +151,7 @@ class CausalSaliencyLinearizer:
           query_embedding, node_embedding
       )
 
-      # 1. Temporal Masking (Range)
+      # 1. 临时蒙面(距离)
       temporal_mask = 1.0
       if node.timestamp and time_range.query_type not in ('none', 'recent'):
         node_ts = node.timestamp
@@ -160,7 +160,7 @@ class CausalSaliencyLinearizer:
         if time_range.end and node_ts > time_range.end:
           temporal_mask = 0.1
 
-      # 2. Recency Boost
+      # 2 . 静态助推
       recency_score = 0.0
       if (
           node.timestamp
@@ -168,12 +168,12 @@ class CausalSaliencyLinearizer:
           and max_timestamp
           > datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
       ):
-        # Linear decay based on days from max_timestamp (which might be anchor_date)
+        # 基于max_timestamp天数的线性衰变(可能是anchor_date)
         delta_days = (max_timestamp - node.timestamp).days
-        # Decay over 1 year (365 days)
+        # 衰竭于1年(365天)
         recency_score = max(0.0, 1.0 - (delta_days / 365.0))
 
-      # 3. Relative Time (Anchor)
+      # 3. 相对时间(锁定).
       anchor_mask = 1.0
       if anchor_time and node.timestamp:
         if time_range.raw_query_span and 'after' in time_range.raw_query_span:
@@ -185,15 +185,15 @@ class CausalSaliencyLinearizer:
           if node.timestamp > anchor_time:
             anchor_mask = 0.1
 
-      # 4. Always Include
+      # 4。总是包含
       always_include_boost = 0.0
       if node.resource_type in self.config.always_include_types:
         always_include_boost = 1.0
 
-      # Combine Scores
-      # Base: Semantic * Masks
+      # 组合分数
+      # 基数:语义学* 面具
       final_score = semantic_similarity * temporal_mask * anchor_mask
-      # Add Boosts
+      # 添加脚步
       final_score += recency_score * self.config.recency_weight
       final_score += always_include_boost
 
@@ -216,7 +216,7 @@ class CausalSaliencyLinearizer:
         f" {'(Phantom)' if hn.is_phantom else ''} ==="
     )
     lines = [header]
-    # Sort salient nodes by timestamp
+    # 按时间戳排序突出节点
     salient_nodes.sort(
         key=lambda x: x.timestamp
         or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
@@ -254,7 +254,7 @@ class CausalSaliencyLinearizer:
 
     hn_candidates = []
 
-    # 1. Split Execution Path based on requested Strategic Algorithm
+    # 1.根据请求的战略算法分割执行路径
     if strategy == 'greedy':
       # --- PATH A: Saliency / Relevance Packed (Greedy) ---
       saliency_scores = self.calculate_saliency(query)
@@ -265,7 +265,7 @@ class CausalSaliencyLinearizer:
             [spine_node] if spine_node and spine_node not in hn.nodes else []
         )
 
-        # Filter nodes that meet saliency threshold
+        # 达到显著阈值的过滤节点
         salient_nodes = []
         hn_max_score = 0.0
         for node in nodes_in_hn:
@@ -285,7 +285,7 @@ class CausalSaliencyLinearizer:
               'start_time': hn.start_time,
           })
 
-      # Rank by highest usefulness
+      # 最高功用等级
       hn_candidates.sort(key=lambda x: x['score'], reverse=True)
 
     elif strategy == 'chronological':
@@ -299,18 +299,18 @@ class CausalSaliencyLinearizer:
         if not nodes_in_hn:
           continue
 
-        # Directly package complete hypernodes without filtering overhead
+        # 直接包装完成超节点而不过滤高空
         hn_text = self._format_hypernode(hn, nodes_in_hn)
         hn_tokens = len(hn_text.split())
         hn_candidates.append({
             'hn': hn,
-            'score': 1.0,  # Mock score for structural homogeneity
+            'score': 1.0,  # 结构均匀性模拟分数
             'text': hn_text,
             'tokens': hn_tokens,
             'start_time': hn.start_time,
         })
 
-      # Rank by newest timeline items first to prioritize recent events in budget
+      # 按最新时间顺序排列，首先确定预算最近活动的优先次序
       hn_candidates.sort(
           key=lambda x: x.get('start_time')
           or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc),
@@ -319,7 +319,7 @@ class CausalSaliencyLinearizer:
     else:
       raise ValueError(f'Unknown linearization strategy: {strategy}')
 
-    # 2. Common Logic Flow: Pack Candidates into Linearized Budget
+    # 2. 常见逻辑流:将候选人打包入线性预算。
     selected_hns = []
     current_tokens = 0
     for cand in hn_candidates:
@@ -329,16 +329,16 @@ class CausalSaliencyLinearizer:
         selected_hns.append(cand)
         current_tokens += cand['tokens']
       else:
-        # Stop or skip candidates that no longer fit
+        # 停止或跳过不再适合的候选者
         continue
 
-    # 3. Common Logic Flow: Resort final selections back into natural timeline order
+    # 3. 常见逻辑流:将最终选择重新放回自然时间顺序
     selected_hns.sort(
         key=lambda x: x.get('start_time')
         or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
     )
 
-    # 5. Format with Gaps
+    # 5. 带有漏洞的格式
     output: list[str] = []
     last_salient_hn_end_time = None
 
@@ -395,8 +395,8 @@ def precompute_node_embeddings(
     if embedding_pool:
       logging.info('Loaded %d embeddings from cache.', len(embedding_pool))
 
-  # Prepare text data for all nodes and identify missing embeddings.
-  # Update embeddding_pool when necessary
+  # 为所有节点准备文本数据，并识别缺失嵌入。
+  # 必要时更新embeddding_pool
   texts_not_in_cache = collections.OrderedDict()
   for node in nodes:
     text = _serialize_node_for_embedding(node)
@@ -409,13 +409,13 @@ def precompute_node_embeddings(
     if cache_path:
       embeddings_module.save_embedding_pool(embedding_pool, cache_path)
 
-  # Construct the final result map.
+  # 构造最终结果映射。
   node_embeddings = {
       node.id: embedding_pool[embeddings_module.get_cache_hash(_serialize_node_for_embedding(node), embedder.model_name)]
       for node in nodes
   }
  
-  # Verify consistency of embedding dimensions.
+  # 验证嵌入维度的一致性。
   if node_embeddings:
     embedding_dims = {vec.shape[0] for vec in node_embeddings.values()}
     if len(embedding_dims) > 1:

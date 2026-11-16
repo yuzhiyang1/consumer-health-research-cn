@@ -31,7 +31,7 @@ def main(argv=None):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
 
-  # Setup Config
+  # 设置配置
   API_KEY = os.getenv("GENAI_API_KEYS") or os.getenv("GENAI_API_KEY")
 
   if not API_KEY:

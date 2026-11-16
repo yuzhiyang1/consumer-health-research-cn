@@ -24,16 +24,16 @@ from pathlib import Path
 
 
 # =============================================================================
-# API Key Cache (session-scoped)
+# API 密钥缓存(会话范围)
 # =============================================================================
 
 _API_KEY_CACHE = {}
-_PROMPTED_KEYS = set()  # Track which keys we've already prompted for
+_PROMPTED_KEYS = set()  # 追踪我们已提示的键
 
 
 def _is_interactive():
     """Check if we can prompt the user interactively."""
-    # Check if stdin is a TTY (interactive terminal)
+    # 检查stdin 是否为 TTY (交互终端)
     return sys.stdin.isatty()
 
 
@@ -47,22 +47,22 @@ def _prompt_for_key(key_name: str, description: str) -> str:
     Returns:
         The API key string, or None if not provided
     """
-    # Check environment first
+    # 先检查环境
     env_value = os.environ.get(key_name)
     if env_value:
         return env_value
     
-    # Check cache (already prompted this session)
+    # 检查缓存( 已经提醒了此会话)
     if key_name in _API_KEY_CACHE:
         return _API_KEY_CACHE[key_name]
     
-    # Only prompt once per key per session
+    # 每场会话只提示一次密钥
     if key_name in _PROMPTED_KEYS:
         return None
     
     _PROMPTED_KEYS.add(key_name)
     
-    # Try to prompt interactively
+    # 尝试以交互方式提示
     if _is_interactive():
         print(f"\n{'='*60}")
         print(f"API Key Required: {key_name}")
@@ -76,7 +76,7 @@ def _prompt_for_key(key_name: str, description: str) -> str:
             value = input(f"{key_name}: ").strip()
             if value:
                 _API_KEY_CACHE[key_name] = value
-                os.environ[key_name] = value  # Set for subprocess use
+                os.environ[key_name] = value  # 设定用于子进程
                 print(f"✓ {key_name} set for this session\n")
                 return value
             else:
@@ -90,7 +90,7 @@ def _prompt_for_key(key_name: str, description: str) -> str:
 
 
 # =============================================================================
-# Pytest Configuration
+# Pytest 配置
 # =============================================================================
 
 def pytest_configure(config):
@@ -118,7 +118,7 @@ def pytest_collection_modifyitems(config, items):
     Note: We no longer skip tests at collection time. Instead, the fixtures
     will prompt for keys interactively when needed.
     """
-    pass  # Let fixtures handle API key prompting
+    pass  # 让定点器处理 API 键提示
 
 
 def pytest_report_header(config):
@@ -161,7 +161,7 @@ def pytest_report_header(config):
 
 
 # =============================================================================
-# API Key Fixtures (with interactive prompting)
+# API 密钥定点器(带有交互式提示)
 # =============================================================================
 
 @pytest.fixture
@@ -233,7 +233,7 @@ def anthropic_api_key():
 
 
 # =============================================================================
-# Sample Data Fixtures
+# 数据定型样本
 # =============================================================================
 
 @pytest.fixture

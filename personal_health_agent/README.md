@@ -1,97 +1,89 @@
-# Personal Health Agent (PHA) Framework
+# 个人健康 Agent（PHA）框架
 
-<p align="center">
-:fire: Please remember to :star: this repo if you find it useful and <a href="https://github.com/google-health/consumer-health-research/tree/main/personal_health_agent#scroll-citation">cite</a> our work if you end up using it in your work! :fire:
-</p>
-<p align="center">
-:fire: If you have any questions or concerns, please create an issue :memo:! :fire:
-</p>
+本目录是论文《The Anatomy of a Personal Health Agent》及其个人健康 Agent（Personal Health Agent，PHA）框架的官方代码库。如果你在研究中使用这项工作，请[引用论文](#scroll-citation)。有问题可以通过 GitHub Issues 反馈。
 
-<p align="center">
-<a href="https://research.google/blog/the-anatomy-of-a-personal-health-agent/">Blog Post</a> | <a href="https://www.arxiv.org/abs/2508.20148">Pre-print</a>
-</p>
+[Google Research 博客](https://research.google/blog/the-anatomy-of-a-personal-health-agent/) · [论文预印本](https://www.arxiv.org/abs/2508.20148)
 
-The official repository for the paper "The Anatomy of a Personal Health Agent" and its corresponding Personal Health Agent (PHA) framework.
+![个人健康 Agent（PHA）框架](docs/header.png)
 
-![Personal Health Agent (PHA) Framework](docs/header.png)
+## 概览
 
-## :sparkles: Overview
+PHA 是一个多 Agent 框架，用于分析可穿戴传感器数据流、活动记录和人口学信息等多模态健康数据，在日常非临床场景给出个性化的分析和建议。
 
-PHA is a multi-agent framework for reasoning across multimodal consumer wellness data — wearable sensor streams, activity records, and demographics — to deliver personalized insights and recommendations in everyday, non-clinical settings.
+编排器协调三个专用子 Agent。
 
-The framework coordinates three specialist sub-agents through an orchestrator:
+- **数据科学 Agent**（Data Science Agent）分析个人健康时间序列，识别趋势、比较不同时间段或人群，并按需计算统计指标。
+- **领域专家 Agent**（Domain Expert Agent）结合医学参考范围和健康背景解读分析结果，使用网页搜索和 Data Commons 获取信息。
+- **健康教练 Agent**（Health Coach Agent）综合上述信息，通过对话给出可执行的建议。
 
-- **Data Science Agent** — analyzes personal time-series health data, producing trends, comparisons, and on-demand statistics.
-- **Domain Expert Agent** — interprets findings against medical reference ranges and broader health context using web search and Data Commons.
-- **Health Coach Agent** — synthesizes the above into conversational, actionable guidance.
+项目还提供两种用于比较的基线架构。**Parallel** 让同样的三个专用 Agent 并行工作。**PHIA** 使用一个通用的 ReAct Agent。论文在 10 项基准任务中评估这些架构，覆盖健康专家和终端用户提供的 7,000 多条标注。
 
-Two additional architectures are included as baselines for comparison: **Parallel** (the same three specialists with no orchestration) and **PHIA** (a single generalist ReAct agent). The accompanying paper evaluates these designs across 10 benchmark tasks spanning over 7,000 annotations from health experts and end-users.
+## 环境搭建
 
-## :wrench: Setup
-
-Python 3.11+ and conda are required. Run `bash setup.sh` to set up the `pha_framework` conda environment automatically.
+需要 Python 3.11 或更新版本以及 conda。运行 `bash setup.sh` 可自动创建并配置 `pha_framework` 环境。
 
 ```bash
-# Full setup (creates conda env and installs all dependencies)
+# 创建 conda 环境并安装所有依赖
 bash setup.sh
 
-# Activate environment
+# 激活环境
 conda activate pha_framework
 ```
 
-## :rocket: Web Portal (Recommended)
+## Web 门户（推荐）
 
-The easiest way to use PHA is through the web portal, which provides a user-friendly interface for configuring and chatting with the health agent.
+Web 门户可以配置模型和用户档案，并直接与健康 Agent 对话。
 
-### Quick Start
+### 快速上手
 
 ```bash
-# Terminal 1: Start the API server
+# 终端 1：启动 API 服务
 conda activate pha_framework
 uvicorn api.main:app --reload --port 8000
 
-# Terminal 2: Start the frontend
+# 终端 2：启动前端
 cd frontend
-npm install  # first time only
+npm install  # 首次启动时安装依赖
 npm run dev
 ```
 
-Then open http://localhost:3000 in your browser. The portal will prompt you for API keys.
+在浏览器打开 <http://localhost:3000>，按页面提示填写 API 密钥。
 
-### Portal Features
+### 门户功能
 
-- **Provider Selection**: Choose between Gemini and OpenAI models
-- **Baseline Comparison**: Compare PHA (orchestrated), Parallel, and PHIA (single-agent) architectures
-- **Persona Selection**: Switch between different user health profiles
-- **Persistent Settings**: API keys and preferences are saved locally
+- **模型提供商**支持 Gemini 和 OpenAI。
+- **架构对比**支持在 PHA、Parallel 和 PHIA 之间切换。
+- **用户档案**支持切换不同的健康数据样本。
+- **设置保存**将 API 密钥和偏好设置保存在本地。
 
-### System Architectures
+### 系统架构
 
-| Baseline | Architecture | Description |
-|----------|--------------|-------------|
-| **PHA** | 3 specialists + orchestrator | Full multi-agent system with intelligent routing |
-| **Parallel** | 3 specialists, no routing | All agents run in parallel, responses synthesized |
-| **PHIA** | 1 generalist agent | Original single ReAct agent (Gemini and OpenAI) |
+| 架构 | 组成 | 运行方式 |
+| --- | --- | --- |
+| **PHA** | 3 个专用 Agent 和 1 个编排器 | 编排器按问题选择合适的 Agent，并协调生成回复。 |
+| **Parallel** | 3 个专用 Agent | 所有 Agent 并行处理同一问题，再汇总结果。 |
+| **PHIA** | 1 个通用 Agent | 原始单 Agent ReAct 架构，支持 Gemini 和 OpenAI。 |
 
-## :floppy_disk: Data Format
+## 数据格式
 
-PHA expects health data in four CSV files. Sample synthetic data is provided in `data/sample/`. See [`data/README.md`](data/README.md) for detailed schema documentation.
+PHA 读取四个 CSV 文件。仓库在 `data/sample/` 提供了合成样本数据。字段定义请见[数据说明](data/README.md)。
 
-| File | Description |
-|------|-------------|
-| `summary.csv` | Daily health metrics (steps, sleep, heart rate, etc.) |
-| `activities.csv` | Individual exercise/activity records |
-| `profile.csv` | User demographics (age, gender, height, weight) |
-| `population_percentiles.csv` | Population reference data for comparisons |
+| 文件 | 用途 |
+| --- | --- |
+| `summary.csv` | 每日健康指标，如步数、睡眠和心率。 |
+| `activities.csv` | 每次运动或活动的记录。 |
+| `profile.csv` | 用户档案，如年龄、性别、身高和体重。 |
+| `population_percentiles.csv` | 与同类人群比较时使用的参考数据。 |
 
-To use your own data, either:
-1. Replace the files in `data/sample/` with your own CSVs following the same schema
-2. Create a new persona directory under `data/` with your files
-3. Pass custom paths when initializing via `Settings(data_dir="path/to/your/data")`
+可以采用以下任一方式加载自己的数据。
 
-## :computer: Programmatic Usage
+1. 按相同字段结构替换 `data/sample/` 下的 CSV 文件。
+2. 在 `data/` 下创建新的用户档案目录并放入文件。
+3. 初始化时通过 `Settings(data_dir="path/to/your/data")` 指定位置。
 
-For scripting and notebooks, you can use the agents directly:
+## 在代码中使用
+
+Python 脚本和 Jupyter Notebook 都可以直接调用各个 Agent。
 
 ```python
 import pandas as pd
@@ -102,15 +94,15 @@ from pha.agents import (
     MultiAgentOrchestrator,
 )
 
-# Load your health data
+# 加载健康数据
 summary_df = pd.read_csv('data/sample/summary.csv')
 activities_df = pd.read_csv('data/sample/activities.csv')
 profile_df = pd.read_csv('data/sample/profile.csv')
 population_df = pd.read_csv('data/sample/population_percentiles.csv')
 
-# Data Science Agent — handles dataframe analysis and statistics
+# 数据科学 Agent：分析 DataFrame 并计算统计指标
 ds_agent = DataScienceAgent()
-ds_agent.configure(api_key='your-key', provider='gemini')  # or 'openai'
+ds_agent.configure(api_key='your-key', provider='gemini')  # 也可以用 'openai'
 ds_agent.load_dataframes({
     'summary': summary_df,
     'activities': activities_df,
@@ -118,7 +110,7 @@ ds_agent.load_dataframes({
     'population': population_df,
 })
 
-# Domain Expert Agent — interprets findings using web search and reference ranges
+# 领域专家 Agent：利用网页搜索和参考范围解读分析结果
 de_agent = DomainExpertAgent(tavily_api_key='your-tavily-key')
 de_agent.get_agent(api_key='your-key', provider='gemini')
 health_context = (
@@ -127,11 +119,11 @@ health_context = (
 )
 de_agent.set_user_health_data(health_context)
 
-# Health Coach Agent — synthesizes guidance in a conversational style
+# 健康教练 Agent：汇总信息并以对话形式给出建议
 coach = HealthCoachAgent(simple_mode=True)
 coach.configure(api_key='your-key', provider='gemini')
 
-# Orchestrator — routes questions across the three specialists
+# 编排器：把问题交给合适的专用 Agent
 pha = MultiAgentOrchestrator()
 pha.configure(api_key='your-key', provider='gemini')
 pha.set_agents(
@@ -140,76 +132,75 @@ pha.set_agents(
     health_coach_agent=coach,
 )
 
-# Ask questions about your health
+# 提出健康问题
 response = pha.respond("How has my sleep been lately?")
 print(response)
 ```
 
-### Notebooks
+### 教程 Notebook
 
-Tutorial notebooks live in [`notebooks/`](notebooks/) and walk through each agent in isolation as well as the full pipeline:
+[`notebooks/`](notebooks/) 目录包含各 Agent 的独立示例，以及完整的多 Agent 流程。
 
-| Notebook | Description |
-|----------|-------------|
-| `01_quickstart.ipynb` | Get started in 5 minutes |
-| `02_data_science_agent.ipynb` | Data analysis and trend detection |
-| `03_domain_expert_agent.ipynb` | Medical interpretation with ReAct |
-| `04_health_coach_agent.ipynb` | Conversational health coaching |
-| `05_full_pipeline.ipynb` | Complete multi-agent orchestration |
-| `06_parallel_baseline.ipynb` | Parallel multi-agent baseline (no orchestrator) |
-| `07_phia_baseline.ipynb` | PHIA single-agent ReAct baseline |
+| Notebook | 内容 |
+| --- | --- |
+| [01 快速上手](notebooks/01_quickstart.ipynb) | 约 5 分钟体验基本用法。 |
+| [02 数据科学 Agent](notebooks/02_data_science_agent.ipynb) | 分析数据并识别趋势。 |
+| [03 领域专家 Agent](notebooks/03_domain_expert_agent.ipynb) | 使用 ReAct 解读健康指标。 |
+| [04 健康教练 Agent](notebooks/04_health_coach_agent.ipynb) | 通过多轮对话提供健康指导。 |
+| [05 完整流程](notebooks/05_full_pipeline.ipynb) | 从问题路由到回复的完整编排流程。 |
+| [06 Parallel 基线](notebooks/06_parallel_baseline.ipynb) | 多 Agent 并行基线。 |
+| [07 PHIA 基线](notebooks/07_phia_baseline.ipynb) | 单 Agent ReAct 基线。 |
 
-Additional medical-interpretation few-shot examples (e.g., blood pressure, cholesterol, HbA1c) are available in [`few_shots/`](few_shots/).
+[少样本示例目录](few_shots/)还提供了血压、胆固醇、糖化血红蛋白（HbA1c）等解读示例及其[中文阅读版](few_shots/EXAMPLES.zh-CN.md)。
 
-### Environment Variables (Optional)
+### 环境变量（可选）
 
-API keys can be set as environment variables instead of passing them directly:
+也可以通过环境变量提供密钥。
 
 ```bash
 export GEMINI_API_KEY='your-gemini-key'
 export OPENAI_API_KEY='your-openai-key'
-export TAVILY_API_KEY='your-tavily-key'  # Optional, for web search
+export TAVILY_API_KEY='your-tavily-key'  # 可选，用于网页搜索
 ```
 
-## :open_file_folder: Repository Structure
+## 目录结构
 
-```
-pha/                 # Core multi-agent framework
-  agents/            # DataScience, DomainExpert, HealthCoach + orchestrator and baselines
-  prompts/           # Prompt templates per agent
-  llm/               # Provider-agnostic LLM backends (Gemini, OpenAI)
-  tools/             # Web search and Python sandbox tools
-  utils/             # Data loading, personas, parsing, model discovery
-  streaming.py       # Server-sent event emission for the web portal
-api/                 # FastAPI backend powering the web portal
-frontend/            # React + Vite web portal
-notebooks/           # Tutorial notebooks (see above)
-few_shots/           # Few-shot example notebooks for medical interpretation
-data/                # Sample synthetic persona data
-config/              # Settings and user study configuration
-tests/               # Unit and end-to-end tests
-```
+| 路径 | 内容 |
+| --- | --- |
+| `pha/agents/` | 三个专用 Agent、编排器和两种基线实现 |
+| `pha/prompts/` | 各 Agent 的提示词模板 |
+| `pha/llm/` | 模型提供商抽象层 |
+| `pha/tools/` | 网页搜索和 Python 沙箱 |
+| `pha/utils/` | 数据加载、用户档案、解析和模型发现 |
+| `pha/streaming.py` | 为 Web 门户发送服务端事件（SSE） |
+| `api/` | FastAPI 后端 |
+| `frontend/` | React 和 Vite 前端 |
+| `notebooks/` | 教程 Notebook |
+| `few_shots/` | 健康解读少样本示例 |
+| `data/` | 合成档案及健康样本 |
+| `config/` | 应用设置和用户研究配置 |
+| `tests/` | 单元测试和端到端测试 |
 
-For a deeper dive into the web portal architecture, see [PORTAL_README.md](PORTAL_README.md).
+Web 门户的实现细节见[开发指南](PORTAL_README.md)。
 
-## :gear: API Reference
+## API 参考
 
-The backend exposes a REST API for building custom frontends:
+| 端点 | 方法 | 功能 |
+| --- | --- | --- |
+| `/config` | GET | 获取所有配置选项 |
+| `/sessions` | POST | 创建对话会话 |
+| `/sessions/{id}` | GET | 获取会话状态 |
+| `/sessions/{id}` | DELETE | 结束会话 |
+| `/sessions/{id}/chat` | POST | 发送消息 |
+| `/sessions/{id}/messages` | GET | 获取消息历史 |
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/config` | GET | Get all configuration options |
-| `/sessions` | POST | Create a new chat session |
-| `/sessions/{id}` | GET | Get session state |
-| `/sessions/{id}` | DELETE | End a session |
-| `/sessions/{id}/chat` | POST | Send a message |
-| `/sessions/{id}/messages` | GET | Get message history |
+后端运行后，可以在 <http://localhost:8000/docs> 查看完整 API 文档。
 
-Full API documentation available at http://localhost:8000/docs when the server is running.
+<a id="scroll-citation"></a>
 
-## :scroll: Citation
+## 引用方式
 
-If you find our [paper](https://www.arxiv.org/abs/2508.20148) or this code release useful for your research, please cite our work.
+如果你在研究中使用了[论文](https://www.arxiv.org/abs/2508.20148)或这份代码，请引用以下条目。
 
 ```bibtex
 @article{heydari2025anatomy,
@@ -220,11 +211,11 @@ If you find our [paper](https://www.arxiv.org/abs/2508.20148) or this code relea
 }
 ```
 
-## :handshake: Contributing
+## 参与贡献
 
-For details on contributing to this repository, please see [CONTRIBUTING.md](https://github.com/Google-Health/consumer-health-research/blob/main/personal_health_agent/CONTRIBUTING.md).
+详见[贡献指南](CONTRIBUTING.md)。
 
-## :balance_scale: License
+## 许可证
 
 Copyright 2025 Google LLC
 
@@ -240,8 +231,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-## :warning: Disclaimers
+## 免责声明
 
-This is not an officially supported Google product. This project is not eligible for the [Google Open Source Software Vulnerability Rewards Program](https://bughunters.google.com/open-source-security). This project is intended for demonstration purposes only. It is not intended for use in a production environment.
+本项目不是 Google 官方提供支持的产品，也不属于 [Google 开源软件漏洞奖励计划](https://bughunters.google.com/open-source-security)的覆盖范围。代码仅用于演示，不适合部署在生产环境。
 
-NOTE: the content of this research code repository (i) is not intended to be a medical device; and (ii) is not intended for clinical use of any kind, including but not limited to diagnosis, prognosis, or treatment recommendations.
+此研究代码不属于医疗器械，也不适用于任何临床用途，包括诊断、预后判断和治疗建议。

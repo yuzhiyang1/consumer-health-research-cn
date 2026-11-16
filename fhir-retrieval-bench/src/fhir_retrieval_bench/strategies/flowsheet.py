@@ -123,7 +123,7 @@ def build_flowsheet(fhir_bundle: dict[str, Any]) -> str:
       patient_info["DOB"] = res.get("birthDate")
       patient_info["Gender"] = res.get("gender")
 
-  # Sort by date
+  # 按日期排序
   obs_rows.sort(key=lambda x: x[0])
   med_rows.sort(key=lambda x: x[0])
   cond_rows.sort(key=lambda x: x[0])

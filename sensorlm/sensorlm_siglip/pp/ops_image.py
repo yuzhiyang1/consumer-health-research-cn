@@ -65,7 +65,7 @@ def get_decode(channels=3, precise=False):
 
   def _decode(image):
     if precise:
-      return tf.image.decode_jpeg(  # Also supports png btw.
+      return tf.image.decode_jpeg(  # 还支持 png btw.
           image, channels=channels, dct_method="INTEGER_ACCURATE")
     else:
       return tf.io.decode_image(
@@ -94,11 +94,11 @@ def get_resize(size, method="bilinear", antialias=False):
 
   def _resize(image):
     """Resizes image to a given size."""
-    # Note: use TF-2 version of tf.image.resize as the version in TF-1 is
-    # buggy: https://github.com/tensorflow/tensorflow/issues/6720.
-    # In particular it was not equivariant with rotation and lead to the network
-    # to learn a shortcut in self-supervised rotation task, if rotation was
-    # applied after resize.
+    # 注:使用 TF-2 版本tf.image. 调整大小作为 TF-1中的版本是
+    # https://github.com/tensorflow/tensorflow/issues/6720. (英语).
+    # 特别是它与旋转不相称，导致网络
+    # 如果旋转是自控旋转任务，则在其中学习快捷键
+    # 调整大小后应用。
     dtype = image.dtype
     tf_dtype = tf.type_spec_from_value(image).dtype
     image = tf.image.resize(image, size, method=method, antialias=antialias)
@@ -107,9 +107,9 @@ def get_resize(size, method="bilinear", antialias=False):
   return _resize
 
 
-# This functionality is used by resize_small and resize_long. But we're not
-# registering it as a pp op yet, as there is no need for it. However, it can
-# probably be slightly generalized into "scale augmentation" eventually.
+# 这个功能被resize_small和resize_long使用。
+# 由于没有必要将其登记为第3页行动，因此可以将其登记为第3页行动。
+# 可能最终被略泛化为"规模增强".
 def _resize_factor(image, factor, method="area", antialias=True):
   """Resizes the image by a (float) `factor`, keeping the aspect ratio fixed."""
   h, w = tf.shape(image)[0], tf.shape(image)[1]
@@ -201,11 +201,11 @@ def get_inception_crop(size=None, area_min=5, area_max=100,
         tf.shape(image),
         tf.zeros([0, 0, 4], tf.float32),
         area_range=(area_min / 100, area_max / 100),
-        min_object_covered=0,  # Don't enforce a minimum area.
+        min_object_covered=0,  # 不要强制一个最小的区域。
         use_image_if_no_bounding_boxes=True)
     crop = tf.slice(image, begin, crop_size)
-    # Unfortunately, the above operation loses the depth-dimension. So we need
-    # to restore it the manual way.
+    # 不幸的是，上述行动失去了深度。
+    # 恢复手动方式。
     crop.set_shape([None, None, image.shape[-1]])
     if size:
       crop = get_resize(size, method, antialias)({"image": crop})["image"]
@@ -245,10 +245,10 @@ def get_decode_jpeg_and_inception_crop(size=None, area_min=5, area_max=100,
         tf.zeros([0, 0, 4], tf.float32),
         area_range=(area_min / 100, area_max / 100),
         aspect_ratio_range=(ratio_min, ratio_max),
-        min_object_covered=0,  # Don't enforce a minimum area.
+        min_object_covered=0,  # 不要强制一个最小的区域。
         use_image_if_no_bounding_boxes=True)
 
-    # Crop the image to the specified bounding box.
+    # 将图像切换到指定的边框。
     offset_y, offset_x, _ = tf.unstack(begin)
     target_height, target_width, _ = tf.unstack(crop_size)
     crop_window = tf.stack([offset_y, offset_x, target_height, target_width])

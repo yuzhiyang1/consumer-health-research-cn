@@ -17,26 +17,26 @@ class TimeRange(pydantic.BaseModel):
   start: Optional[datetime.datetime] = None
   end: Optional[datetime.datetime] = None
   query_type: Optional[str] = (
-      None  # e.g., 'recent', 'exact_date', 'range', 'since', 'before'
+      None  # 例如，“最近”、“exact_date”、“范围”、“自”、“以前”
   )
-  raw_query_span: Optional[str] = None  # The part of the query indicating time
+  raw_query_span: Optional[str] = None  # 查询中标明时间的部分
   anchor_event: Optional[str] = (
-      None  # Event name for relative queries (e.g., 'surgery')
+      None  # 相对查询的事件名称(如“ 外科手术 )
   )
 
 
 def get_temporal_intent(query: str, config: config_module.Config, anchor_date: datetime.datetime | None = None) -> TimeRange:
   """Extracts the time intent from the user's query using an LLM call."""
-  # Fast heuristic check to bypass LLM if no temporal markers are found.
-  # Matches years (19XX, 20XX, 21XX), dates (MM/DD/YYYY, YYYY-MM-DD, Month DDth),
-  # and common temporal keywords.
+  # 如果找不到时间标记，则快速休眠检查可以绕过 LLM。
+  # 对应年份(19XX,20XX,21XX),日期(MM/DD/YYYY,YYYY-MM-DD,月DDth),.
+  # 和常见的时间关键词。
   temporal_pattern = re.compile(
-      r'\b(19\d{2}|20\d{2}|21\d{2})\b|'  # Years 1900-2199
-      r'\b(?:1[0-2]|0?[1-9])[-/](?:3[01]|[12][0-9]|0?[1-9])[-/](?:19|20|21)\d{2}\b|'  # MM/DD/YYYY
+      r'\b(19\d{2}|20\d{2}|21\d{2})\b|'  # 年份 1900-2199
+      r'\b(?:1[0-2]|0?[1-9])[-/](?:3[01]|[12][0-9]|0?[1-9])[-/](?:19|20|21)\d{2}\b|'  # MM / DD / YYYY
       r'\b(?:19|20|21)\d{2}[-/](?:1[0-2]|0?[1-9])[-/](?:3[01]|[12][0-9]|0?[1-9])\b|'  # YYYY-MM-DD
       r'\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*'
-      r' \d{1,2}(?:st|nd|rd|th)?\b|'  # Jan 1st
-      r'\b(since|before|after|recent|last|ago|past|from|to|between|onwards)\b',  # Keywords
+      r' \d{1,2}(?:st|nd|rd|th)?\b|'  # 1月1日 (中文(简体) ).
+      r'\b(since|before|after|recent|last|ago|past|from|to|between|onwards)\b',  # 关键词
       re.IGNORECASE,
   )
 
@@ -81,4 +81,4 @@ User Query: {query}
     return response.parsed
   except Exception as e:  # pylint: disable=broad-except
     print(f'Error during temporal intent extraction: {e}')
-    return TimeRange()  # Return default instance on error
+    return TimeRange()  # 错误时返回默认实例

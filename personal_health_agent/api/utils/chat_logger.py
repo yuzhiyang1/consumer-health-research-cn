@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
-# Approximate token counter (avoids a tokenizer dependency)
+# 近似代币计数器( 避免对代币的依赖)
 # ---------------------------------------------------------------------------
 
 def _estimate_tokens(text: str) -> int:
@@ -33,7 +33,7 @@ def _estimate_tokens(text: str) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Stdout / stderr capture context manager
+# Stdout /stderr 抓取上下文管理器
 # ---------------------------------------------------------------------------
 
 class _OutputCapture:
@@ -71,8 +71,8 @@ class _OutputCapture:
         def flush(self):
             self._original.flush()
 
-        # Forward any other attribute lookups to the original stream so
-        # things like ``sys.stdout.encoding`` still work.
+        # 将其它属性查询转发到原始流中
+        # 诸如``sys.stdout.encoding``之类的东西仍然有效。
         def __getattr__(self, name):
             return getattr(self._original, name)
 
@@ -95,7 +95,7 @@ class _OutputCapture:
 
 
 # ---------------------------------------------------------------------------
-# Per-turn record
+# 每回合记录
 # ---------------------------------------------------------------------------
 
 class TurnRecord:
@@ -181,13 +181,13 @@ class ChatSessionLogger:
         self.persona_id = persona_id
         self.created_at = datetime.now()
 
-        # Build folder name: {baseline}_{model_short}_{YYYY-MM-DD_HH-MM-SS}
+        # 构建文件夹名称：{ 基线 } model_short {YYYY-MM -DD_HH-MM-SS }
         model_short = model_id.split("/")[-1] if "/" in model_id else model_id
         ts = self.created_at.strftime("%Y-%m-%d_%H-%M-%S")
         folder_name = f"{baseline}_{model_short}_{ts}"
 
         if logs_root is None:
-            # Default: <project_root>/chat_logs
+            # 默认：<project_root> /chat_logs (中文(简体) ).
             logs_root = Path(__file__).resolve().parent.parent.parent / "chat_logs"
 
         self.session_dir: Path = logs_root / self.user_id / folder_name
@@ -196,12 +196,12 @@ class ChatSessionLogger:
         self.summary_path = self.session_dir / "summary.json"
         self.raw_log_path = self.session_dir / "raw_conversation.log"
 
-        # State
+        # 状态
         self.turns: List[TurnRecord] = []
         self._current_turn: Optional[TurnRecord] = None
         self._capture: Optional[_OutputCapture] = None
 
-        # Write initial header to raw log
+        # 将初始信头写入原始日志
         with open(self.raw_log_path, "w", encoding="utf-8") as f:
             f.write(f"{'=' * 80}\n")
             f.write(f"PHA Chat Session — Raw Verbose Log\n")
@@ -215,11 +215,11 @@ class ChatSessionLogger:
             f.write(f"Created    : {self.created_at.isoformat()}\n")
             f.write(f"{'=' * 80}\n\n")
 
-        # Write initial summary
+        # 写入初始摘要
         self._write_summary()
 
     # ------------------------------------------------------------------
-    # Turn lifecycle
+    # 改变生命周期
     # ------------------------------------------------------------------
 
     def begin_turn(self, user_message: str) -> _OutputCapture:
@@ -232,7 +232,7 @@ class ChatSessionLogger:
         turn_number = len(self.turns) + 1
         self._current_turn = TurnRecord(turn_number, user_message)
 
-        # Write the user message to the raw log immediately
+        # 立即将用户消息写入原始日志
         with open(self.raw_log_path, "a", encoding="utf-8") as f:
             f.write(f"\n{'─' * 80}\n")
             f.write(f"TURN {turn_number}  [{datetime.now().isoformat()}]\n")
@@ -273,7 +273,7 @@ class ChatSessionLogger:
 
         self.turns.append(self._current_turn)
 
-        # Append to raw log — full verbose output + assistant response
+        # 附加到原始日志中— 完整的动词输出+助手响应
         with open(self.raw_log_path, "a", encoding="utf-8") as f:
             if raw_output:
                 f.write(raw_output)
@@ -290,7 +290,7 @@ class ChatSessionLogger:
         self._write_summary()
 
     # ------------------------------------------------------------------
-    # Summary I/O
+    # 总表一/O
     # ------------------------------------------------------------------
 
     def _build_summary(self) -> Dict[str, Any]:
@@ -302,7 +302,7 @@ class ChatSessionLogger:
         total_processing_ms = sum(t.processing_time_ms for t in self.turns)
         total_errors = sum(t.errors for t in self.turns)
 
-        # Aggregate agents and tools across all turns
+        # 跨所有转弯的聚合剂和工具
         all_agents: Dict[str, int] = {}
         all_tools: Dict[str, int] = {}
         for t in self.turns:
@@ -345,7 +345,7 @@ class ChatSessionLogger:
             json.dump(summary, f, indent=2, ensure_ascii=False)
 
     # ------------------------------------------------------------------
-    # Session close
+    # 会议闭幕
     # ------------------------------------------------------------------
 
     def close(self):
@@ -356,7 +356,7 @@ class ChatSessionLogger:
         """
         duration_s = (datetime.now() - self.created_at).total_seconds()
 
-        # Final raw log footer
+        # 最终原始日志页脚
         with open(self.raw_log_path, "a", encoding="utf-8") as f:
             f.write(f"\n{'=' * 80}\n")
             f.write(f"SESSION CLOSED  [{datetime.now().isoformat()}]\n")
@@ -364,7 +364,7 @@ class ChatSessionLogger:
                     f"Duration: {duration_s:.1f}s\n")
             f.write(f"{'=' * 80}\n")
 
-        # Final summary
+        # 最后摘要
         summary = self._build_summary()
         summary["session"]["status"] = "closed"
         summary["session"]["closed_at"] = datetime.now().isoformat()

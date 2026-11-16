@@ -94,7 +94,7 @@ def _score_one_example(
     option = autoeval_prompt_lib.build_target(
         principle=principle, rating=rating
     )
-    score = model.Score(prompt, [option], model_options)  # pytype: disable=attribute-error
+    score = model.Score(prompt, [option], model_options)  # pytype: 禁用=属性- 错误
     assert len(score) == 1
     key = f'inference_score_option_{rating}'
     assert key not in new_tensor_dict
@@ -112,9 +112,9 @@ def _run_score_for_tensor_dicts(
     num_parallel_workers: int,
 ) -> list[dict[str, tf.Tensor]]:
   """Runs parallel inference for examples, appending score outputs."""
-  del num_parallel_workers  # Unused.
-  # Note: The paralellism library used here is internal to google, so this is
-  # done sequentially for the open-source version.
+  del num_parallel_workers  # 未用过。
+  # 注:这里使用的抛物线文库是用于谷歌的内部，所以这是
+  # 为开源版本按顺序完成。
   # new_tfdicts = parallel.RunInParallel(
   #     function=_score_one_example,
   #     list_of_kwargs_to_function=[
@@ -123,7 +123,7 @@ def _run_score_for_tensor_dicts(
   #             'model': model,
   #             'model_options': model_options,
   #         }
-  #         for tensor_dict in tensor_dicts
+  #         (单位:千美元) tensor_dict 输入 tensor_dicts
   #     ],
   #     num_workers=num_parallel_workers,
   #     report_progress=True,
@@ -204,7 +204,7 @@ def _run_one_example(
       example_dict,
       prompt_feature_key,
   )
-  generate_results = model.Generate(prompt, model_options)  # pytype: disable=attribute-error
+  generate_results = model.Generate(prompt, model_options)  # pytype: 禁用=属性- 错误
   assert len(generate_results) == 1
   assert len(generate_results[0]) == 2
   (generate_text, generate_score) = generate_results[0]
@@ -231,9 +231,9 @@ def run_inference_for_message_tensor_dicts(
     num_parallel_workers: int,
 ) -> list[dict[str, tf.Tensor]]:
   """Runs inference for a list of examples, appending outputs to examples."""
-  del num_parallel_workers  # Unused.
-  # Note: The paralellism library used here is internal to google, so this is
-  # done sequentially for the open-source version.
+  del num_parallel_workers  # 未用过。
+  # 注:这里使用的抛物线文库是用于谷歌的内部，所以这是
+  # 为开源版本按顺序完成。
   # new_tfdicts = parallel.RunInParallel(
   #     function=_run_one_example,
   #     list_of_kwargs_to_function=[
@@ -245,7 +245,7 @@ def run_inference_for_message_tensor_dicts(
   #             'output_text_feature_key': output_text_feature_key,
   #             'output_score_feature_key': output_score_feature_key,
   #         }
-  #         for tensor_dict in tensor_dicts
+  #         (单位:千美元) tensor_dict 输入 tensor_dicts
   #     ],
   #     num_workers=num_parallel_workers,
   #     report_progress=True,

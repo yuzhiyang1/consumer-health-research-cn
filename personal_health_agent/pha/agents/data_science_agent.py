@@ -111,10 +111,10 @@ class DataScienceAgent:
         self.total_code_retries = total_code_retries
         self.max_code_update_cycles = max_code_update_cycles
         
-        # Initialize LLM as None - can be set via configure()
+        # 初始化 LLM作为无 - 可以通过配置设置()
         self.llm = None
         
-        # Initialize DataFrames as None - can be set via load_dataframes()
+        # 初始化 DataFrames作为无 - 可以通过 load_dataframes ()
         self.summary_df = None
         self.activities_df = None
         self.profile_df = None
@@ -123,7 +123,7 @@ class DataScienceAgent:
         self.dfs_info_str = ""
         self.python_sandbox = None
         
-        # Set up LLM backend if provided
+        # 如果提供则设置 LLM 后端
         if llm_backend is not None:
             self.llm = llm_backend
         elif settings is not None:
@@ -135,7 +135,7 @@ class DataScienceAgent:
                 max_tokens=settings.max_tokens,
             )
         
-        # Load data if provided
+        # 如果提供的话，则装入数据
         if all(df is not None for df in [summary_df, activities_df, profile_df, population_df]):
             self._setup_dataframes(summary_df, activities_df, profile_df, population_df)
         elif settings is not None:
@@ -155,16 +155,16 @@ class DataScienceAgent:
         self.profile_df = profile_df
         self.population_df = population_df
         
-        # Serialize DataFrames for prompts
+        # 提示的序列化 DataFrames
         self.dfs_str = serialize_dataframes(
             [self.summary_df, self.activities_df, self.profile_df, self.population_df],
             DFS_INFO,
         )
         
-        # Create DataFrame info string for codegen prompt
+        # 创建 DataFrame 代码提示的信息字符串
         self.dfs_info_str = self._serialize_df_info(DFS_INFO)
         
-        # Set up Python sandbox
+        # 设置 Python 沙盒
         self.python_sandbox = get_python_sandbox(
             dfs={
                 "summary_df": self.summary_df,
@@ -181,7 +181,7 @@ class DataScienceAgent:
         model_name: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 8192,
-        # Legacy parameter for backwards compatibility
+        # 向后兼容的遗留参数
         gemini_api_key: Optional[str] = None,
     ) -> "DataScienceAgent":
         """Configure the LLM backend.
@@ -197,19 +197,19 @@ class DataScienceAgent:
         Returns:
             Self for chaining.
         """
-        # Handle legacy parameter
+        # 处理遗留参数
         if gemini_api_key and not api_key:
             api_key = gemini_api_key
             if not provider:
                 provider = "gemini"
         
-        # If provider not specified, get from global config
+        # 如果未指定提供者，请从全局配置中获取
         from ..llm.config import get_config
         config = get_config()
         if not provider:
             provider = config.provider
             
-        # Update global configuration
+        # 更新全球配置
         from ..llm.config import configure_global
         configure_global(
             provider=provider,
@@ -218,7 +218,7 @@ class DataScienceAgent:
             temperature=temperature,
         )
         
-        # Initialize backend
+        # 初始化后端
         self.llm = get_llm_backend(
             backend_type=provider,  # type: ignore
             api_key=api_key,
@@ -247,7 +247,7 @@ class DataScienceAgent:
         profile_df = dataframes.get('profile')
         population_df = dataframes.get('population')
         
-        # Allow partial loading - use existing or empty DataFrames for missing
+        # 允许部分加载 -为缺失使用已有或空 DataFrames
         if summary_df is None:
             summary_df = self.summary_df if self.summary_df is not None else pd.DataFrame()
         if activities_df is None:
@@ -502,9 +502,9 @@ class DataScienceAgent:
 
         for _ in range(max_try - 1):
             if code_result.has_error():
-                # Real execution error: error-fixing debug prompt.
-                # Any pending refinement feedback is discarded — fixing the
-                # crash takes priority.
+                # 真正的执行错误： 错误修复调试提示。
+                # 任何有待改进的反馈都将被丢弃——确定
+                # 坠机优先。
                 code = self.debug_code(
                     approach=approach,
                     code_result=code_result,
@@ -512,8 +512,8 @@ class DataScienceAgent:
                 code_update_feedback = ""
                 code_result = self.execute_code(code)
             elif code_update_feedback:
-                # Code ran successfully but interpreter flagged a logical
-                # issue — use the dedicated refinement prompt.
+                # 代码运行成功，但解释器标记了逻辑
+                # 使用专门精细化的即时处理。
                 code = self.refine_code(
                     approach=approach,
                     code_result=code_result,
@@ -589,19 +589,19 @@ class DataScienceAgent:
         print(f"\n[DS:{ts}] ═══ DataScienceAgent.query ═══")
         print(f"[DS:{ts}] Question: {question[:100]}...")
         
-        # Step 1: Generate approach
+        # 步骤1:生成方法
         emit_step("DS", "Generating analysis approach...")
         print(f"[DS:{ts}] Step 1: Generating approach...")
         approach = self.generate_approach(question)
         print(f"[DS:{ts}] Approach ({len(approach)} chars): {approach[:200]}...")
         
-        # Step 2: Generate initial code
+        # 步骤 2:生成初始代码
         emit_step("DS", "Writing analysis code...")
         print(f"[DS:{ts}] Step 2: Generating code...")
         code = self.generate_code(question, approach)
         print(f"[DS:{ts}] Code ({len(code)} chars):\n{code[:300]}")
         
-        # Step 3: Execute code
+        # 步骤 3:执行代码
         emit_step("DS", "Executing analysis code...")
         print(f"[DS:{ts}] Step 3: Executing code...")
         code_result = self.execute_code(code)
@@ -609,14 +609,14 @@ class DataScienceAgent:
         output = code_result.execution_result.output
         print(f"[DS:{ts}] Execution: error={has_err}, output ({len(output)} chars): {output[:200]}...")
         
-        # Step 4: Debug loop
+        # 步骤 4:调试循环
         num_total_steps = 0
         code_update_feedback = ""
         
         while num_total_steps < self.total_code_retries:
             num_total_steps += 1
             
-            # If there's an error or feedback, try to fix
+            # 如果有错误或反馈，请试着修正
             if code_result.has_error() or code_update_feedback:
                 emit_step("DS", f"Debugging code (attempt {num_total_steps})...")
                 print(f"[DS:{ts}] Debug loop iteration {num_total_steps}: error={code_result.has_error()}, feedback={bool(code_update_feedback)}")
@@ -637,7 +637,7 @@ class DataScienceAgent:
                     if not code_result.has_error():
                         break
             
-            # Step 5: Interpret results
+            # 步骤5:解释结果
             emit_step("DS", "Interpreting results...")
             print(f"[DS:{ts}] Step 5: Interpreting results...")
             result_communication = self.interpret_results(
@@ -647,16 +647,16 @@ class DataScienceAgent:
                 execution_results=code_result.execution_result.output,
             )
             
-            # Check if interpretation requests code update
+            # 检查解释请求更新代码
             if result_communication.lstrip().startswith("[CODE UPDATE]"):
                 code_update_feedback = result_communication.split("[CODE UPDATE]")[-1].strip()
                 print(f"[DS:{ts}] Interpretation requested CODE UPDATE: {code_update_feedback[:100]}...")
             else:
-                # Success - return the summary
+                # 成功 - 返回摘要
                 print(f"[DS:{ts}] ✓ Final response ({len(result_communication)} chars): {result_communication[:200]}...")
                 return result_communication
         
-        # If we exhausted retries, return whatever we have
+        # 如果我们疲惫不堪，归还我们所拥有的一切
         print(f"[DS:{ts}] ✗ Exhausted {self.total_code_retries} retries, returning last result")
         return result_communication
     
@@ -681,7 +681,7 @@ class DataScienceAgent:
         code = self.generate_code(question, approach)
         code_result = self.execute_code(code)
         
-        # Simple version without retries for detailed output
+        # 简单版本，无需重试详细输出
         response = self.interpret_results(
             question=question,
             approach=approach,

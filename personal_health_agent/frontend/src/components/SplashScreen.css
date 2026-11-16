@@ -66,7 +66,7 @@
   opacity: 0.6;
 }
 
-/* Provider buttons */
+/* 提供者按钮 */
 .provider-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -134,7 +134,7 @@
   font-size: 0.9rem;
 }
 
-/* User ID input */
+/* 用户 ID 输入 */
 .user-id-section {
   background: #f0f9ff;
   padding: 1rem;
@@ -157,7 +157,7 @@
   border-color: var(--primary);
 }
 
-/* Select dropdown */
+/* 选择下拉 */
 .config-select {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -205,7 +205,7 @@
   color: var(--warning);
 }
 
-/* Fixed value display (for PHIA locked model) */
+/* 固定值显示(用于 PHIA 锁定模型) */
 .fixed-value {
   padding: 0.75rem 1rem;
   background: #f0f9ff;
@@ -215,7 +215,7 @@
   font-size: 0.95rem;
 }
 
-/* Baseline cards */
+/* 基线卡片 */
 .baseline-grid {
   display: flex;
   flex-direction: column;
@@ -279,7 +279,7 @@
   display: inline-block;
 }
 
-/* Persona details */
+/* 人物细节 */
 .persona-details {
   display: flex;
   gap: 1rem;
@@ -291,7 +291,7 @@
   color: var(--text-muted);
 }
 
-/* API Keys */
+/* API 密钥 */
 .api-key-group {
   background: var(--bg);
   padding: 1rem;
@@ -373,7 +373,7 @@
   border-radius: var(--radius);
 }
 
-/* Error message */
+/* 错误消息 */
 .config-error {
   background: #fef2f2;
   color: var(--error);
@@ -384,7 +384,7 @@
   border: 1px solid #fecaca;
 }
 
-/* Start button */
+/* 启动按钮 */
 .start-btn {
   width: 100%;
   padding: 1rem;
@@ -424,7 +424,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Config summary */
+/* 配置摘要 */
 .config-summary {
   display: flex;
   justify-content: center;
@@ -434,7 +434,7 @@
   color: var(--text-muted);
 }
 
-/* Model note for PHIA recommendation */
+/* PHIA建议示范说明 */
 .model-note {
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
@@ -445,13 +445,13 @@
   color: #92400e;
 }
 
-/* Saved indicator */
+/* 已保存指标 */
 .saved-indicator {
   color: #059669;
   font-weight: 500;
 }
 
-/* Footer */
+/* 页脚 */
 .splash-footer {
   padding: 1rem 2rem;
   text-align: center;

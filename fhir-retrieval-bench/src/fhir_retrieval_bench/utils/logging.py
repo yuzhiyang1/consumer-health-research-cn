@@ -35,8 +35,8 @@ class LogSuppressor(logging.Filter):
     if is_info_level and is_target_file:
       message = record.getMessage()
       if self._message_regex is None:
-        return False  # Drop this log message
+        return False  # 丢弃此日志消息
       elif self._message_regex.search(message):
         return False
 
-    return True  # Keep all other log messages
+    return True  # 保存所有其他日志消息

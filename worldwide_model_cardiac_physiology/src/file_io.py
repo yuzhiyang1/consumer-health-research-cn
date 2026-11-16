@@ -29,7 +29,7 @@ import os
 import shutil
 from typing import Any
 
-# Storage back-end; None = local filesystem.
+# 存储后端;无 = 本地文件系统。
 _env: Any = None
 
 _DATA_DIR_ENV_VAR = 'WPM_DATA_DIR'

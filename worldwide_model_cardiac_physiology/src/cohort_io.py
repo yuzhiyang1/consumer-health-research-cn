@@ -48,7 +48,7 @@ import pandas as pd
 
 import file_io as fio
 
-# Public CSV header -> column name used by the code.
+# 公共 CSV 标题 -> 代码使用的列名。
 PUBLIC_COLUMNS: Mapping[str, str] = {
     'id': 'user_id',
     'month': 'activity_period',
@@ -69,7 +69,7 @@ INTERNAL_TO_PUBLIC: Mapping[str, str] = {
     v: k for k, v in PUBLIC_COLUMNS.items()
 }
 
-# Columns that are optional in a public CSV and the value used when absent.
+# 在公众中可选的列CSV,以及缺席时使用的值。
 OPTIONAL_DEFAULTS: Mapping[str, str] = {'un_region': 'unknown'}
 
 METRIC_TARGET_COLS: Mapping[str, str] = {
@@ -88,7 +88,7 @@ _SEX_VALUES: Mapping[str, str] = {
     'f': 'Female',
 }
 _DEGREES_TO_E7 = 1e7
-# pandas' default missing-value tokens (``pd.read_csv`` documentation).
+# pandas]的默认缺失值符(``pd.read_csv``文档).
 _NA_TOKENS = (
     '',
     '#N/A',
@@ -255,8 +255,8 @@ def read_public_csv(
   with fio.open_file(path, 'r') as f:
     header = list(pd.read_csv(f, nrows=0).columns)
     f.seek(0)
-    # Only an empty country field is missing: pandas' default tokens would
-    # turn Namibia's 'NA' into NaN. Other columns keep the default tokens.
+    # 仅缺少一个空的国别字段：pandas 默认符号将
+    # 转动纳米比亚的“ NA '进 NaN。其他列保留默认的符号。
     na_values = {}
     for col in header:
       norm_col = str(col).strip().lower()

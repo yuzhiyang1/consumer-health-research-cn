@@ -46,7 +46,7 @@ from .personas import (
 )
 
 __all__ = [
-    # Data schemas
+    # 数据计划
     "DType",
     "ColumnInfo", 
     "DataFrameInfo",
@@ -57,17 +57,17 @@ __all__ = [
     "DFS_INFO",
     "PhdaDataFrame",
     "enforce_persona_schema",
-    # Data loading
+    # 数据加载
     "load_persona",
     "localize_to_date",
-    # Serialization
+    # 序列化
     "DataSerializer",
     "DataSerializerBase",
     "serialize_dataframes",
     "round_nested_floats",
-    # Parsing
+    # 分析
     "parse_code_output",
-    # Model discovery
+    # 模型发现
     "ModelInfo",
     "get_available_models",
     "get_gemini_models",
@@ -79,7 +79,7 @@ __all__ = [
     "KNOWN_GEMINI_MODELS",
     "KNOWN_OPENAI_MODELS",
     "KNOWN_ANTHROPIC_MODELS",
-    # Personas
+    # 个人
     "PersonaInfo",
     "discover_personas",
     "list_personas",

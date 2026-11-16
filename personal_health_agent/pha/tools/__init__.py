@@ -18,7 +18,7 @@ from .web_search import (
 )
 
 __all__ = [
-    # Python sandbox
+    # Python 沙盒
     "PythonSandbox",
     "PhdaPythonRequest",
     "PhdaPythonReply",
@@ -26,7 +26,7 @@ __all__ = [
     "ExecutionStatus",
     "get_python_sandbox",
     "PREAMBLE_TEMPLATE",
-    # Web search
+    # Web 搜索
     "WebSearchTool",
     "SearchResult",
     "DataCommonsClient",

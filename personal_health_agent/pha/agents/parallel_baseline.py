@@ -42,37 +42,37 @@ def clean_agent_response(text: str) -> str:
     if not text:
         return text
     
-    # Handle JSON-escaped newlines (convert \n literal to actual newlines)
+    # 处理 JSON - 逃逸的新线(将\n字转换为实际的新线)
     if '\\n' in text:
         text = text.replace('\\n', '\n')
     
-    # Remove surrounding quotes if the entire text is quoted
+    # 如果引用了整个文字，删除周围的引文
     text = text.strip()
     if (text.startswith('"') and text.endswith('"')) or (text.startswith("'") and text.endswith("'")):
         text = text[1:-1]
     
-    # Remove [SUMMARY] and [CODE UPDATE] tags (keep content after)
+    # 删除 SUMMARY ]和 CODEUPDATE 标记(在之后保留内容)
     text = re.sub(r'^\s*\[SUMMARY\]\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'^\s*\[CODE UPDATE\]\s*', '', text, flags=re.MULTILINE)
     
-    # Remove Coach: prefix at start of response
+    # 删除教练： 响应开始前缀
     text = re.sub(r'^Coach:\s*', '', text, flags=re.MULTILINE)
     
-    # Remove Expert: prefix at start of response  
+    # 删除专家： 响应开始前缀
     text = re.sub(r'^Expert:\s*', '', text, flags=re.MULTILINE)
     
-    # Remove [Finish]: prefix (ReAct final answer marker)
-    # Handle various formats: [Finish]:, [Finish]: , [Finish]:\n, etc.
+    # 删除 [完成]:前缀 (ReAct 最终答案标记)
+    # 处理各种格式：[完成]:,[完成]:,[完成]:,[完成]:\n等。
     text = re.sub(r'^\s*\[Finish\]:\s*', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\[Finish\]:\s*\n*', '', text)  # Also catch mid-text occurrences
+    text = re.sub(r'\[Finish\]:\s*\n*', '', text)  # 还要抓住中文本的出现
     
-    # Detect and reject system prompt leakage
-    # These patterns indicate the model is outputting its instructions instead of a response
-    # Normalize text for detection (handle ellipsis, extra spaces, etc.)
+    # 检测和拒绝系统即时泄漏
+    # 这些模式显示模型正在输出指令，而不是响应
+    # 将文本规范化以供检测(手性椭圆、额外空格等)
     text_normalized = text.lower().replace('…', '...').replace('  ', ' ')
     
     prompt_leak_indicators = [
-        # From orchestrator/domain expert prompts
+        # 来自编排器/域专家提示
         'you must do so safely and transparently',
         'quantify uncertainty when appropriate',
         'avoid diagnosing or prescribing',
@@ -80,7 +80,7 @@ def clean_agent_response(text: str) -> str:
         'you should use the provided tools',
         'if a tool fails or required user context',
         'explicitly state the limitation',
-        # From domain expert agent
+        # 从 领域专家 Agent
         'clinically accurate, evidence-based',
         'safety-conscious guidance',
         'explicitly separate objective findings',
@@ -91,20 +91,20 @@ def clean_agent_response(text: str) -> str:
         'request only the minimum additional data',
         'wearables, labs, imaging, notes',
         'urgent/emergent evaluation when red flags',
-        # Generic instruction patterns
+        # 一般教学模式
         'you will analyze and synthesize',
         'you will avoid',
         'you will cite',
         'you will request',
         'with the goal of delivering',
         'delivering clinically accurate',
-        # Tool instruction patterns (shouldn't be in final response)
+        # 工具指令模式( 不应该在最后回复中)
         'e.g., `tool_code` for math',
         'for math, `compare_blood_test',
         '`datacommons_natural_language_query`',
         'via the `search` tool',
         'use the provided tools',
-        # Instruction-style patterns
+        # 指令式图案
         'you are tasked with',
         'as a domain expert',
         'you are a domain expert',
@@ -123,13 +123,13 @@ def clean_agent_response(text: str) -> str:
                 "or switch to a different model."
             )
     
-    # Clean up any extra whitespace
+    # 清除任何额外的空白
     text = text.strip()
     
     return text
 
 
-# Try to import LLM backends
+# 尝试导入 LLM 后端
 _GENAI_AVAILABLE = False
 try:
     import google.genai as genai
@@ -144,7 +144,7 @@ from .health_coach_agent import HealthCoachAgent
 
 
 # =============================================================================
-# Synthesis Prompt
+# 综合提示
 # =============================================================================
 
 PARALLEL_SYNTHESIS_PROMPT = """
@@ -172,7 +172,7 @@ Synthesized Response:"""
 
 
 # =============================================================================
-# Parallel Baseline Class
+# 平行 基线 类
 # =============================================================================
 
 class ParallelMultiAgentBaseline:
@@ -199,22 +199,22 @@ class ParallelMultiAgentBaseline:
         """
         self.debug_verbose = debug_verbose
         
-        # Agent instances
+        # 代理实例
         self.data_science_agent: Optional[DataScienceAgent] = None
         self.domain_expert_agent: Optional[DomainExpertAgent] = None
         self.health_coach_agent: Optional[HealthCoachAgent] = None
         
-        # LLM for synthesis
+        # LLM用于合成
         self._llm_client = None
         self._model_name = None
         
-        # User context for synthesis (profile info)
+        # 合成用户上下文(简介信息)
         self.user_context: str = ""
         
-        # Conversation state
+        # 对话状态
         self.conversation_history: list = []
         
-        # Last response details (for debugging/analysis)
+        # 最后回复细节(用于调试/分析)
         self.last_ds_response: str = ""
         self.last_de_response: str = ""
         self.last_coach_response: str = ""
@@ -225,7 +225,7 @@ class ParallelMultiAgentBaseline:
         api_key: Optional[str] = None,
         provider: str = "gemini",
         model_name: Optional[str] = None,
-        # Legacy parameter for backwards compatibility
+        # 向后兼容的遗留参数
         gemini_api_key: Optional[str] = None,
     ) -> "ParallelMultiAgentBaseline":
         """Configure the baseline with API credentials.
@@ -241,12 +241,12 @@ class ParallelMultiAgentBaseline:
         """
         import os
         
-        # Handle legacy parameter
+        # 处理遗留参数
         if gemini_api_key and not api_key:
             api_key = gemini_api_key
             provider = "gemini"
         
-        # Get API key from environment if not provided
+        # 如果未提供则从环境获取 API 密钥
         env_vars = {
             "gemini": "GEMINI_API_KEY",
             "openai": "OPENAI_API_KEY",
@@ -256,7 +256,7 @@ class ParallelMultiAgentBaseline:
         if not api_key:
             api_key = os.environ.get(env_vars.get(provider, ""))
         
-        # Set default model names per provider
+        # 每个提供者设置默认模型名称
         default_models = {
             "gemini": "models/gemini-3.1-flash-lite-preview",
             "openai": "gpt-4o",
@@ -269,7 +269,7 @@ class ParallelMultiAgentBaseline:
         self._backend = None
         self._llm_client = None
         
-        # Use google-genai directly for Gemini
+        # 直接为 Gemini 使用 google- genai
         if provider == "gemini":
             if not _GENAI_AVAILABLE:
                 raise ImportError(
@@ -277,7 +277,7 @@ class ParallelMultiAgentBaseline:
                 )
             self._llm_client = genai.Client(api_key=api_key)
         else:
-            # Use the multi-provider backend for OpenAI/Anthropic
+            # 使用OpenAI/Anthropic的多提供者后端
             from ..llm.backend_multimodel import get_llm_backend
             self._backend = get_llm_backend(
                 backend_type=provider,
@@ -322,10 +322,10 @@ class ParallelMultiAgentBaseline:
             The LLM response text.
         """
         if self._backend:
-            # Use multi-provider backend (OpenAI/Anthropic)
+            # 使用多提供者后端 (OpenAI / Anthropic).
             return self._backend.generate(prompt)
         elif self._llm_client:
-            # Use google-genai for Gemini
+            # Gemini 使用google-genai
             response = self._llm_client.models.generate_content(
                 model=self._model_name,
                 contents=prompt,
@@ -474,10 +474,10 @@ class ParallelMultiAgentBaseline:
         print(f"[Parallel:{ts}] Query: {user_message[:100]}...")
         print(f"{'═' * 60}")
         
-        # Call all agents in parallel
+        # 将所有代理同时调用
         responses = self._call_agents_parallel(user_message)
         
-        # Store individual responses for debugging
+        # 存储调试的单个响应
         self.last_ds_response = responses.get("data_science", "")
         self.last_de_response = responses.get("domain_expert", "")
         self.last_coach_response = responses.get("health_coach", "")
@@ -489,7 +489,7 @@ class ParallelMultiAgentBaseline:
         print(f"[Parallel:{ts2}] DE: {len(self.last_de_response)} chars")
         print(f"[Parallel:{ts2}] Coach: {len(self.last_coach_response)} chars")
         
-        # Synthesize responses
+        # 合成响应
         synthesis = self._synthesize_responses(
             query=user_message,
             ds_response=self.last_ds_response,
@@ -502,7 +502,7 @@ class ParallelMultiAgentBaseline:
         ts3 = datetime.now().strftime("%H:%M:%S")
         print(f"[Parallel:{ts3}] Synthesis ({len(synthesis)} chars): {synthesis[:200]}...")
         
-        # Update conversation history
+        # 更新对话历史
         self.conversation_history.append({
             "role": "user",
             "content": user_message,
@@ -512,7 +512,7 @@ class ParallelMultiAgentBaseline:
             "content": synthesis,
         })
         
-        # Clean internal agent labels before returning to user
+        # 返回用户前的清洁内部代理标签
         cleaned = clean_agent_response(synthesis)
         print(f"[Parallel:{ts3}] ✓ Final cleaned ({len(cleaned)} chars): {cleaned[:200]}...")
         return cleaned
@@ -537,13 +537,13 @@ class ParallelMultiAgentBaseline:
         self.last_coach_response = ""
         self.last_synthesis = ""
         
-        # Reset health coach conversation too (it maintains state)
+        # 重置健康导师对话(它保持状态)。
         if self.health_coach_agent:
             self.health_coach_agent.reset_conversation()
 
 
 # =============================================================================
-# Factory Function
+# 工厂函数
 # =============================================================================
 
 def create_parallel_baseline(
@@ -553,7 +553,7 @@ def create_parallel_baseline(
     tavily_api_key: Optional[str] = None,
     settings: Optional[Any] = None,
     debug_verbose: bool = False,
-    # Legacy parameter for backwards compatibility
+    # 向后兼容的遗留参数
     gemini_api_key: Optional[str] = None,
 ) -> ParallelMultiAgentBaseline:
     """Create a fully configured ParallelMultiAgentBaseline.
@@ -583,7 +583,7 @@ def create_parallel_baseline(
         response = baseline.respond("How is my sleep?")
         ```
     """
-    # Handle legacy parameter
+    # 处理遗留参数
     if gemini_api_key and not api_key:
         api_key = gemini_api_key
         provider = "gemini"
@@ -591,41 +591,41 @@ def create_parallel_baseline(
     from config.settings import Settings
     from ..utils import load_persona
     
-    # Use provided settings or create default
+    # 使用已提供的设置或创建默认值
     if settings is None:
         settings = Settings()
     
-    # Load persona data for context
+    # 为上下文装入人称数据
     summary_df, activities_df, profile_df, population_df = load_persona(settings=settings)
     
-    # Create user context string from profile
+    # 从配置文件创建用户上下文字符串
     user_context = _create_user_context(profile_df, summary_df)
     
-    # Create Data Science Agent with multi-provider support
+    # 在多提供者支持下创建 数据科学 Agent
     ds_agent = DataScienceAgent(settings=settings)
     ds_agent.configure(api_key=api_key, provider=provider, model_name=model_name)
     
-    # Domain Expert Agent uses OneTwo which supports Gemini and OpenAI
+    # 领域专家 Agent使用OneTwo,支持Gemini和OpenAI.
     de_agent = None
     if provider in ("gemini", "openai"):
         de_agent = DomainExpertAgent(tavily_api_key=tavily_api_key)
         de_agent.get_agent(api_key=api_key, provider=provider, model_name=model_name)
-        # Pass user health data to domain expert
+        # 将用户健康数据传递给域专家
         health_data_md = f"## User Profile\n{profile_df.to_string()}\n\n## Recent Health Summary\n{summary_df.head(30).to_string()}"
         de_agent.set_user_health_data(health_data_md)
     else:
         print(f"Note: DomainExpertAgent uses OneTwo which supports Gemini and OpenAI. "
               f"Using {provider} without domain expert functionality (no Anthropic backend in OneTwo).")
     
-    # Create Health Coach Agent with multi-provider support
+    # 在多提供者支持下创建 健康教练 Agent
     coach_agent = HealthCoachAgent(simple_mode=True)
     coach_agent.configure(api_key=api_key, provider=provider, model_name=model_name)
     coach_agent.initialize_context(user_context)
     
-    # Create and configure baseline
+    # 创建和配置 基线
     baseline = ParallelMultiAgentBaseline(debug_verbose=debug_verbose)
     baseline.configure(api_key=api_key, provider=provider, model_name=model_name)
-    baseline.user_context = user_context  # Set context for synthesis prompt
+    baseline.user_context = user_context  # 设置合成提示的上下文
     baseline.set_agents(
         data_science_agent=ds_agent,
         domain_expert_agent=de_agent,

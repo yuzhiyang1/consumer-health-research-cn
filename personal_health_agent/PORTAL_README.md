@@ -1,63 +1,47 @@
-# PHA Portal - Developer Guide
+# PHA Web 门户开发指南
 
-Detailed documentation for the PHA web portal. For quick start instructions, see the main [README.md](README.md).
+本文介绍 Web 门户的结构和配置。启动方法见[项目 README](README.md)。
 
-## Architecture
+## 架构
 
-```
-┌─────────────────┐     ┌─────────────────┐
-│   Frontend      │────▶│   API Server    │
-│   (React)       │◀────│   (FastAPI)     │
-│   Port 3000     │     │   Port 8000     │
-└─────────────────┘     └─────────────────┘
-                               │
-                    ┌──────────┼──────────┐
-                    ▼          ▼          ▼
-              ┌─────────┐┌─────────┐┌─────────┐
-              │  PHA  ││ Parallel││  PHIA   │
-              │Orchestr.││ Baseline││ ReAct   │
-              └─────────┘└─────────┘└─────────┘
-```
+React 前端默认使用端口 3000，调用运行在端口 8000 的 FastAPI 服务。后端根据会话配置运行 PHA 编排架构、Parallel 并行基线或 PHIA 单 Agent ReAct 基线。
 
-## Project Structure
+## 目录结构
 
-```
-api/
-  main.py              # FastAPI application, session management
-frontend/
-  src/
-    App.jsx            # Main React component
-    components/
-      SplashScreen.jsx # Configuration screen
-      ChatInterface.jsx# Chat UI
-    components/*.css   # Component styles
-pha/
-  agents/              # Agent implementations
-  llm/                 # LLM backend abstraction
-  utils/               # Model discovery, utilities
-data/
-  sample/              # Default synthetic persona
-  */                   # Additional persona directories
-```
+| 路径 | 用途 |
+| --- | --- |
+| `api/main.py` | FastAPI 应用和会话管理 |
+| `frontend/src/App.jsx` | React 主组件 |
+| `frontend/src/components/SplashScreen.jsx` | 配置页面 |
+| `frontend/src/components/ChatInterface.jsx` | 聊天界面 |
+| `frontend/src/components/*.css` | 组件样式 |
+| `pha/agents/` | Agent 实现 |
+| `pha/llm/` | 大模型后端抽象层 |
+| `pha/utils/` | 模型发现及其他工具 |
+| `data/sample/` | 默认合成档案 |
+| `data/*/` | 其他档案目录 |
 
-## API Endpoints
+## API 端点
 
-### Configuration
-```
+### 获取配置
+
+```text
 GET /config
 ```
-Returns available providers, models, baselines, and personas.
 
-### Sessions
-```
+返回可用的模型提供商、模型、架构和用户档案。
+
+### 管理会话
+
+```text
 POST /sessions
 Body: {
   "provider": "gemini",
   "model_id": "models/gemini-2.0-flash",
   "baseline": "pha",
   "persona_id": "sample",
-  "gemini_api_key": "...",     // or openai_api_key
-  "tavily_api_key": "..."      // optional
+  "gemini_api_key": "...",     // 也可以使用 openai_api_key
+  "tavily_api_key": "..."      // 可选
 }
 Response: { "session_id": "uuid", ... }
 
@@ -72,103 +56,91 @@ GET /sessions/{id}/messages
 Response: { "messages": [...] }
 ```
 
-## Adding New Personas
+## 添加用户档案
 
-1. Create directory: `data/my_persona/`
-2. Add required CSV files:
-   - `summary.csv` - Daily health metrics
-   - `activities.csv` - Exercise records  
-   - `profile.csv` - Demographics
-   - `population_percentiles.csv` - Reference data (can copy from sample)
-3. Optionally add `description.txt` with persona description
-4. Restart the API server
+1. 创建目录 `data/my_persona/`。
+2. 添加 `summary.csv`（每日健康指标）、`activities.csv`（活动记录）、`profile.csv`（人口学信息）和 `population_percentiles.csv`（参考人群数据，可从样本复制）。
+3. 如需添加档案介绍，可创建 `description.txt`。
+4. 重启 API 服务。门户会自动发现新档案。
 
-The portal will automatically discover the new persona.
+## 模型提供商
 
-## Provider Support
+| 提供商 | 支持情况 | 说明 |
+| --- | --- | --- |
+| Gemini | 已支持 | 支持全部架构。 |
+| OpenAI | 已支持 | 通过 OneTwo 支持全部架构。 |
+| Anthropic | 即将支持 | 后端已就绪，界面入口暂未启用。 |
 
-| Provider | Status | Notes |
-|----------|--------|-------|
-| Gemini | ✅ Full | All baselines supported |
-| OpenAI | ✅ Full | All baselines supported via OneTwo |
-| Anthropic | 🚧 Coming Soon | Backend ready, UI disabled |
+## 环境变量
 
-## Environment Variables
-
-All API keys can be provided via the portal UI, but can also be set server-side:
+API 密钥可以在门户界面填写，也可以通过服务端环境变量设置。
 
 ```bash
-# LLM Providers
+# 模型提供商
 GEMINI_API_KEY=...
 OPENAI_API_KEY=...
 ANTHROPIC_API_KEY=...
 
-# Optional Services  
-TAVILY_API_KEY=...     # Web search in DomainExpertAgent
+# 可选服务：供领域专家 Agent 搜索网页
+TAVILY_API_KEY=...
 ```
 
-## Development
+## 本地开发
 
-### Frontend Development
+### 前端
 
 ```bash
 cd frontend
 npm install
-npm run dev          # Development server with hot reload
-npm run build        # Production build
-npm run preview      # Preview production build
+npm run dev          # 启动支持热重载的开发服务器
+npm run build        # 构建生产版本
+npm run preview      # 预览生产版本
 ```
 
-### Backend Development
+### 后端
 
 ```bash
-# Run with auto-reload
+# 启动支持自动重载的服务
 uvicorn api.main:app --reload --port 8000
 
-# Run tests
+# 运行测试
 pytest tests/
 
-# Type checking
+# 运行类型检查
 mypy pha/
 ```
 
-### Adding New Models
+### 添加新模型
 
-Models are automatically discovered from provider APIs when keys are available.
-Fallback model lists are defined in `pha/utils/model_discovery.py`.
+提供密钥后，应用会调用对应提供商的 API 自动发现模型。备用模型列表定义在 `pha/utils/model_discovery.py` 中。
 
-## User Study Mode
+## 用户研究模式
 
-When `GLOBAL_USER_STUDY_FLAG = True` in `api/main.py`, the splash screen hides provider, model, and API key selection. Defaults are loaded from `config/user_study_defaults.json` (gitignored).
+当 `api/main.py` 中的 `GLOBAL_USER_STUDY_FLAG = True` 时，配置页会隐藏提供商、模型和密钥选项。服务端从 Git 忽略的 `config/user_study_defaults.json` 读取默认值。
 
-**Setup:**
-1. Copy `config/user_study_defaults.example.json` to `config/user_study_defaults.json`
-2. Fill in `provider`, `model`, and `api_keys` for your chosen provider
-3. The API key stays on the server and is never sent to the frontend
+1. 将 `config/user_study_defaults.example.json` 复制为 `config/user_study_defaults.json`。
+2. 填写所用提供商的 `provider`、`model` 和 `api_keys`。
+3. 密钥仅存于服务端。开启用户研究模式后，`GET /user-study-defaults` 只返回 `{ provider, model }`。
 
-**Endpoint:** `GET /user-study-defaults` returns `{ provider, model }` when user study mode is enabled (API keys are never exposed).
+## 开展用户研究
 
-## For User Studies
+门户支持不同 Agent 架构的 A/B 测试。
 
-The portal is designed for A/B testing different agent architectures:
+- 使用不同的 `baseline` 值创建会话，便于随机分组。
+- 消息保存在各自的会话对象，可通过 `/sessions/{id}/messages` 读取。
+- 每条回复带有 `processing_time`，便于比较响应耗时。
+- 会话彼此独立，可在研究结束后删除。
 
-1. **Randomize Assignment**: Create sessions with different `baseline` values
-2. **Collect Data**: All messages stored in session objects via `/sessions/{id}/messages`
-3. **Measure Performance**: `processing_time` returned with each response
-4. **Clean Separation**: Each session is independent, can be deleted after study
+## 常见问题
 
-## Troubleshooting
+### 提示 API 密钥无效
 
-### "API key not valid" error
-- Ensure correct key format (Gemini: `AIza...`, OpenAI: `sk-...`)
-- Check provider selection matches the key entered
-- Try refreshing and re-entering the key
+确认密钥格式与所选提供商匹配。Gemini 密钥形如 `AIza...`，OpenAI 密钥形如 `sk-...`。可刷新页面后重新输入。
 
-### PHIA baseline fails
-- PHIA supports Gemini and OpenAI (uses OneTwo ReAct, which has no Anthropic backend)
-- Switch to PHA or Parallel baseline for Anthropic models
+### PHIA 基线无法运行
 
-### Frontend can't connect to API
-- Ensure API server is running on port 8000
-- Check CORS settings if running from different domain
-- Verify no firewall blocking localhost connections
+PHIA 使用 OneTwo ReAct，支持 Gemini 和 OpenAI。使用 Anthropic 模型时，选择 PHA 或 Parallel。
+
+### 前端连不上 API
+
+确认 API 服务正在监听端口 8000。前后端域名不同时，检查 CORS 设置，并确认防火墙允许本地连接。

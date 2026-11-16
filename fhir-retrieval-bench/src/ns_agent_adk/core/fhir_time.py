@@ -5,7 +5,7 @@ import datetime
 import re
 from typing import Any, NamedTuple
 
-# Dataclasses to simpler NamedTuples or classes to avoid external deps
+# 数据类更简单 NamedTuples 或类来避免外部阻隔
 
 
 class ClinicalInstant(NamedTuple):
@@ -38,20 +38,20 @@ class ClinicalTime(NamedTuple):
     if self.range:
       if self.range.end:
         return self.range.end.end_time
-      # If range has no end, fallback to start's end_time or just start_time?
-      # Usually if it's a range with only start, end is open or unknown.
-      # For sorting purposes, might use start_time.
-      # But let's check usage.
+      # 如果射程没有终点，则倒转开始的end_time或仅仅是start_time?.
+      # 通常如果它是一个只有起始的射程，则结束是开着的或未知的。
+      # 为了进行分类，可以使用start_time.
+      # 但让我们检查一下用法。
       return self.range.start.end_time
     return None
 
 
-# Enum-like constants for logic
+# 逻辑的像 Enum 的常数
 TYPE_INSTANT = 'ClinicalInstant'
 TYPE_RANGE = 'ClinicalRange'
 
 
-# Maps FHIR Resource Type -> (Clinical Time Type, Ordered List of FHIR Paths)
+# 地图 FHIR 资源类型 -> (临床时间类型，顺序列表 FHIR 路径)
 _CLINICAL_TIME_CONFIG = {
     'Patient': (None, []),
     'Encounter': (
@@ -141,13 +141,13 @@ def _parse_partial_date(
   year_str, month_str, day_str = groups
   year = int(year_str)
 
-  # Defaults for calculating the Start Time
+  # 计算起始时间的默认值
   month = int(month_str) if month_str else 1
   day = int(day_str) if day_str else 1
 
   start_time = datetime.datetime(year, month, day, tzinfo=datetime.timezone.utc)
 
-  # Calculate End Time based on precision provided
+  # 根据所提供的精确度计算结束时间
   if day_str:
     # Day (End of that specific day)
     end_time = start_time.replace(
@@ -188,7 +188,7 @@ def _parse_fhir_datetime(
 ) -> ClinicalInstant | None:
   """Parses a FHIR date/time string into a ClinicalInstant."""
   try:
-    # Regex for YYYY, YYYY-MM, or YYYY-MM-DD
+    # YYYY,YYYY-MM,或YYYY-MM-DD的备注。
     if match := re.fullmatch(r'^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$', date_str):
       return _parse_partial_date(match.groups(), fhir_path)
 
@@ -209,9 +209,9 @@ def get_clinical_time(
 
   config = _CLINICAL_TIME_CONFIG.get(resource_type)
   if not config:
-    # Fallback/Default behavior?
-    # Original code returns empty ClinicalTime if no config found
-    # But we want to be safe.
+    # 倒计时/ 过失行为？
+    # 原始代码返回空 ClinicalTime如果找不到配置
+    # 但我们想要安全
     return ClinicalTime()
 
   time_type, paths = config
@@ -229,5 +229,5 @@ def get_clinical_time(
         elif time_type == TYPE_RANGE:
           return ClinicalTime(range=ClinicalRange(start=instant))
 
-  # Check if we should log failure?
+  # 检查一下是否要登录失败？
   return ClinicalTime()

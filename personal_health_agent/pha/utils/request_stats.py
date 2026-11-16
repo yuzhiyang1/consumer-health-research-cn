@@ -18,12 +18,12 @@ class RequestStats:
         """Reset stats for a new request."""
         self.start_time = datetime.now()
         self.agents_called: List[str] = []
-        self.tools_used: Dict[str, int] = {}  # tool_name -> count
+        self.tools_used: Dict[str, int] = {}  # tool_name -> 计数
         self.errors = 0
     
     def record_agent(self, agent_name: str):
         """Record an agent call."""
-        # Clean up agent name
+        # 清理代理名称
         clean_name = agent_name.replace(" (MAIN)", "").replace(" (supporting)", "")
         if clean_name not in self.agents_called:
             self.agents_called.append(clean_name)
@@ -55,5 +55,5 @@ class RequestStats:
         print(f"{'═' * 60}\n")
 
 
-# Global stats tracker (reset at start of each request)
+# 全球数据跟踪器(在每个请求开始时重置)
 request_stats = RequestStats()

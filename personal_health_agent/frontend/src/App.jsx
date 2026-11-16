@@ -3,7 +3,7 @@ import SplashScreen from './components/SplashScreen'
 import ChatInterface from './components/ChatInterface'
 import './App.css'
 
-// API base URL - use proxy in dev
+// API 碱基 URL -在 dev中使用代理
 const API_BASE = '/api'
 const ACTIVE_SESSION_KEY = 'pha_active_session'
 
@@ -14,7 +14,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Fetch configuration on mount
+  // 挂载时获取配置
   useEffect(() => {
     fetchConfig()
   }, [])
@@ -53,10 +53,10 @@ function App() {
       if (!res.ok) throw new Error('Stored session is unavailable')
       const restoredState = await res.json()
 
-      // Validate that the restored session's model is still in the curated list
-      // for its provider. If it isn't (because we updated the curated set since
-      // the session was created), drop the session and force the user back to
-      // the splash screen — otherwise they'd be silently using a stale model.
+      // 校验恢复的会话模式是否还在目录中
+      // 如果不是的话(因为我们更新了自
+      // ),将会话放下并强迫用户返回到
+      // 喷射屏，不然他们会默默使用一个僵硬的模型。
       const restoredProvider = restoredState.config?.provider
       const restoredModel = restoredState.config?.model_id
       const cfg = latestConfig || config
@@ -100,7 +100,7 @@ function App() {
   const createSession = async (sessionConfig) => {
     try {
       setLoading(true)
-      // Extract userId from sessionConfig and save it
+      // 摘录userId从sessionConfig并保存它
       if (sessionConfig.user_id) {
         setUserId(sessionConfig.user_id)
       }
@@ -166,7 +166,7 @@ function App() {
           const errData = await res.json()
           detail = errData.detail || detail
         } catch {
-          // Keep default detail if response is not JSON.
+          // 如果响应不是JSON,则保留默认细节。
         }
         throw new Error(detail)
       }
@@ -184,7 +184,7 @@ function App() {
     }
   }
 
-  // Loading state
+  // 装入状态
   if (loading && !config) {
     return (
       <div className="app-loading">
@@ -194,7 +194,7 @@ function App() {
     )
   }
 
-  // Error state
+  // 错误状态
   if (error && !config) {
     return (
       <div className="app-error">

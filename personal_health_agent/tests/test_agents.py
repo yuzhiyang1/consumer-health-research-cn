@@ -16,7 +16,7 @@ import pandas as pd
 
 
 # =============================================================================
-# DataScienceAgent Tests
+# DataScienceAgent 测试
 # =============================================================================
 
 class TestDataScienceAgentUnit:
@@ -52,7 +52,7 @@ class TestDataScienceAgentUnit:
         from pha.agents import DataScienceAgent
         agent = DataScienceAgent()
         
-        # Should not raise
+        # 不应该加薪
         agent.load_dataframes(all_sample_dataframes)
     
     def test_has_query_method(self):
@@ -89,7 +89,7 @@ class TestDataScienceAgentPrompts:
         )
         
         assert "steps" in prompt.lower()
-        assert len(prompt) > 100  # Should be substantial
+        assert len(prompt) > 100  # 应该是实质性的
     
     def test_codegen_prompt_generation(self):
         """Agent generates code generation prompts correctly."""
@@ -117,7 +117,7 @@ class TestDataScienceAgentIntegration:
         from pha.agents import DataScienceAgent
         agent = DataScienceAgent()
         
-        # Should not raise
+        # 不应该加薪
         agent.configure(gemini_api_key=gemini_api_key)
     
     def test_simple_query(self, gemini_api_key, all_sample_dataframes):
@@ -131,7 +131,7 @@ class TestDataScienceAgentIntegration:
         
         assert response is not None
         assert len(response) > 0
-        # Response should mention steps or numbers
+        # 答复应提及步骤或编号
         assert "step" in response.lower() or any(c.isdigit() for c in response)
     
     def test_trend_query(self, gemini_api_key, all_sample_dataframes):
@@ -148,7 +148,7 @@ class TestDataScienceAgentIntegration:
 
 
 # =============================================================================
-# DomainExpertAgent Tests
+# DomainExpertAgent 测试
 # =============================================================================
 
 class TestDomainExpertAgentUnit:
@@ -200,16 +200,16 @@ class TestDomainExpertPrompts:
         """Reference range check function works."""
         from pha.prompts.domain_expert_prompts import check_reference_ranges
         
-        # Value within range
+        # 范围内的数值
         result = check_reference_ranges([[50, 40, 60]])
         assert len(result) == 1
         assert "within" in result[0][0].lower()
         
-        # Value above range
+        # 数值大于幅度
         result = check_reference_ranges([[70, 40, 60]])
         assert "outside" in result[0][0].lower() or "above" in result[0][1].lower()
         
-        # Value below range
+        # 数值低于范围
         result = check_reference_ranges([[30, 40, 60]])
         assert "outside" in result[0][0].lower() or "below" in result[0][1].lower()
 
@@ -225,7 +225,7 @@ class TestDomainExpertAgentIntegration:
         from pha.agents import DomainExpertAgent
         agent = DomainExpertAgent()
         
-        # Should not raise
+        # 不应该加薪
         result = agent.get_agent(gemini_api_key=gemini_api_key)
         assert result is not None
     
@@ -239,7 +239,7 @@ class TestDomainExpertAgentIntegration:
         
         assert response is not None
         assert len(response) > 0
-        # Should mention heart rate or bpm
+        # 应提及 心率 或 bpm
         assert "heart" in response.lower() or "bpm" in response.lower() or "beat" in response.lower()
     
     def test_with_user_data(self, gemini_api_key, sample_profile_df):
@@ -256,7 +256,7 @@ class TestDomainExpertAgentIntegration:
 
 
 # =============================================================================
-# HealthCoachAgent Tests
+# HealthCoachAgent 测试
 # =============================================================================
 
 class TestHealthCoachAgentUnit:
@@ -328,7 +328,7 @@ class TestHealthCoachAgentIntegration:
         from pha.agents import HealthCoachAgent
         agent = HealthCoachAgent(simple_mode=True)
         
-        # Should not raise
+        # 不应该加薪
         agent.configure(gemini_api_key=gemini_api_key)
     
     def test_coaching_query(self, gemini_api_key):
@@ -341,7 +341,7 @@ class TestHealthCoachAgentIntegration:
         
         assert response is not None
         assert len(response) > 0
-        # Should mention sleep-related advice
+        # 应该提到与睡眠有关的咨询
         assert "sleep" in response.lower() or "bed" in response.lower() or "rest" in response.lower()
     
     def test_goal_setting_query(self, gemini_api_key):
@@ -357,7 +357,7 @@ class TestHealthCoachAgentIntegration:
 
 
 # =============================================================================
-# LLM Backend Tests
+# LLM 后端测试
 # =============================================================================
 
 class TestLLMBackendUnit:
@@ -396,9 +396,9 @@ class TestLLMBackendIntegration:
         """Gemini backend can generate text."""
         from pha.llm import get_llm_backend
 
-        # Don't pin a specific model — let get_llm_backend pick the current
-        # default. Hardcoded names go stale fast (gemini-2.0-flash was retired
-        # to existing customers in early 2026).
+        # 不要给特定的模型定下钉子——让get_llm_backend选择电流。
+        # 默认。硬码名称会快速变质( gemini - 2.0 - flash 已退役)
+        # (b) 提前向现有客户2026提供。
         backend = get_llm_backend(
             backend_type="gemini",
             api_key=gemini_api_key,
@@ -411,7 +411,7 @@ class TestLLMBackendIntegration:
 
 
 # =============================================================================
-# Parallel Baseline Tests
+# 平行 基线 测试
 # =============================================================================
 
 @pytest.mark.agents
@@ -446,7 +446,7 @@ class TestParallelBaselineUnit:
         
         result = baseline.set_agents(data_science_agent=ds_agent)
         
-        assert result is baseline  # Method chaining
+        assert result is baseline  # 方法链
         assert baseline.data_science_agent is ds_agent
     
     def test_reset_conversation(self):
@@ -496,7 +496,7 @@ class TestParallelBaselineUnit:
 
 
 # =============================================================================
-# PHIABaseline Tests
+# PHIABaseline 测试
 # =============================================================================
 
 class TestPHIABaselineUnit:
@@ -550,11 +550,11 @@ class TestPHIABaselineUnit:
         
         sandbox = {"pd": pd, "np": np}
         
-        # Test simple expression
+        # 测试简单的表达式
         result = simple_python_executor("2 + 2", sandbox)
         assert "4" in result
         
-        # Test print statement
+        # 测试打印语句
         result = simple_python_executor("print('hello')", sandbox)
         assert "hello" in result
     
@@ -562,10 +562,10 @@ class TestPHIABaselineUnit:
         """tavily_search_func handles missing API key gracefully."""
         from pha.agents.phia_baseline import tavily_search_func
 
-        # The function falls back to os.getenv('TAVILY_API_KEY') when api_key
-        # is None, so we have to clear the env var to actually test the
-        # missing-key path. Without this, a developer who has TAVILY_API_KEY
-        # set in their shell silently turns this into a live search test.
+        # 函数在 api_key 时返回到 os. getenv(' TAVILY_API_KEY]。
+        # 没有，所以我们得清空内脏 来测试
+        # 缺少密钥路径。没有此选项，开发者将拥有 TAVILY_API_KEY。
+        # 他们的壳里静悄悄地 把这个变成一个现场搜索测试
         monkeypatch.delenv("TAVILY_API_KEY", raising=False)
 
         result = tavily_search_func("test query", api_key=None)
@@ -581,25 +581,25 @@ class TestPHIABaselineUnit:
         from pha.agents import PHIABaseline
         baseline = PHIABaseline()
         
-        # Test prefix removal
+        # 测试前缀删除
         assert baseline._clean_react_format("[Thought]: This is a thought") == "This is a thought"
         assert baseline._clean_react_format("[Finish]: Final answer") == "Final answer"
         
-        # Test inline marker removal - should truncate at [Act]:
+        # 测试内置标记去除 - 应在[法案]中切换：
         text_with_act = "Some analysis here\n[Act]: ```code```"
         result = baseline._clean_react_format(text_with_act)
         assert "[Act]" not in result
         assert "Some analysis here" in result
         
-        # Test code block removal
+        # 测试代码块删除
         text_with_code = "Analysis\n```python\ncode\n```\nMore text"
         result = baseline._clean_react_format(text_with_code)
         assert "```" not in result
         
-        # Test JSON detection
+        # 测试 JSON 检测
         assert baseline._clean_react_format('{"key": "value"}') == ""
         
-        # Test normal text passes through
+        # 测试普通文本通过
         assert baseline._clean_react_format("Normal response text") == "Normal response text"
     
     def test_is_complete_response_helper(self):
@@ -612,10 +612,10 @@ class TestPHIABaselineUnit:
         from pha.agents import PHIABaseline
         baseline = PHIABaseline()
         
-        # Complete responses
+        # 完整答复
         assert baseline._is_complete_response("Your average sleep is 7 hours per night, which is within the healthy range.") == True
         
-        # Incomplete responses
+        # 答复不完整
         assert baseline._is_complete_response("I need to analyze the data first") == False
         assert baseline._is_complete_response("[Act]: some code") == False
         assert baseline._is_complete_response("") == False

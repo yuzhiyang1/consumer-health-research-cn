@@ -87,11 +87,11 @@ METRIC_LONG_NAME: Dict[str, str] = {
     'hrv': 'Heart Rate Variability (HRV)',
 }
 
-# The table functions infer the stage winners (table stage -> model name) of
-# the given run with ``infer_stage_winners`` unless a mapping is passed. Table
-# stage 3 is pipeline stage 4 (geolocation), table stage 4 is pipeline stage 5
-# (temperature); pipeline stage 3 (day-length interactions) is not a reported
-# stage.
+# 表格功能推断出：
+# 与 ``infer_stage_winners`` 一起运行，除非通过映射。
+# 3是 流程 舞台 4 (地理),桌台舞台 4是 流程 舞台 5
+# (温度); 流程阶段 3 (日-日相互作用)不是报告
+# 阶段。
 
 STAGES: Tuple[int, ...] = (1, 2, 3, 4, 5)
 STAGE_SHORT_NAMES: Dict[int, str] = {
@@ -124,10 +124,10 @@ MONTH_NAMES: Tuple[str, ...] = (
     'Dec',
 )
 
-# Pipeline model name -> "table stage.candidate" enumeration used in the
-# candidate grid (``table_stage_of_model`` gives the stage; the day-length
-# forms are season candidates). Names outside this mapping are printed
-# verbatim.
+# 流程 模型名称 -> "表级.candidate" 用于
+# 候选网格( ``table_stage_of_model``) 给予舞台； 日长
+# 表格是季选。此映射以外的名称会被打印
+# 逐字记录。
 CANDIDATE_ENUMERATION: Dict[str, str] = {
     'Stage1_1.1_Linear': '1.1',
     'Stage1_1.2_Quadratic': '1.2',
@@ -156,7 +156,7 @@ CANDIDATE_ENUMERATION: Dict[str, str] = {
     'Stage6_6.3_Joint_Competition': '5.3',
 }
 
-# Design-matrix column (patsy atom) -> symbol used in the tables.
+# 设计- 矩阵列( pasy 原子) -> 表格中使用的符号。
 ATOM_SYMBOLS: Dict[str, str] = {
     'age_c': r'a',
     'age_sq_c': r'a^2',
@@ -185,12 +185,12 @@ ATOM_SYMBOLS: Dict[str, str] = {
     'month_sin_2': r'm_{\sin_2}',
     'month_cos_2': r'm_{\cos_2}',
 }
-# (sin column, cos column, period in months, symbol).
+# (单列,COS列，数月间，符号).
 _HARMONIC_PAIRS: Tuple[Tuple[str, str, int, str], ...] = (
     ('month_sin', 'month_cos', 12, r'h_1'),
     ('month_sin_2', 'month_cos_2', 6, r'h_2'),
 )
-# Substring of a term name -> predictor family (first match wins).
+# 名词的子字符串 -> 预测家族(第一对胜).
 _TERM_GROUP_RULES: Tuple[Tuple[str, str], ...] = (
     ('dl_monthly', 'Day Length'),
     ('avg_temp', 'Temperature'),
@@ -200,9 +200,9 @@ _TERM_GROUP_RULES: Tuple[Tuple[str, str], ...] = (
 )
 _OTHER_GROUP = 'Other'
 
-# OLS temperature residualisation: each monthly temperature variable is
-# regressed on latitude and the latitude x season harmonics; the residuals
-# enter the LME models as the temperature predictors.
+# OLS 温度残留:每个月温度变量是
+# 在纬度和纬度X季声波上倒退;残片
+# 输入 LME 模型作为温度预测器。
 OLS_TEMP_VARS: Tuple[str, ...] = (
     'avg_temp_max',
     'avg_temp_min',
@@ -217,7 +217,7 @@ OLS_TEMP_HEADERS: Dict[str, str] = {
     'avg_temp_min': r'\(T_{\min}\)',
     'avg_temp_mean': r'\(T_{\text{mean}}\)',
 }
-# (patsy term name, LaTeX row label) in table row order.
+# (patsy术语名，LaTeX行标签)按表格行顺序排列。
 OLS_TERM_LABELS: Tuple[Tuple[str, str], ...] = (
     ('Intercept', r'Intercept (\(\alpha_0\))'),
     ('abs_lat_e7_c', r'Abs Latitude Slope (\(\alpha_1\))'),
@@ -286,14 +286,14 @@ def _write_tex(latex: str, out_dir: Optional[str], label: str) -> None:
     f.write(latex)
 
 
-# Inline preview of a LaTeX table (notebook display) ---------------------------
+# LaTeX表的内置预览(注解显示)--------------------
 
 _RULE_RE = re.compile(
     r'\\(toprule|midrule|bottomrule|hline|addlinespace|cmidrule)(\[[^\]]*\])?'
     r'(\([^)]*\))?(\{[^}]*\})?'
 )
 _MULTICOLUMN_RE = re.compile(r'\\multicolumn\{(\d+)\}\{[^}]*\}\{')
-# A ``tabular`` opened and closed on one line is a stacked cell, not a table.
+# A ``tabular`` 打开和关闭在一条线上的是一个堆叠的单元格，而不是一个表。
 _NESTED_TABULAR_RE = re.compile(
     r'\\begin\{tabular\}(?:\[[^\]\n]*\])?'
     r'\{(?:[^{}\n]|\{[^{}\n]*\})*\}([^\n]*?)\\end\{tabular\}'
@@ -305,8 +305,8 @@ _WRAPPER_RE = re.compile(
 _SIMPLE_CMD_RE = re.compile(r'\\(?:[a-zA-Z]+)\*?')
 _INLINE_MATH_RE = re.compile(r'\\\(|\\\)|\$')
 _SPACES_RE = re.compile(r'\s+')
-# Math commands that appear in the row labels, mapped to Unicode for the
-# preview (anything else is dropped by _SIMPLE_CMD_RE).
+# 显示在行标签中的数学命令，映射到Unicode
+# 预览(其他东西由 _SIMPLE_CMD_RE ).
 _MATH_SYMBOLS: Dict[str, str] = {
     'alpha': 'α',
     'beta': 'β',
@@ -419,8 +419,8 @@ def table_preview(latex: str) -> pd.DataFrame:
   Returns:
     DataFrame of strings; empty if no ``tabular`` environment is found.
   """
-  # The column spec follows ``\begin{...}`` on the same line in every generator
-  # (``tabularx`` has two arguments and nested braces, so it is not parsed).
+  # 列光谱跟随 ``\begin{...}`` 在同一行上的每个生成器
+  # (``tabularx``有两个论据和嵌套，所以没有解析).
   latex = _NESTED_TABULAR_RE.sub(
       lambda m: m.group(1).replace(r'\\', ' '), latex
   )
@@ -594,7 +594,7 @@ def _fmt_criterion(value: float, thousands: bool = False) -> Optional[str]:
 
 
 _FORMULA_TOKEN_RE = re.compile(r'[A-Za-z_][A-Za-z0-9_.]*|\S')
-# Legacy aliases that may appear in stored formula strings.
+# 可能出现在存储的公式字符串中的遗留别名。
 _FORMULA_SYMBOLS: Dict[str, str] = {**ATOM_SYMBOLS, 'DL': 'd'}
 
 
@@ -754,10 +754,10 @@ def select_stage_winners(
   return out
 
 
-# Table stage -> prefix of the pipeline model names of its decision point.
-# Pipeline stage 3 (season x day-length interactions) is diagnostic: nothing
-# is carried forward, so it has no table column; its candidates are listed
-# with the season candidates (table stage 2) in the candidate grid.
+# 表级 -> 其决定点的流程模型名称的前缀。
+# 流程阶段 3(季节x日间互动)是诊断:无
+# 因此没有表格栏;其候选人被列出。
+# 与赛季候选人(表级2)在候选网格中。
 STAGE_MODEL_PREFIXES: Dict[int, str] = {
     1: 'Stage1_',
     2: 'Stage2_',
@@ -825,7 +825,7 @@ def infer_stage_winners(results_df: pd.DataFrame) -> Dict[int, str]:
       bic = pd.Series(np.nan, index=rows.index)
     if bic.notna().any():
       winners[stage] = str(rows.loc[bic.idxmin(), 'model'])
-    else:  # No usable BIC: keep the last candidate of the stage.
+    else:  # 无可用 BIC :保留舞台上最后一名候选人。
       winners[stage] = str(rows['model'].iloc[-1])
   return winners
 
@@ -845,7 +845,7 @@ def _unique_rows(results_df: pd.DataFrame) -> List[Row]:
 
 # --- 4. Main results table (tab:results_{metric}) --------------------------
 
-# (variable, label, is_intercept) - always printed, even if all cells empty.
+# (可变，标签，is_intercept) - 总是打印，即使所有的单元格都是空的。
 _MAIN_DEMOGRAPHICS: Tuple[Tuple[str, str, bool], ...] = (
     ('Intercept', r'\quad (Intercept)', True),
     ('age_c', r'\quad \(a\) (Age)', False),
@@ -854,7 +854,7 @@ _MAIN_DEMOGRAPHICS: Tuple[Tuple[str, str, bool], ...] = (
     ('age_c:gender_n', r'\quad \(a \cdot s\)', False),
     ('age_sq_c:gender_n', r'\quad \(a^2 \cdot s\)', False),
 )
-# (label, sin_var, cos_var, period)
+# (标签， sin_var , cos_var 期间)
 _MAIN_SEASONAL_HARMONICS: Tuple[Tuple[str, str, str, int], ...] = (
     (r'Annual Rhythm (\(h_1\))', 'month_sin', 'month_cos', 12),
     (r'Semi-annual Rhythm (\(h_2\))', 'month_sin_2', 'month_cos_2', 6),
@@ -893,7 +893,7 @@ _MAIN_SPATIAL_HARMONICS: Tuple[Tuple[str, str, str, int], ...] = (
         6,
     ),
 )
-# (LaTeX symbol, column stem) of the temperature predictors.
+# LaTeX符号，列干) 温度预测器。
 _TEMPERATURE_STEMS: Tuple[Tuple[str, str], ...] = (
     (r'T_{\text{mean}}', 'avg_temp_mean'),
     (r'T_{\max}', 'avg_temp_max'),
@@ -939,7 +939,7 @@ def _main_temperature_harmonic_rows() -> (
   return tuple(rows)
 
 
-# Stage 4 shows the raw term, stage 5 the residualised one.
+# 阶段4显示原始名词，阶段5 剩余名词。
 _MAIN_TEMPERATURE = _main_temperature_rows()
 _MAIN_TEMPERATURE_HARMONICS = _main_temperature_harmonic_rows()
 
@@ -1121,7 +1121,7 @@ def _main_table_rows(
     if any(c is not None for c in cells):
       lines.append(_main_row(label, cells))
 
-  # 1. Demographics (rows always printed).
+  # 1. 人口统计(总印刷).
   lines.append(_main_group_header('Demographics'))
   for var, label, is_intercept in _MAIN_DEMOGRAPHICS:
     lines.append(
@@ -1131,7 +1131,7 @@ def _main_table_rows(
         )
     )
 
-  # 2. Seasonality.
+  # 2 季节性。
   lines.append(r'        \midrule')
   lines.append(_main_group_header('Seasonality'))
   for label, sin_var, cos_var, period in _MAIN_SEASONAL_HARMONICS:
@@ -1143,7 +1143,7 @@ def _main_table_rows(
         ],
     )
 
-  # 3. Spatial geography.
+  # 3. 空间地理。
   lines.append(r'        \midrule')
   lines.append(_main_group_header('Spatial Geography'))
   for var, label in _MAIN_SPATIAL:
@@ -1157,7 +1157,7 @@ def _main_table_rows(
         ],
     )
 
-  # 4. Temperature (raw term in stage 4, residualised term in stage 5).
+  # 4. 温度(在阶段的起始词4,在阶段的剩余词5).
   lines.append(r'        \midrule')
   lines.append(_main_group_header('Temperature'))
   for raw_var, res_var, label in _MAIN_TEMPERATURE:
@@ -1184,7 +1184,7 @@ def _main_table_rows(
       cells.append(cell)
     add_if_any(label, cells)
 
-  # 5. Winner terms outside the fixed layout, by predictor family.
+  # 5. 固定布局外的赢家名词，通过预测家谱。
   extra = [t for t in fixed_effect_terms(rows) if t not in _main_layout_terms()]
   _warn_extra_terms(extra, 'results_table')
   for group, group_lines in _main_extra_term_rows(rows, extra, is_hrv):
@@ -1192,7 +1192,7 @@ def _main_table_rows(
     lines.append(_main_group_header(f'{group} (other terms)'))
     lines.extend(group_lines)
 
-  # 6. Variance components (SDs; proportional SDs for log-HRV).
+  # 6. 差异组件(SDs;比例 SDs,用于对数-HRV).
   lines.append(r'        \midrule')
   lines.append(r'        \textbf{Variance Components} & & & & & \\')
 
@@ -1226,7 +1226,7 @@ def _main_table_rows(
     icc_cells.append(None if icc is None else f'{icc:.3f}')
   lines.append(_main_row(r'\quad Adjusted ICC', icc_cells))
 
-  # 7. Fit diagnostics.
+  # 7. 适合诊断。
   lines.append(r'        \midrule \textbf{Model Fit Diagnostics} & & & & & \\')
   rmse_cells: List[Optional[str]] = []
   for r in rows:
@@ -1645,9 +1645,9 @@ def _parameter_specs_with_extras(
   return sorted(specs, key=lambda spec: order.index(spec.group))
 
 
-# Raw-unit rescaling of the unstandardised estimates: latitude is stored in
-# 1e-7 degrees (``lat_e7``), so per-unit coefficients are multiplied by 1e7
-# (1e14 for the square) to read per degree (per degree squared).
+# Raw-unit 重新调整未标准化的估计数:纬度储存在
+# 1e-7度(``lat_e7``),因此，单位系数乘以1e7
+# (平方(1e14)改为每度(每度)).
 _RAW_UNIT_SCALE: Dict[str, float] = {
     'lat_e7_c': 1e7,
     'abs_lat_e7_c': 1e7,

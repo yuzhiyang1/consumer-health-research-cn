@@ -13,7 +13,7 @@
 // limitations under the License.
 edition = "2023";
 
-// This proto is designed to support research on AI fitness coaches.
+// 这个原型旨在支持AI健身教练的研究。
 
 package phllm_protos;
 
@@ -21,43 +21,43 @@ import "third_party/tensorflow/core/example/feature.proto";
 
 option features.utf8_validation = NONE;
 
-// User supplied inputs relevant to the case study.
+// 用户提供了与案例研究相关的投入。
 message UserInput {
-  // 'Tags' for user interactions; a short name for this interaction.
-  // Example conceived tag: 'ask-user-for-sleep-perception'
-  // This is effectively a loosely typed enum to provide flexibility downstream.
+  // 用于用户交互的“ Tags” ;此交互的短名。
+  // 示例预想的标签：“任务用户对睡眠的认知”
+  // 这实际上是一个打字松散的圆柱，为下游提供了灵活性。
   string tag = 1;
 
-  // The prompt shown to the user to collect this feedback. This may not
-  // necessarily exist if the user provided data unprompted.
+  // 向用户显示收集反馈的提示。可能不会
+  // 如果用户提供的数据不及时，则必然存在。
   string prompt = 2;
 
-  // The response provided by the user (potentially freeform)
+  // 用户提供的答复(可能自由格式)
   string response = 3;
 }
 
-// Features associated with this case study. They can be tagged for namespacing.
-// We use TF Features to allow us to encode a dictionary of tensors, allowing
-// arbitrary data to be placed inside a feature.
+// 与本案例研究相关的特征，可以标记为命名间隔。
+// 我们使用 TF 特性让我们可以编码一个 百日词典，允许
+// 将任意数据放置在特性中。
 message Feature {
-  // A tag for this feature set: e.g. 'daily_summaries'
+  // 此特性集的标签:例如 ` daily_summaries'
   string tag = 1;
 
-  // This is just a map of string -> tf.Features.
-  // No explicit timestamp field has been provided. It is assumed that this will
-  // be embedded into the features.
+  // 这只是一个字符串地图 ->tf.Features.
+  // 未提供明确的时间戳字段。假定这将
+  // 被嵌入到特性中。
   tensorflow.Features tensors = 2;
 }
 
-// Top level case study data structure.
+// 顶级案例研究数据结构。
 message CaseStudy {
-  // An identifier for this case study.
+  // 本案例研究的标识符。
   string case_study_id = 1;
 
-  // Additional features available for this case study. This can include:
-  // Contextual data, or time series.
+  // 本案例研究可提供的其他特点包括：
+  // 上下文数据，或时间序列。
   repeated Feature contextual_features = 2;
 
-  // User inputs associated with this case study.
+  // 与本案例研究有关的用户投入。
   repeated UserInput user_inputs = 3;
 }

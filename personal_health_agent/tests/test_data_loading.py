@@ -60,13 +60,13 @@ class TestLoadPersona:
             temporally_localize=True,
         )
         
-        # Parse dates and check that max date is recent
+        # 分析日期并检查最大日期是否为最近
         if "date" in summary_df.columns:
             dates = pd.to_datetime(summary_df["date"])
             max_date = dates.max()
             today = pd.Timestamp.now().normalize()
             
-            # Max date should be within a day of today
+            # 最大日期应该就在今天的一天之内
             assert abs((max_date - today).days) <= 1
     
     def test_schema_enforcement_filters_columns(self, sample_data_dir):
@@ -80,7 +80,7 @@ class TestLoadPersona:
             temporally_localize=False,
         )
         
-        # Should have core summary columns
+        # 应有核心摘要栏
         assert "date" in summary_df.columns or len(summary_df.columns) > 0
     
     def test_returns_four_dataframes(self, sample_data_dir):

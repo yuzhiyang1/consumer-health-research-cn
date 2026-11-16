@@ -46,12 +46,12 @@ def parse_events(events: list[Any]) -> dict[str, Any]:
     if not events:
         return stats
 
-    # Calculate Total Duration
+    # 计算总期限
     start_time = events[0].timestamp
     end_time = events[-1].timestamp
     stats["aggregate_summary"]["total_duration_seconds"] = round(end_time - start_time, 2)
 
-    # Variables for tracking context growth
+    # 跟踪环境增长的变量
     previous_prompt_count = 0
     initial_prompt_count = 0
     total_growth = 0
@@ -64,7 +64,7 @@ def parse_events(events: list[Any]) -> dict[str, Any]:
             "step_number": i + 1,
             "role": role,
             "prompt_tokens_this_step": 0,
-            "context_growth_from_last_turn": 0,  # The Delta
+            "context_growth_from_last_turn": 0,  # 三角洲
             "tokens_generated_this_step": 0,
             "cumulative_context_size": 0,
             "tools_called": [],
@@ -72,7 +72,7 @@ def parse_events(events: list[Any]) -> dict[str, Any]:
             "is_text_response": False
         }
 
-        # 1. Extract Token Usage (Only present on 'model' turns usually)
+        # 1. 提取 Token Usage(通常只在"模版"转弯时出现)
         usage = getattr(event, 'usage_metadata', None)
         if usage:
             current_prompt_count = getattr(usage, 'prompt_token_count', 0)
@@ -83,26 +83,26 @@ def parse_events(events: list[Any]) -> dict[str, Any]:
             
             # --- CONTEXT VALIDATION LOGIC ---
             if initial_prompt_count == 0:
-                # This is the very first model turn
+                # 这是第一个模式转弯
                 initial_prompt_count = current_prompt_count
             else:
-                # Calculate how many new tokens were added since the last model turn
+                # 计算自上次模式转向以来新增了多少个符号
                 growth = current_prompt_count - previous_prompt_count
                 step_data["context_growth_from_last_turn"] = growth
                 total_growth += growth
                 
             previous_prompt_count = current_prompt_count
 
-            # Track peak tokens
+            # 音轨峰值符
             if total_tokens > stats["aggregate_summary"]["peak_cumulative_tokens"]:
                 stats["aggregate_summary"]["peak_cumulative_tokens"] = total_tokens
 
-            # Tokens generated natively during this step
+            # 此步骤中土生土长的托肯
             candidates = getattr(usage, 'candidates_token_count', 0)
             thoughts = getattr(usage, 'thoughts_token_count', 0)
             step_data["tokens_generated_this_step"] = candidates + (thoughts if thoughts else 0)
 
-        # 2. Extract Tool Calls, Responses, and Text
+        # 2. 提取工具调用，响应，和文本
         parts = getattr(content, 'parts', []) if content else []
         for part in parts:
             func_call = getattr(part, 'function_call', None)
@@ -123,7 +123,7 @@ def parse_events(events: list[Any]) -> dict[str, Any]:
         stats["steps"].append(step_data)
 
     # --- FINAL VALIDATION CHECK ---
-    # The initial baseline + all the chunks of context added over time MUST equal the final prompt size.
+    # 初始 基线 + 随时间推移添加的所有块上下文 MUST 等于最终的快速大小。
     final_prompt_count = previous_prompt_count
     is_valid = (initial_prompt_count + total_growth == final_prompt_count)
     
@@ -215,7 +215,7 @@ def _build_graph_agent(
           tools_handler.filter_graph_by_time
       ),
   }
-  # Prepare ADK FunctionTools dynamically based on configuration
+  # 以配置为基础动态地编写 ADK FunctionTools
   tools = [all_tools_map[tool_name] for tool_name in config.enabled_tools]
   if isinstance(anchor_date, datetime.datetime):
     current_time = anchor_date
@@ -313,7 +313,7 @@ def _build_graph_agent(
       tools=tools,
       before_model_callback=graceful_termination_callback,
       generate_content_config=generate_content_config,
-      # In case if we want to enable thinking with a built in planner:
+      # 以防我们想让设计师思考：
       # planner=built_in_planner.BuiltInPlanner(thinking_config=thinking_config),
   )
 
@@ -339,7 +339,7 @@ class NeuroSymbolicAgent:
     self.precomputed_node_embeddings = precomputed_node_embeddings
     self.user_context = user_context
 
-    # Resolve anchor_date
+    # 决断 anchor_date
     if anchor_date == "latest_resource":
       max_ts_dt = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
       for node in graph.get_all_nodes():
@@ -351,7 +351,7 @@ class NeuroSymbolicAgent:
     else:
       self.anchor_date = anchor_date
 
-    # Instantiate the agent
+    # 证明代理商
     self.agent = _build_graph_agent(
         graph,
         config,
@@ -386,7 +386,7 @@ class NeuroSymbolicAgent:
     if verbose:
       print(f"DEBUG: Prompt Length: {len(full_prompt)} chars")
 
-    # Create an ADK Runner
+    # 创建 ADK 运行器
     runner = runners.Runner(
         agent=self.agent,
         app_name="fhir_neuro_symbolic_app",
@@ -394,12 +394,12 @@ class NeuroSymbolicAgent:
         auto_create_session=True,
     )
 
-    # Run the agent in the sync simulator loop and collect events.
-    # We use the implicit runner method to avoid asyncio colab loop conflicts.
+    # 在同步模拟器循环中运行代理并收集事件。
+    # 我们用隐含的跑步方法 来避免Ayncio Colab循环冲突
     events = []
 
-    # We use a static id for simplicity and demonstration.
-    # In a full web app, the backend would supply unique session IDs.
+    # 我们使用静态的ID来进行简单和演示。
+    # 在全网应用中，后端会提供独特的会话IDs.
     run_config = RunConfig(max_llm_calls=self.config.max_agent_steps) if self.config.max_agent_steps is not None else None
     for event in runner.run(
         user_id="fhir_agent_user",
@@ -411,8 +411,8 @@ class NeuroSymbolicAgent:
     ):
       events.append(event)
 
-    # Abstract final response from the event stream. The last event might be an
-    # empty action event.
+    # 来自事件流的总结性最后回应。最后一个事件可能是
+    # 空动作事件。
     final_response = ""
     for event in reversed(events):
       if (
@@ -429,6 +429,6 @@ class NeuroSymbolicAgent:
           final_response = "".join(text_parts)
           break
     print("final_response", final_response)
-    # Return the response and the full interaction trace to power the
-    # visualizer UI
+    # 返回反应和全部互动追踪
+    # 可视化器 UI
     return final_response, events

@@ -21,14 +21,14 @@ import pandas as pd
 import requests
 from datetime import datetime
 
-# For notebook-based exemplar parsing (following PHIA pattern)
+# 用于基于笔记本的示例解析(遵循 PHIA 模式)
 try:
     import nbformat
     _NBFORMAT_AVAILABLE = True
 except ImportError:
     _NBFORMAT_AVAILABLE = False
 
-# Import shared request stats
+# 导入共享请求数据
 try:
     from ..utils.request_stats import request_stats
     _STATS_AVAILABLE = True
@@ -37,7 +37,7 @@ except ImportError:
 
 
 # =============================================================================
-# Tool Call Logging
+# 工具调用日志
 # =============================================================================
 
 def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str = None):
@@ -49,13 +49,13 @@ def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str 
         output: The tool output (will be truncated for display).
         error: Error message if the tool failed.
     """
-    # Record stats
+    # 记录数据
     if _STATS_AVAILABLE:
         request_stats.record_tool(tool_name, had_error=error is not None)
     
     timestamp = datetime.now().strftime("%H:%M:%S")
     
-    # Format inputs
+    # 格式输入
     input_str = ", ".join(f"{k}={repr(v)[:50]}" for k, v in inputs.items())
     
     print(f"\n{'─' * 60}")
@@ -65,7 +65,7 @@ def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str 
     if error:
         print(f"   ❌ Error: {error[:200]}")
     elif output is not None:
-        # Truncate output for display
+        # 显示的截断输出
         output_str = str(output)
         if len(output_str) > 300:
             output_str = output_str[:300] + "..."
@@ -75,10 +75,10 @@ def _log_tool_call(tool_name: str, inputs: dict, output: Any = None, error: str 
 
 
 # =============================================================================
-# OpenAI API Compatibility Patch
+# OpenAI API 兼容性补丁
 # =============================================================================
-# Newer OpenAI models require `max_completion_tokens` instead of `max_tokens`.
-# This patch ensures compatibility with libraries like onetwo.
+# 较新的OpenAI型号需要`max_completion_tokens`而不是`max_tokens`.
+# 此补丁确保了像一二这样的库的兼容性。
 
 _OPENAI_PATCHED = False
 
@@ -196,16 +196,16 @@ def _patch_openai_for_compatibility():
             model = kwargs.get('model', '')
             is_gpt5 = model and 'gpt-5' in model.lower()
             
-            # Note: reasoning_effort parameter only works with Responses API, not Chat Completions
-            # For Chat Completions, we rely on explicit prompting instead
+            # 注：reasoning_effort 参数只与响应API配合，而不是聊天补全
+            # 对于聊天完成，我们依靠明确的提示代替
             
-            # Save stop sequences for backup manual truncation
+            # 保存备份手动截断的停止序列
             saved_stop_sequences = kwargs.get('stop')
 
-            # GPT-5 reasoning models reject `stop` with HTTP 400. Strip it
-            # before sending so the request succeeds, and rely on the
-            # manual `_truncate_at_stop_sequences` post-processing below to
-            # honor the requested stop semantics on the returned content.
+            # GPT-5 推理模型拒绝 `stop` 与 HTTP 400.
+            # 在发送之前，请求是成功的，并依赖
+            # 手动 `_truncate_at_stop_sequences` 后处理
+            # 尊重返回内容上要求的停止语义。
             if is_gpt5 and 'stop' in kwargs:
                 kwargs.pop('stop')
 
@@ -218,11 +218,11 @@ def _patch_openai_for_compatibility():
                             if choice.message.content:
                                 content = choice.message.content
                                 
-                                # For GPT-5: backup manual truncate at stop sequences
+                                # GPT-5: 备份手动截断在停止序列
                                 if is_gpt5 and saved_stop_sequences:
                                     content = _truncate_at_stop_sequences(content, saved_stop_sequences)
                                 
-                                # Transform tool calls for OneTwo compatibility
+                                # 变形工具调用 OneTwo 兼容性
                                 content = _transform_tool_calls_for_onetwo(content)
                                 
                                 choice.message.content = content
@@ -237,11 +237,11 @@ def _patch_openai_for_compatibility():
         pass
 
 
-# Try to import onetwo components
-# Note: onetwo requires Python 3.12+ due to use of new type parameter syntax
+# 尝试导入一个 2 个组件
+# 注:由于使用新类型的参数语法，需要1个Python 3.12+
 _ONETWO_AVAILABLE = False
 _ONETWO_OPENAI_AVAILABLE = False
-_ONETWO_GENAI_AVAILABLE = False  # True if new GoogleGenAIAPI backend is available
+_ONETWO_GENAI_AVAILABLE = False  # 如果有新的 GoogleGenAIAPI 后端，则为真
 _ONETWO_IMPORT_ERROR = None
 try:
     from onetwo import ot
@@ -249,28 +249,28 @@ try:
     from onetwo.stdlib.tool_use import llm_tool_use
     from onetwo.stdlib.tool_use import python_tool_use
     
-    # Use GoogleGenAIAPI backend (new google.genai SDK, no deprecation warning,
-    # safety defaults to OFF for Gemini 2.5+ models)
+    # 使用 GoogleGenAIAPI 后端(新google.genai SDK,无贬值警告，
+    # Gemini2.5+模型的安全默认值为OFF
     try:
         from onetwo.backends import google_genai_api
         _ONETWO_GENAI_AVAILABLE = True
     except ImportError:
-        pass  # Will error clearly at backend construction time
+        pass  # 会在后端施工时间明显出错
     
     _ONETWO_AVAILABLE = True
     
-    # Try to import OpenAI backend as well
+    # 尝试导入 OpenAI 后端
     try:
         from onetwo.backends import openai_api
         _ONETWO_OPENAI_AVAILABLE = True
-        # Apply patch when OpenAI backend is available
+        # 当OpenAI 后端可用时应用补丁
         _patch_openai_for_compatibility()
     except ImportError:
-        pass  # OpenAI backend not available
+        pass  # OpenAI 后端不可用
 except ImportError as e:
     _ONETWO_IMPORT_ERROR = str(e)
 except SyntaxError as e:
-    # Python version too old (onetwo requires 3.12+)
+    # Python版本太老了(一二需要3.12+).
     import sys
     _ONETWO_IMPORT_ERROR = f"onetwo requires Python 3.12+, you have {sys.version}"
 except Exception as e:
@@ -282,11 +282,11 @@ from ..prompts.domain_expert_prompts import (
 )
 
 
-__version__ = "0.9.0"  # Clarified Domain Expert has no access to summary_df
+__version__ = "0.9.0"  # summary_df (中文(简体) ).
 
 
 # =============================================================================
-# Tool Examples
+# 工具示例
 # =============================================================================
 
 ORGANIC_SEARCH_TOOL_EXAMPLE = textwrap.dedent("""\
@@ -303,7 +303,7 @@ DC_EXAMPLE_RESPONSE = textwrap.dedent("""
 
 
 # =============================================================================
-# Preamble
+# 序言
 # =============================================================================
 
 CONTEXTUAL_REASONING_PREAMBLE_V1 = """\
@@ -459,7 +459,7 @@ summarization task:
 
 
 # =============================================================================
-# Domain Expert Agent Class
+# 领域专家 Agent 类
 # =============================================================================
 
 if _ONETWO_AVAILABLE:
@@ -510,7 +510,7 @@ if _ONETWO_AVAILABLE:
             Raises:
                 ValueError: If search_backend is "tavily" but no API key is provided.
             """
-            # Validate Tavily API key if that backend is selected
+            # 验证 Tavily API 密钥，如果选中后端
             if self.search_backend == "tavily":
                 api_key = self.tavily_api_key or os.environ.get("TAVILY_API_KEY")
                 if not api_key:
@@ -522,16 +522,16 @@ if _ONETWO_AVAILABLE:
                         "Get a Tavily API key at: https://tavily.com/"
                     )
             
-            # Try to load notebook-based exemplars (PHIA pattern)
+            # 尝试装入基于笔记本的示例( PHIA 模式)
             health_exemplars = []
             
             if exemplar_files:
-                # Use provided exemplar files
+                # 使用已提供的示例文件
                 health_exemplars = self._build_exemplars_from_notebooks(exemplar_files)
             else:
-                # Try to find default few_shots directory
+                # 尝试查找默认 few_shots目录
                 import glob
-                # Look for few_shots relative to this file or in common locations
+                # 查找此文件的 few_shots 或常见位置
                 possible_paths = [
                     os.path.join(os.path.dirname(__file__), '..', '..', 'few_shots', '*.ipynb'),
                     os.path.join(os.getcwd(), 'few_shots', '*.ipynb'),
@@ -543,15 +543,15 @@ if _ONETWO_AVAILABLE:
                         health_exemplars = self._build_exemplars_from_notebooks(found_files)
                         break
             
-            # Fall back to hardcoded exemplars if no notebooks found
+            # 如果找不到笔记本，则返回到硬编码实例
             if not health_exemplars:
                 health_exemplars = self._create_health_domain_exemplars()
             
-            # Get default ReAct exemplars for search/finish format reinforcement.
-            # python_tool_name is required but unused — pass a placeholder
-            # since tool_code is no longer available to this agent.
-            # Code execution is handled by the data_science_agent; the domain
-            # expert should rely on its computed insights instead.
+            # 获取默认 ReAct 实例用于搜索/完成格式加固。
+            # python_tool_name 需要但未使用——通过占位符
+            # 因为tool_code 不再可供这名特工使用。
+            # 代码执行由 data_science_agent 处理;域名
+            # 专家应依靠其计算出的见解。
             default_fewshots = react.default_react_exemplars(
                 python_tool_name="_unused",
                 search_tool_name="search",
@@ -559,7 +559,7 @@ if _ONETWO_AVAILABLE:
             )
             health_exemplars.extend(default_fewshots)
 
-            # Create the ReAct agent
+            # 创建 ReAct 代理
             domain_expert_agent = react.ReActAgent(
                 prompt=self.get_jinja_preamble_from_string(),
                 exemplars=health_exemplars,
@@ -616,14 +616,14 @@ if _ONETWO_AVAILABLE:
                 if not cells:
                     continue
                 
-                # Problem description is in the first cell
+                # 问题描述在第一个单元格
                 description_cell = cells.pop(0)
                 problem_description = "".join(description_cell.get("source", [])).strip()
                 problem_description = problem_description.lstrip("#").strip()
                 
                 planner_updates = []
                 
-                # Process cells in pairs (markdown thought + code action)
+                # 进程单元格成对( markdownthought + 代码动作)
                 i = 0
                 while i < len(cells):
                     if (i < len(cells) - 1 
@@ -633,14 +633,14 @@ if _ONETWO_AVAILABLE:
                         thought = "".join(cells[i].get("source", [])).strip()
                         code = "".join(cells[i + 1].get("source", [])).strip()
                         
-                        # Remove testing tags
+                        # 删除测试标记
                         code = code.replace('# @test {"skip": true}\n', "")
                         
-                        # Determine function to call based on code content
+                        # 根据代码内容确定调用函数
                         code_lower = code.lower()
                         if "search" in code_lower and code.strip().startswith("#"):
                             function_name = _SEARCH_TOOL_NAME
-                            # Extract query from # search('query')
+                            # 从# 搜索('query') 中提取查询
                             try:
                                 args = (code.split("'")[1],)
                             except IndexError:
@@ -652,7 +652,7 @@ if _ONETWO_AVAILABLE:
                             function_name = _PYTHON_TOOL_NAME
                             args = (code,)
                         
-                        # Get observation from output if available
+                        # 如果可用，可以从输出中获取观察
                         observation = ""
                         try:
                             outputs = cells[i + 1].get("outputs", [])
@@ -665,8 +665,8 @@ if _ONETWO_AVAILABLE:
                         except (KeyError, IndexError):
                             pass
                         
-                        # Format: MARKDOWN for tool_code, PYTHON for search
-                        # This matches PHIA's pattern
+                        # 格式：MARKDOWN,用于搜索 tool_code, PYTHON
+                        # 这符合 PHIA 的图案
                         fmt = (
                             llm_tool_use.ArgumentFormat.MARKDOWN
                             if function_name == _PYTHON_TOOL_NAME
@@ -689,14 +689,14 @@ if _ONETWO_AVAILABLE:
                     else:
                         i += 1
                 
-                # Check if last step should be marked as finished
+                # 检查最后一个步骤是否应该标记为已完成
                 if planner_updates and not planner_updates[-1].is_finished:
                     last_step = planner_updates[-1]
                     if (last_step.action 
                         and last_step.action.function_name == _PYTHON_TOOL_NAME):
                         action_code = last_step.action.args[0] if last_step.action.args else ""
                         
-                        # Check for print() indicating final answer
+                        # 检查显示最后答案的打印( )
                         if "print(" in action_code:
                             final_answer = None
                             if 'print("""' in action_code and '""")' in action_code:
@@ -744,7 +744,7 @@ if _ONETWO_AVAILABLE:
             
             exemplars = []
             
-            # Example 1: Metabolic health summary with search
+            # 例1:通过搜索实现元素健康摘要
             exemplars.append(react.ReActState(
                 inputs="Please summarize my metabolic health based on my blood test data.",
                 updates=[
@@ -779,7 +779,7 @@ if _ONETWO_AVAILABLE:
                 ],
             ))
             
-            # Example 2: Cholesterol interpretation with search
+            # 示例2:胆固醇解释与搜索
             exemplars.append(react.ReActState(
                 inputs="What do my cholesterol levels mean? LDL is 142, HDL is 52, total is 210.",
                 updates=[
@@ -823,7 +823,7 @@ if _ONETWO_AVAILABLE:
             model_name: Optional[str] = None,
             temperature: float = 0.6,
             exemplar_files: Optional[Sequence[str]] = None,
-            # Legacy parameter for backwards compatibility
+            # 向后兼容的遗留参数
             gemini_api_key: Optional[str] = None,
         ) -> "react.ReActAgent":
             """Configure and return the domain expert agent.
@@ -839,7 +839,7 @@ if _ONETWO_AVAILABLE:
             Returns:
                 Configured ReActAgent.
             """
-            # Handle legacy parameter
+            # 处理遗留参数
             if gemini_api_key and not api_key:
                 api_key = gemini_api_key
                 provider = "gemini"
@@ -871,7 +871,7 @@ if _ONETWO_AVAILABLE:
             if self.domain_expert_agent is None:
                 return "Error: Agent not initialized. Call get_agent() first."
             
-            # Append user health data if available
+            # 如果有用户健康数据，请予以补充
             if self.user_phr_data and self.user_phr_data != "\n<USER DATA NOT FOUND>\n":
                 full_prompt = (
                     prompt
@@ -886,7 +886,7 @@ if _ONETWO_AVAILABLE:
                     print(f"[DEBUG] Calling ReAct agent with prompt length: {len(full_prompt)}")
                     print(f"[DEBUG] Max steps: {self.domain_expert_agent.max_steps}")
                 
-                # Use return_final_state=True to get both answer and state (PHIA pattern)
+                # 使用 return_final_state = 需要同时获得答案和状态 (PHIA 模式)
                 result = ot.run(
                     self.domain_expert_agent(
                         inputs=full_prompt, 
@@ -894,7 +894,7 @@ if _ONETWO_AVAILABLE:
                     )
                 )
                 
-                # Result is (answer, state) tuple when return_final_state=True
+                # 结果是return_final_state=True时的(答，状态)Tuple
                 if isinstance(result, tuple) and len(result) == 2:
                     answer, state = result
                     
@@ -912,14 +912,14 @@ if _ONETWO_AVAILABLE:
                                     obs = step.observation[:200] if isinstance(step.observation, str) else str(step.observation)[:200]
                                     print(f"[DEBUG]   observation={obs}...")
                     
-                    # Validate and extract proper answer
+                    # 验证并提取正确答案
                     clean_answer = self._extract_clean_answer(answer, state, verbose)
                     
                     if return_state:
                         return clean_answer, state
                     return clean_answer
                 else:
-                    # Fallback for unexpected result format
+                    # 意外结果格式的倒置
                     if verbose:
                         print(f"[DEBUG] Unexpected result format: {type(result)}")
                     return self._validate_response(str(result))
@@ -942,14 +942,14 @@ if _ONETWO_AVAILABLE:
             Returns:
                 A validated, cleaned response.
             """
-            # Try the direct answer first
+            # 先试试直接回答
             if answer:
                 answer_str = str(answer)
                 validated = self._validate_response(answer_str)
                 if validated and self._is_valid_response(validated):
                     return validated
             
-            # Try to extract from finished steps
+            # 尝试从完成的步数中提取
             if hasattr(state, 'updates') and state.updates:
                 for step in reversed(state.updates):
                     if step.is_finished and step.observation:
@@ -958,7 +958,7 @@ if _ONETWO_AVAILABLE:
                         if validated and self._is_valid_response(validated):
                             return validated
                 
-                # Look for substantial observations (tool outputs)
+                # 寻找实质性意见(工具产出)
                 for step in reversed(state.updates):
                     if step.observation:
                         obs_str = str(step.observation)
@@ -967,7 +967,7 @@ if _ONETWO_AVAILABLE:
                             if validated and self._is_valid_response(validated):
                                 return validated
             
-            # Fallback — surface what went wrong
+            # 退缩——表面什么出了问题
             n_steps = len(state.updates) if hasattr(state, 'updates') and state.updates else 0
             step_summary = ""
             if hasattr(state, 'updates') and state.updates:
@@ -978,9 +978,9 @@ if _ONETWO_AVAILABLE:
                     parts.append(f"  Step {i}: thought=`{thought}` | obs=`{obs}`")
                 step_summary = "\n".join(parts)
             
-            # Print the full raw answer (no truncation) so backend errors from
-            # OpenAI/Anthropic/Gemini are diagnosable. The user-facing message
-            # below stays trimmed.
+            # 打印完整原始答案(不切换)因此后端错误
+            # OpenAI/Anthropic/Gemini可诊断. 用户信息解析。
+            # 继续修剪。
             print(f"[DE:extract] All extraction attempts failed. Steps={n_steps}, answer={repr(str(answer))}")
             return (
                 f"⚠️ **Domain Expert could not extract a valid answer** from the ReAct agent output.\n\n"
@@ -1002,16 +1002,16 @@ if _ONETWO_AVAILABLE:
             if not text:
                 return ""
             
-            # Remove ReAct markers
+            # 删除 ReAct 标记
             import re
             for marker in ['[Thought]:', '[Act]:', '[Observe]:', '[Finish]:']:
                 if text.startswith(marker):
                     text = text[len(marker):].strip()
             
-            # Remove code blocks
+            # 删除代码块
             text = re.sub(r'```[\w]*\n.*?```', '', text, flags=re.DOTALL)
             
-            # Remove inline ReAct markers
+            # 删除内线 ReAct 标记
             for marker in ['[Act]:', '[Thought]:', '[Observe]:']:
                 if marker in text:
                     text = text.split(marker)[0].strip()
@@ -1032,7 +1032,7 @@ if _ONETWO_AVAILABLE:
             
             text_lower = text.lower()
             
-            # Prompt leakage indicators
+            # 快速渗漏指标
             leakage_indicators = [
                 'you are tasked with',
                 'you must do so safely',
@@ -1047,14 +1047,14 @@ if _ONETWO_AVAILABLE:
                 if indicator in text_lower:
                     return False
             
-            # Incomplete response indicators
-            # Normalize text: remove backticks for pattern matching
+            # 答复指标不完整
+            # 文本规范化： 取消模式匹配的回转
             text_normalized = text_lower.replace('`', '').replace('  ', ' ')
             
             incomplete_indicators = [
                 '[act]:', '[thought]:', '```tool_code', '```python',
                 'i need to', 'i will', 'let me', "i'll",
-                'i need your', 'i need the user',  # Planning statements
+                'i need your', 'i need the user',  # 规划报表
                 'then use search', 'then use web', 'then use tool',
                 'from summary_df', 'from activities_df',
                 'and compute the', 'and calculate the',
@@ -1065,11 +1065,11 @@ if _ONETWO_AVAILABLE:
                 if indicator in text_normalized:
                     return False
             
-            # Check for planning statements that start with "I need"
+            # 检查从“我需要”开始的规划报表
             if text_normalized.strip().startswith('i need'):
                 return False
             
-            # Detect raw search results being returned instead of synthesized answer
+            # 检测原始搜索结果被返回而不是合成答案
             url_count = text_normalized.count('url:')
             relevance_count = text_normalized.count('relevance score:')
             if url_count >= 2 or relevance_count >= 2:
@@ -1085,7 +1085,7 @@ if _ONETWO_AVAILABLE:
             provider: str = "gemini",
             model_name: Optional[str] = None,
             temperature: float = 0.6,
-            # Legacy parameter for backwards compatibility
+            # 向后兼容的遗留参数
             gemini_api_key: Optional[str] = None,
         ) -> None:
             """Configure the LLM backend.
@@ -1097,22 +1097,22 @@ if _ONETWO_AVAILABLE:
                 temperature: Sampling temperature.
                 gemini_api_key: DEPRECATED - use api_key instead.
             """
-            # Handle legacy parameter
+            # 处理遗留参数
             if gemini_api_key and not api_key:
                 api_key = gemini_api_key
                 provider = "gemini"
             
-            # Update/Read from global configuration
+            # 更新/从全球配置读取
             from ..llm.config import configure_global, get_config
             
-            # If explicit args provided, update global config
-            if api_key or provider != "gemini":  # rough check if user tried to configure
-                # Note: valid providers for DE are limited, but we update global anyway
-                # defaulting provider to gemini if not passed is handled by the arg default,
-                # but if we are here we might want to respect global config if args are empty?
+            # 如果提供了明确的参数，请更新全局配置
+            if api_key or provider != "gemini":  # 粗略检查用户是否尝试配置
+                # 注意：DE 的有效供应商有限，但我们还是更新全局
+                # 默认提供商到基因组时，如果不通过则由参数默认处理，
+                # 但是，如果我们在这里，我们可能想要尊重全球配置，如果参数是空的？
                 pass
 
-            # Update global config if we have new values
+            # 如果我们有新值，更新全局配置
             configure_global(
                 provider=provider,
                 api_key=api_key,
@@ -1120,35 +1120,35 @@ if _ONETWO_AVAILABLE:
                 temperature=temperature,
             )
             
-            # Now read back fully resolved config
-            # But wait, configure_global doesn't overwrite if we pass Nones?
-            # Actually configure_global treats passed values as overrides.
-            # If we passed local args, global config is updated.
+            # 现在读回已完全解析的配置
+            # 但是，configure_global如果我们通过Nones,不覆盖？
+            # 实际上configure_global将过值视为覆数。
+            # 如果我们通过了本地参数，将更新全球配置。
             
             config = get_config()
-            # If arguments were None, use the config values
-            # (Note: configure_global handles None logic internally by trying to load from env,
-            # but if we didn't pass an API key and env is empty, detailed resolution happens here)
+            # 如果参数为无，请使用配置值
+            # (注：configure_global通过尝试从env加载，在内部处理无逻辑，
+            # 但如果我们没有通过 API 密钥和内存是空的，详细解析发生在这里).
             
             provider = config.provider
             api_key = config.api_key
             model_name = config.model_name
             
-            # Anthropic is now supported via our OneTwo-compatible
-            # AnthropicAPI wrapper (pha/llm/onetwo_anthropic.py). The
-            # construction branch below dispatches per provider.
+            # Anthropic现在通过我们的OneTwo - 兼容
+            # AnthropicAPI包装机(pha/llm/onetwo_anthropic.py).
+            # 建筑分公司低于每个供应商的发送量。
 
             if not api_key:
-                # One check before trying to instantiate
+                # 在尝试即时处理前先检查一次
                 env_vars = {"gemini": "GEMINI_API_KEY", "openai": "OPENAI_API_KEY"}
                 raise ValueError(
                     f"{provider.title()} API key required. Set {env_vars.get(provider, 'API_KEY')} "
                     f"environment variable."
                 )
             
-            # Configure backend based on provider
+            # 基于提供者配置后端
             if provider == "gemini":
-                # Add models/ prefix for Gemini if needed
+                # 必要时为 Gemini 添加模型/前缀
                 if not model_name.startswith("models/"):
                     model_name = f"models/{model_name}"
                 
@@ -1162,8 +1162,8 @@ if _ONETWO_AVAILABLE:
                 backend = google_genai_api.GoogleGenAIAPI(
                     api_key=api_key,
                     generate_model_name=model_name,
-                    # Pin chat model too — OneTwo verifies both; default is
-                    # `models/gemini-2.5-flash` which not all keys have.
+                    # Pin 聊天模式也——OneTwo 验证两者;默认为
+                    # `models/gemini-2.5-flash` 并不是所有的键有。
                     chat_model_name=model_name,
                     temperature=temperature,
                     threadpool_size=1,
@@ -1175,9 +1175,9 @@ if _ONETWO_AVAILABLE:
                         "OneTwo OpenAI backend not available. "
                         "Please update onetwo or use Gemini models for ReAct functionality."
                     )
-                # Reasoning / GPT-5 models only accept temperature=1.0 (the
-                # API default). Use that — it's the closest analog to the
-                # 0.7 we use for Gemini/Anthropic.
+                # 原因/GPT-5模型只接受温度=1.0(
+                # API 默认值。使用这个——它是最接近于
+                # 0.7,我们用于Gemini/Anthropic.
                 if model_name.startswith(("o1", "o3", "o4", "gpt-5")):
                     temperature = 1.0
                 backend = openai_api.OpenAIAPI(
@@ -1262,7 +1262,7 @@ if _ONETWO_AVAILABLE:
                 error_msg = None
                 
                 if self.search_backend == "tavily":
-                    # Use Tavily (API key already validated in setup_agent)
+                    # 使用 Tavily (API 键已在 setup_agent 中验证).
                     try:
                         from tavily import TavilyClient
                         api_key = self.tavily_api_key or os.environ.get("TAVILY_API_KEY")
@@ -1285,7 +1285,7 @@ if _ONETWO_AVAILABLE:
                         error_msg = str(e)
                         snippets.append(f"Tavily search error: {e}")
                 else:
-                    # Use DuckDuckGo
+                    # 使用 DuckDuckGo (美国英语).
                     try:
                         try:
                             from ddgs import DDGS
@@ -1304,7 +1304,7 @@ if _ONETWO_AVAILABLE:
                         error_msg = str(e)
                         snippets.append(f"DuckDuckGo search error: {e}")
                 
-                # Log result
+                # 日志结果
                 if error_msg:
                     _log_tool_call("search", {"query": query}, error=error_msg)
                 else:
@@ -1332,7 +1332,7 @@ if _ONETWO_AVAILABLE:
             """
             from ..tools.web_search import DataCommonsClient
             
-            # Create client instance
+            # 创建客户端实例
             dc_client = DataCommonsClient()
             
             def datacommons_natural_language_query(query: str) -> dict:
@@ -1359,7 +1359,7 @@ if _ONETWO_AVAILABLE:
                 
                 try:
                     result = dc_client.query(query)
-                    # Summarize result for logging
+                    # 汇总记录结果
                     if isinstance(result, dict):
                         title = result.get("title", "No title")
                         _log_tool_call("datacommons_natural_language_query", {"query": query}, 
@@ -1389,8 +1389,8 @@ if _ONETWO_AVAILABLE:
         def _setup_python_sandbox_tool(self) -> llm_tool_use.Tool:
             """Set up the Python code execution tool."""
             
-            # Use Python call format to match ReAct [Act]: expectations
-            # NOT markdown code blocks which confuse the parser
+            # 使用 Python 调用格式来匹配 ReAct [法案]:期望
+            # NOT 标记下代码块，混淆解析器
             python_sandbox_example = textwrap.dedent("""\
               tool_code("1 + 1") returns "2".
               tool_code("70 * 2.205") returns "154.35" (kg to lbs).
@@ -1411,7 +1411,7 @@ if _ONETWO_AVAILABLE:
                 result = None
                 error_msg = None
                 
-                # Try onetwo sandbox first
+                # 先试两瓶沙盒
                 try:
                     from onetwo.stdlib.code_execution import python_sandbox
                     sandbox = python_sandbox.PythonSandboxSafeSubset()
@@ -1423,13 +1423,13 @@ if _ONETWO_AVAILABLE:
                 except Exception:
                     pass
                 
-                # Fallback to restricted exec
+                # 回落到限制执行
                 try:
                     import io
                     import contextlib
                     import math
                     
-                    # Provide safe builtins for basic calculations
+                    # 为基本计算提供安全的内建结构
                     safe_builtins = {
                         'abs': abs, 'all': all, 'any': any, 'bool': bool,
                         'dict': dict, 'enumerate': enumerate, 'filter': filter,
@@ -1448,7 +1448,7 @@ if _ONETWO_AVAILABLE:
                     
                     result = output.getvalue()
                     if not result and local_vars:
-                        # Return last assigned variable
+                        # 返回上次指定的变量
                         result = str(list(local_vars.values())[-1])
                     result = result or "Code executed successfully"
                     _log_tool_call("tool_code", {"code": "..."}, output=result[:200] if len(str(result)) > 200 else result)
@@ -1524,7 +1524,7 @@ if _ONETWO_AVAILABLE:
             )
 
 else:
-    # Fallback implementation when onetwo is not available
+    # 在无法提供1至2个时退后执行
     
     class DomainExpertAgent:
         """Domain Expert Agent (fallback without onetwo).
@@ -1556,7 +1556,7 @@ else:
             provider: Optional[str] = None,
             model_name: Optional[str] = None,
             temperature: float = 0.6,
-            # Legacy parameter for backwards compatibility
+            # 向后兼容的遗留参数
             gemini_api_key: Optional[str] = None,
         ) -> "DomainExpertAgent":
             """Configure the agent backend.
@@ -1573,13 +1573,13 @@ else:
             """
             from ..llm import get_llm_backend
             
-            # Handle legacy parameter
+            # 处理遗留参数
             if gemini_api_key and not api_key:
                 api_key = gemini_api_key
                 if not provider:
                     provider = "gemini"
             
-            # If provider not specified, get from global config
+            # 如果未指定提供者，请从全局配置中获取
             from ..llm.config import get_config
             config = get_config()
             if not provider:
@@ -1606,7 +1606,7 @@ else:
                 print(f"[DE:{ts}] *** ERROR: Agent not configured")
                 return "Error: Agent not configured. Call get_agent() first."
             
-            # Build prompt with context
+            # 以上下文构建快速
             full_prompt = f"""You are a domain expert in internal medicine and health.
 Provide comprehensive, personalized answers to health questions.
 Use medical terminology but define technical terms.

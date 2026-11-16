@@ -23,11 +23,11 @@ from abc import ABC, abstractmethod
 
 
 # =============================================================================
-# OpenAI API Compatibility Patch
+# OpenAI API 兼容性补丁
 # =============================================================================
-# Newer OpenAI models (o1, o3, gpt-4o, etc.) require `max_completion_tokens`
-# instead of `max_tokens`. This patch ensures compatibility with libraries
-# like onetwo that still use the old parameter name.
+# 较新的OpenAI型号(o1,o3,gpt-4o等)需要`max_completion_tokens`.
+# 而不是 `max_tokens`。此补丁确保了与库的兼容性
+# 就像还有两个仍然使用旧参数名。
 
 _OPENAI_PATCHED = False
 
@@ -47,7 +47,7 @@ def _patch_openai_for_max_tokens():
         _original_create = completions.Completions.create
         
         def _patched_create(self, *args, **kwargs):
-            # Convert max_tokens to max_completion_tokens for newer models
+            # 将 max_tokens 转换为 max_completion_tokens 用于更新的模型
             if 'max_tokens' in kwargs and 'max_completion_tokens' not in kwargs:
                 kwargs['max_completion_tokens'] = kwargs.pop('max_tokens')
             return _original_create(self, *args, **kwargs)
@@ -55,48 +55,48 @@ def _patch_openai_for_max_tokens():
         completions.Completions.create = _patched_create
         _OPENAI_PATCHED = True
     except Exception:
-        pass  # If patching fails, continue without it
+        pass  # 如果补丁失败，继续没有它
 
 
-# Try to import onetwo, fall back to simple implementation if not available
-# Note: onetwo requires Python 3.12+ due to use of new type parameter syntax
+# 尝试导入 1 2,如果无法使用，返回到简单的执行中
+# 注:由于使用新类型的参数语法，需要1个Python 3.12+
 _ONETWO_AVAILABLE = False
 _ONETWO_OPENAI_AVAILABLE = False
-_ONETWO_GENAI_AVAILABLE = False  # True if new GoogleGenAIAPI backend is available
+_ONETWO_GENAI_AVAILABLE = False  # 如果有新的 GoogleGenAIAPI 后端，则为真
 _ONETWO_IMPORT_ERROR = None
 try:
     from onetwo import ot
     from onetwo.builtins import llm
     
-    # Use GoogleGenAIAPI backend (new google.genai SDK, no deprecation warning,
-    # safety defaults to OFF for Gemini 2.5+ models)
+    # 使用 GoogleGenAIAPI 后端(新google.genai SDK,无贬值警告，
+    # Gemini2.5+模型的安全默认值为OFF
     try:
         from onetwo.backends import google_genai_api
         _ONETWO_GENAI_AVAILABLE = True
     except ImportError:
-        pass  # Will use FallbackGeminiBackend (google.genai SDK) instead
+        pass  # 将使用 FallbackGeminiBackend (google.genai SDK)代替。
     
     _ONETWO_AVAILABLE = True
     
-    # Try to import OpenAI backend as well
+    # 尝试导入 OpenAI 后端
     try:
         from onetwo.backends import openai_api
         _ONETWO_OPENAI_AVAILABLE = True
-        # Apply patch when OpenAI backend is available
+        # 当OpenAI 后端可用时应用补丁
         _patch_openai_for_max_tokens()
     except ImportError:
-        pass  # OpenAI backend not available, will use fallback
+        pass  # OpenAI 后端不可用，将使用倒置
 except ImportError as e:
     _ONETWO_IMPORT_ERROR = str(e)
 except SyntaxError as e:
-    # Python version too old (onetwo requires 3.12+)
+    # Python版本太老了(一二需要3.12+).
     _ONETWO_IMPORT_ERROR = f"onetwo requires Python 3.12+, you have {__import__('sys').version}"
 except Exception as e:
     _ONETWO_IMPORT_ERROR = str(e)
 
 
 # =============================================================================
-# Backend Interface
+# 后端接口
 # =============================================================================
 
 class LLMBackend(ABC):
@@ -121,7 +121,7 @@ class LLMBackend(ABC):
 
 
 # =============================================================================
-# OneTwo-based Backends (preferred)
+# OneTwo -基于后端(首选)
 # =============================================================================
 
 if _ONETWO_AVAILABLE:
@@ -155,10 +155,10 @@ if _ONETWO_AVAILABLE:
             self.backend = google_genai_api.GoogleGenAIAPI(
                 api_key=self.api_key,
                 generate_model_name=model_name,
-                # OneTwo verifies both generate AND chat model names against
-                # client.models.list(); chat_model_name defaults to
-                # DEFAULT_GENERATE_MODEL (`models/gemini-2.5-flash`) which is
-                # not present on every key. Pin both to the user's selection.
+                # OneTwo 验证两个生成AND 聊天模式名称对齐
+                # 客户端. models.list (); chat_model_name 默认为
+                # DEFAULT_GENERATE_MODEL ( `models/gemini-2.5-flash` 即为
+                # 不在每个密钥上显示。绑定在用户的选中位置。
                 chat_model_name=model_name,
                 temperature=temperature,
                 max_tokens=max_tokens,
@@ -210,8 +210,8 @@ if _ONETWO_OPENAI_AVAILABLE:
                     "or pass api_key parameter."
                 )
             
-            # Reasoning / GPT-5 models only accept temperature=1.0 (their
-            # API default). Closest analog to the 0.7 we use elsewhere.
+            # 原因/ GPT-5 模型只接受温度= 1.0 (其
+            # API 默认值。我们用在其他地方的0.7最接近的模拟值。
             if model_name.startswith(("o1", "o3", "o4", "gpt-5")):
                 temperature = 1.0
             self.backend = openai_api.OpenAIAPI(
@@ -237,7 +237,7 @@ if _ONETWO_OPENAI_AVAILABLE:
 
 
 # =============================================================================
-# Fallback Backends (when onetwo is not available)
+# 后端(当无法使用 1 2 时)
 # =============================================================================
 
 class FallbackGeminiBackend(LLMBackend):
@@ -339,8 +339,8 @@ class FallbackOpenAIBackend(LLMBackend):
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-        # Reasoning / GPT-5 models reject any non-default temperature (only 1 is
-        # supported). Omit the kwarg for those so the API uses its default.
+        # 原因/ GPT-5 模型拒绝任何非默认温度(只有1)是
+        # 支持此选项。关闭这些选项的 kwarg ,因此 API 使用默认值。
         self._is_reasoning_model = (
             self.model_name.startswith("o1")
             or self.model_name.startswith("o3")
@@ -421,7 +421,7 @@ class FallbackAnthropicBackend(LLMBackend):
 
 
 # =============================================================================
-# Factory Functions
+# 工厂功能
 # =============================================================================
 
 def get_llm_backend(
@@ -452,7 +452,7 @@ def get_llm_backend(
     """
     backend_type = backend_type.lower()
     
-    # Default model names
+    # 默认模型名称
     defaults = {
         "gemini": "models/gemini-3.1-flash-lite-preview",
         "openai": "gpt-4o",
@@ -464,7 +464,7 @@ def get_llm_backend(
     
     model_name = model_name or defaults[backend_type]
     
-    # Use onetwo if available and preferred for Gemini (requires GoogleGenAIAPI)
+    # 如果有的话，请使用其中的一二个，并优先使用Gemini(要求GoogleGenAIAPI)
     if prefer_onetwo and _ONETWO_AVAILABLE and _ONETWO_GENAI_AVAILABLE and backend_type == "gemini":
         return OneTwoGeminiBackend(
             api_key=api_key,
@@ -473,7 +473,7 @@ def get_llm_backend(
             max_tokens=max_tokens,
         )
     
-    # Use onetwo if available and preferred for OpenAI
+    # 可用且首选 OpenAI 时使用 12
     if prefer_onetwo and _ONETWO_OPENAI_AVAILABLE and backend_type == "openai":
         return OneTwoOpenAIBackend(
             api_key=api_key,
@@ -482,7 +482,7 @@ def get_llm_backend(
             max_tokens=max_tokens,
         )
     
-    # Otherwise use fallback backends
+    # 否则会使用后端
     if backend_type == "gemini":
         return FallbackGeminiBackend(
             api_key=api_key,
@@ -507,10 +507,10 @@ def get_llm_backend(
 
 
 # =============================================================================
-# Convenience Functions
+# 方便职能
 # =============================================================================
 
-# Global backend instance
+# 全球后端实例
 _global_backend: Optional[LLMBackend] = None
 
 

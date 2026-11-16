@@ -1,14 +1,14 @@
-# FHIR Retrieval Bench
+# FHIR 检索 法官席
 
-[Link to code](../src/fhir_retrieval_bench/)
+[链接到代码](../src/fhir_retrieval_bench/)
 
-## Overview
+## 概览
 
-FHIR Retrieval Bench evaluates question-answering systems over patient FHIR
-(Fast Healthcare Interoperability Resources) data. Each run combines a
-**model**, a **dataset**, and a **strategy** fragment.
+FHIR 检索 座席评价问答系统比病人FHIR.
+(快速保健互操作性资源)数据。
+**模型**、一个**数据集**和一个**战略**碎片。
 
-The config of each fragment is defined as YAML file under `config/` and selected by CLI flags:
+每个片段的配置定义为YAML文件，在`config/`下，由CLI旗选中：
 
 ```text
 config/
@@ -17,117 +17,117 @@ config/
   strategy/   # how FHIR data is turned into context
 ```
 
-## How to run benchmarks
+## 如何运行 基准测试
 
-### 1. Choose a model and set up credentials
+### 1. 选择一个模型并设置证书
 
-Model fragments live under `config/model/`. Each fragment defines the
-**answer**, **judge**, and **embedding** models for a run; the answer and
-judge models are independent and can come from different providers.
+模型碎片在`config/model/`下存在。
+** 回答**、** 法官** 和** 将** 模型纳入运行；
+判断模型是独立的，可以来自不同的提供者。
 
-The simplest path is the default Google GenAI backend. Export one or more API
-keys as a comma-separated list. If you specify multiple API keys, the framework rotates across keys to handle quota issues better:
+最简单的路径是默认 Google GenAI 后端。导出一个或多个 API
+键作为逗号分隔的列表。如果指定多个 API 键，则框架会跨键旋转，以更好地处理配额问题：
 
 ```bash
 export GENAI_API_KEYS="genai_key1,genai_key2,genai_key3"
 ```
 
-For OpenAI-backed model fragments, export OpenAI keys the same way:
+对于 OpenAI - 备份的模型碎片，导出 OpenAI 密钥的方式相同：
 
 ```bash
 export OPENAI_API_KEYS="openai-key-1,openai-key-2"
 ```
 
-To run models against Vertex AI, ensure that your machine is gcloud authorized to your GCP project and export the `GCP_PROJECT_LOCATIONS` environment variable:
+要运行模型与 Vertex AI 相对应，请确保您的机器被 gloud 授权到您的 GCP项目，并导出 `GCP_PROJECT_LOCATIONS` 环境变量：
 
 ```bash
 export GCP_PROJECT_LOCATIONS="project_id_1:location_1,project_id_2:location_2"
 ```
 
-Each model YAML fragment under `config/model/` requires an explicit `backend: "vertex"` or `backend: "public"` parameter for each model (answer, judge, embedding) to control its hosting route.
+`config/model/`下的每个模型YAML片段，需要为每个模型(答案，判断，嵌入)有一个明确的`backend: "vertex"`或`backend: "public"`参数来控制其主机路线。
 
-See
-[docs/models.md](docs/models.md), for the full list of shipped model fragments, provider-routing rules, Vertex
-Model Garden setup, and the `thinking_config` semantics across providers.
+见
+[docs/models.md](docs/models.md),为运出的模型碎片的完整列表，提供商-路线规则,Vertex
+模范花园设置，和`thinking_config`语义跨供应商。
 
-#### Verify the credentials set up
+#### 核查证书的设置
 
 ```bash
-# Test Vertex API for Gemini Pro 3.1
+# 测试 Vertex API 用于 Gemini Pro 3.1 测试 高清 高清 高清 高清
 export GCP_PROJECT_LOCATIONS="project_id_1:location_1"
 python scripts/check_model_api.py --model gemini_3_flash_preview
 
-# Test GenAI API for Gemini Pro 3.1
+# 测试GenAI API,用于Gemini Pro 3.1.
 export GENAI_API_KEYS="genai_api_key"
 python scripts/check_model_api.py --model gemini_3_flash_preview
 
-# Test OpenAI API for GPT-5-mini
+# 测试 OpenAI API为 GPT-5 - mini.
 export GENAI_API_KEYS="genai_api_key" # You still need this because `config/model/gpt_5_mini` is set to use Gemini embeddings
 export OPENAI_API_KEYS="oai_api_key"
 python scripts/check_model_api.py --model gpt_5_mini
 
-# Test AnthropicVertex API for Sonnet 4.6
+# 测试 AnthropicVertex API为松网4.6.
 export GENAI_API_KEYS="genai_api_key" # You still need this because `config/model/claude_sonnet_4_6` is set to use Gemini embeddings
 export GCP_PROJECT_LOCATIONS="project_id_1:location_1"
 python scripts/check_model_api.py --model claude_sonnet_4_6
 ```
 
 
-### 2. Choose a dataset
+### 2. 选择一个数据集
 
-Dataset fragments live under `config/dataset/`. Each fragment points at a
-dataset root. By default, it is set to local `data/` directory with preprocessed datasets.
+数据集碎片在 `config/dataset/` 下存在。
+数据集 root。默认情况下，它被设定为带有预处理数据集的本地 `data/`目录。
 
-Shipped datasets:
+已装运的数据集：
 
-| Dataset          | Description              |
+| 数据集          | 说明              |
 | ---------------- | ------------------------ |
-| `ehrqa`          | EHRQA benchmark          |
-| `fhiragentbench` | FHIRAgentBench benchmark |
-| `medagentbench`  | MedAgentBench benchmark  |
-| `fhirpathqa`     | FHIRPathQA benchmark     |
+| `ehrqa`          | EHRQA 基准测试          |
+| `fhiragentbench` | FHIRAgentBench 基准测试 |
+| `medagentbench`  | MedAgentBench 基准测试  |
+| `fhirpathqa`     | FHIRPathQA 基准测试     |
 
-For exact file expectations, see
-[docs/datasets.md](docs/datasets.md).
+确切的文件预期值见
+[docs/datasets.md](docs/datasets.md) .
 
-#### Verify dataset setup
+#### 校验数据集设置
 
 ```bash
 python scripts/check_dataset.py --dataset fhiragentbench --limit 3 # check only first records for FHIRAgentBench dataset
 python scripts/check_dataset.py # check every fragment
 ```
 
-This validates that the configured path exists, records load, and the sample
-output looks reasonable.
+此验证已配置路径存在、 记录负载和样本
+输出看起来很合理。
 
-### 3. Choose a strategy
+### 3. 选择策略
 
-Strategy fragments live under `config/strategy/`. A strategy controls how a
-FHIR bundle is turned into LLM context.
+战略碎片在`config/strategy/`下存在。
+FHIR 捆绑变为LLM上下文。
 
-| Strategy        | Description                                               |
+| 战略        | 说明                                               |
 | --------------- | --------------------------------------------------------- |
-| `ontology_guided_retrieval` | Keyword-based scoring with medical ontology term expansion |
-| `fhir2text`     | Converts FHIR resources into natural-language text blocks |
-| `prefiltered`   | Status-based filtering and deduplication by concept code  |
-| `embedding_csl` | Embedding-based Serialization                 |
-| `ns_agent` | Graph-based representation of FHIR + Tool usage |
-| `flowsheet` | Tabular views of FHIR data using FHIRPath |
-| `flowsheet_agent` | Agentic representation of tabular FHIR data querying |
+| `ontology_guided_retrieval` | 基于关键词的评分与医学肿瘤学术语扩展 |
+| `fhir2text`     | 将 FHIR 资源转换为自然语言文本块 |
+| `prefiltered`   | 基于状态的过滤和按概念代码的复制  |
+| `embedding_csl` | 基于嵌入的序列化                 |
+| `ns_agent` | 基于图表的FHIR + 工具使用 |
+| `flowsheet` | 表格视图 FHIR 使用数据 FHIRPath |
+| `flowsheet_agent` | 表格FHIR数据查询代理代表 |
 
-For more detail (including how to precompute embeddings for
-`embedding_csl`), see [docs/strategies.md](docs/strategies.md).
+详情(包括如何预先计算嵌入
+`embedding_csl`,参见[docs/strategies.md](docs/strategies.md).
 
-### 4. Run an evaluation
+### 4. 运行评价
 
-The main CLI entry point is `scripts/run_evals.py`. It composes the
-specified strategy, dataset, and model fragments into a complete config,
-then runs the evaluation and writes results to the output directory.
+主要的CLI入口是`scripts/run_evals.py`.
+指定策略、数据集和模型片段组成一个完整的配置，
+然后运行评价，并将结果写入输出目录。
 
-#### Tiny run (recommended first)
+#### 微量运行(建议先行)
 
-Start with a small run so you can confirm everything works end to end before
-spending time or quota on a full benchmark:
+从小跑开始，你就可以确认一切工作到最后
+将时间或配额花在满额基准测试:
 
 ```bash
 export OUTPUT_DIR=./outputs/current_run
@@ -146,7 +146,7 @@ python scripts/run_evals.py \
   --shuffle --max_rows 3
 ```
 
-#### Full run
+#### 全程运行
 
 ```bash
 python scripts/run_evals.py \
@@ -156,10 +156,10 @@ python scripts/run_evals.py \
   --output_dir $OUTPUT_DIR
 ```
 
-#### Grid run
+#### 网格运行
 
-Any of `--strategy`, `--dataset`, and `--model` can take comma-separated
-values. The CLI runs the Cartesian product:
+任何一项 `--strategy` , `--dataset` ,以及 `--model` 可以采取逗号分隔
+CLI运行着笛卡尔产品：
 
 ```bash
 python scripts/run_evals.py \
@@ -171,39 +171,39 @@ python scripts/run_evals.py \
 ```
 
 <!-- * 
-* MedAgentBench: 148 ()
-* FHRAgentBench: 2,931
-* EHRQA: 5,133
-* FHIRPathQA: 2,025
+* MedAgentBench : 148 ()
+* FHRAgentBench : 2,931
+* EHRQA : 5,133
+* FHIRPathQA : 2,025
 
-(148 + 2931 + 5133 + 2025) x ( 1 models ) x ( 3 strategies ) x 2 sec -> 12 hours
-NS agent + embedding = 5x
+( 148 + 2931 + 5133 + 2025 ) x ( 1 型号 ) x ( 3 战略) x 2 秒 -> 12 小时
+NS 代理+嵌入=5x
 -->
 
-> Tip: This benchmark is primarily bottlenecked by API latency and quota, not local compute. You can usually run it on a gcloud instance rather than submitting a XManager job to leverage compute clusters. 
-> To execute the benchmark in parallel, you only need to submit a single command for each model using the `--num_workers` flag, to maximally utilize your quota for the model. The optimal number of workers depends on your specific API quota and strategy, so you may need to just give it a few tries and monitor quota error messages printed on the terminal or check out the API usage dashboards. 
+> 提示 :此基准测试 主要是被 API 的位数和配额，而不是本地计算。您通常可以在 gcloud 实例中运行它，而不是提交 XManager 任务来杠杆计算。
+> 要同时执行基准测试,您只需使用`--num_workers`旗向每个模型提交一个单一命令，以最大限度地利用您的配额。最佳工人人数取决于您特定的API配额和战略，所以您可能只需要给它几条尝试并监控终端上打印的配额错误信息或者检查API的使用仪表板。
 
-> Tip: Strategies like `ns_agent` invoke multiple LLM calls per example; for these, use a lower worker count to avoid rate-limiting. We recommend running `ns_agent` as a separate command with lower `--num_workers` than other strategies.
+> 提示 :如 `ns_agent` 等策略，引用多个 LLM 的调用;对于这些策略，请使用一个较低的工人计数来避免费率限制。我们建议运行 `ns_agent`作为单独的指令，比其他策略低 `--num_workers`。
 
-> Tip: You can set the `cache_dir` to save embedding caches. This is particularly useful when you run multiple experiments using the same embedding model. You can also run the `precompute_embeddings.py` script once to precompute the embeddings for the dataset.
+> 提示 :您可以设置 `cache_dir` 来保存嵌入缓存。如果您使用相同的嵌入模型进行多个实验，这样做特别有用。您还可以运行 `precompute_embeddings.py` 脚本一次，以预算数据集的嵌入。
 
-#### All CLI options are as follows:
+#### 所有CLI选项如下：
 
-| Flag            | Default                             | Description                                                 |
+| 旗帜            | 默认                             | 说明                                                 |
 | --------------- | ----------------------------------- | ----------------------------------------------------------- |
-| `--strategy`    | required                            | Strategy fragment name(s), comma-separated                  |
-| `--dataset`     | required                            | Dataset fragment name(s), comma-separated                   |
-| `--model`       | required                            | Model fragment name(s), comma-separated                     |
-| `--output_dir`  | `/tmp/fhir_retrieval_bench_results` | Directory for results and checkpoints                 |
-| `--cache_dir`  | `/tmp/fhir_retrieval_bench_cache` | Directory for saving cache (e.g., embeddings)                 |
-| `--num_workers` | `1`                                | Parallel threads per evaluation                             |
-| `--shuffle`     | `false`                             | Shuffle the eval instances                                 |
-| `--max_rows`    | all rows                            | Max records loaded. When `--shuffle` is set, shuffle is done first |
-| `--dry_run`     | `false`                             | Print composed configs without executing                    |
+| `--strategy`    | 所需经费                            | 战略片段名称，逗号分隔                  |
+| `--dataset`     | 所需经费                            | 数据集碎片名称，逗号分隔                   |
+| `--model`       | 所需经费                            | 模型碎片名称，逗号分隔                     |
+| `--output_dir`  | `/tmp/fhir_retrieval_bench_results` | 成果和检查站目录                 |
+| `--cache_dir`  | `/tmp/fhir_retrieval_bench_cache` | 保存缓存的目录(如嵌入)                 |
+| `--num_workers` | `1`                                | 每项评价的平行线索                             |
+| `--shuffle`     | `false`                             | 取消 eval 实例                                 |
+| `--max_rows`    | 所有行                            | 最大记录已装入。当设定 `--shuffle` 时，洗牌先完成 |
+| `--dry_run`     | `false`                             | 不执行而打印编组的配置                    |
 
-#### Precomputing Embeddings
+#### 预计算嵌入
 
-For strategies that require embedding calculations (e.g., `embedding_csl`, `ns_agent`), computing them sequentially during evaluations can become a bottleneck. You can precompute embeddings in advance for a dataset using the `precompute_embeddings.py` script:
+对于需要嵌入计算的战略(例如，`embedding_csl`,`ns_agent`),在评价过程中依次计算它们会成为一个瓶颈。您可以预先为使用`precompute_embeddings.py`脚本的数据集进行嵌入计算：
 
 ```bash
 python scripts/precompute_embeddings.py \
@@ -213,16 +213,16 @@ python scripts/precompute_embeddings.py \
     --cache_dir=/tmp/fhir_retrieval_bench_cache
 ```
 
-* `--strategy`: The strategy config fragment names to precompute embeddings for (default: `embedding_csl,ns_agent`).
-* `--dataset`: The dataset name to compute embeddings for (e.g., `ehrqa`, `fhiragentbench`).
-* `--embedding_model`: The embedding model name.
-* `--cache_dir`: Target directory to save cached embeddings (default: `/tmp/fhir_retrieval_bench_cache`).
+* `--strategy`:用于预计算嵌入的策略配置片段名称(默认：`embedding_csl,ns_agent`).
+* `--dataset`:用于计算嵌入的数据集名称，用于(例如`ehrqa`,`fhiragentbench`.
+* `--embedding_model`:嵌入型号名称。
+* `--cache_dir`:用于保存缓存嵌入的目标目录(默认：`/tmp/fhir_retrieval_bench_cache`.
 
-#### Output directory structure
+#### 输出目录结构
 
-By default, results are written to `/tmp/fhir_retrieval_bench_results/`
-(override with `--output-dir`). Each run writes three files, all keyed by the
-same:
+默认情况下，结果会被写入 `/tmp/fhir_retrieval_bench_results/`
+(由 `--output-dir` 覆盖。每个运行会写三个文件，全部由 $ 键
+相同：(中文(简体) ).
 
 ```text
 <output-dir>/<dataset>_<strategy>_<answer-model>_<sha6>/
@@ -231,16 +231,16 @@ same:
   .checkpoint.jsonl  # per-record checkpoint
 ```
 
-The wall-clock timestamp lives inside the summary JSON, not the filename, so
-re-running the same config overwrites prior outputs in place rather than
-accumulating dated copies.
+墙上的时间戳住在摘要内JSON,而不是文件名，所以
+重新运行相同的配置，覆盖先前已存在的输出，而不是
+累积日期副本。
 
-**Why the `<sha6>` digest?** The filename already carries the dataset, the
-strategy, and the answer model — but not the judge model, the embedding
-model, the per-call LLM knobs (temperature, `max_output_tokens`,
-`thinking_config`), `dataset.path`, or `use_vertex_ai`. The 6-char SHA is a
-fingerprint over all of those. Without it, two runs that differ only in
-(say) judge model or temperature would silently overwrite the same file.
-Encoding everything literally would make filenames unwieldy; the digest is
-the compact compromise.
+**为什么`<sha6>` 文摘？**文件名已经载有数据集，
+战略，以及答案模式——但不是法官模式，嵌入式
+模型，每台调用 LLM knobs(温度，`max_output_tokens`),
+`thinking_config`),`dataset.path`,或`use_vertex_ai`. 6 -char SHA是一位美国著名女演员。
+没有指纹，两条只不同
+判断模型或温度会默默地覆盖同一文件。
+拼写所有字面上的东西都会使文件名失去功能;摘要是
+契约妥协
 

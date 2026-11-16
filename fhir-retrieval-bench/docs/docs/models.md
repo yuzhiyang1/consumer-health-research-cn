@@ -1,44 +1,32 @@
-# Model config
+# 模型配置
 
-## Overview
+## 概览
 
-Each model fragment under `config/model/<name>.yaml` defines the
-**answer**, **judge**, and **embedding** models for a run. The answer
-model and the judge model are independent and can come from different
-providers (e.g. Claude for answering, Gemini for judging), so configure each
-one separately in the fragment.
+`config/model/<name>.yaml` 定义一次评估所用的回答模型（`answer`）、评判模型（`judge`）和嵌入模型（`embedding`）。回答和评判模型独立配置，可以由不同提供商提供，例如用 Claude 回答、用 Gemini 评判。
 
-## Supported providers
+## 支持的提供商
 
-| Model makers | API Backend | Configuring Auth |
-| :--- | :--- | :--- |
-| **Google** | GenAI | set env variable `GENAI_API_KEYS` |
-| | GenAI | **OR** pass `--use_vertex --gcp_project_locations project_id_1:location_1,project_id_2:location_2` |
-| **Anthropic** | VertexAnthropic | pass `--use_vertex --gcp_project_locations project_id_1:location_1,project_id_2:location_2` |
-| **OpenAI** | LiteLLM | set env variable `OPENAI_API_KEYS` |
+| 提供商 | API 后端 | 认证方式 |
+| --- | --- | --- |
+| Google | GenAI | 环境变量 `GENAI_API_KEYS`，或者传入 `--use_vertex --gcp_project_locations project_id_1:location_1,project_id_2:location_2`。 |
+| Anthropic | VertexAnthropic | 传入 `--use_vertex --gcp_project_locations project_id_1:location_1,project_id_2:location_2`。 |
+| OpenAI | LiteLLM | 环境变量 `OPENAI_API_KEYS`。 |
 
-Backend routing is by model-name prefix (`claude-*` → Anthropic via Vertex,
-`openai/*` or `gpt-*` → LiteLLM, `google/*` or `gemini-*` → GenAI), so adding a new
-model is a matter of dropping a new YAML into `config/model/`.
+后端按模型名前缀路由。`claude-*` 走 Vertex 的 Anthropic 后端，`openai/*` 或 `gpt-*` 走 LiteLLM，`google/*` 或 `gemini-*` 走 GenAI。添加模型时，可在 `config/model/` 中添加对应的 YAML 文件。
 
-Key rotation applies to the comma-separated key env vars used by the public
-API providers:
+使用公开 API 时，可在环境变量中传入以逗号分隔的多个密钥，由程序轮换使用。
 
-- For Gemini, `export GENAI_API_KEYS="genai_key1,genai_key2,genai_key3"` 
-- For OpenAI, `export OPENAI_API_KEYS="openai-key-1,openai-key-2"` 
+- Gemini：`export GENAI_API_KEYS="genai_key1,genai_key2,genai_key3"`
+- OpenAI：`export OPENAI_API_KEYS="openai-key-1,openai-key-2"`
 
-## Setting thinking config
+## 配置推理模式
 
-The `thinking_config` field in a model fragment controls how "thinking mode" is applied. Setting this to `null` means "do not send any thinking-related parameter", so you get whatever the provider's server-side default is. Value requirements vary significantly by provider: some models categorize thinking intensity using levels such as `"high"`, `"medium"`, `"minimal"`, while other models requires a specific maximum thinking token counts. To determine the correct format, you should consult the specific provider’s documentation. Alternatively, you can test a value directly; if it is incompatible, the system will return an error message containing suggestions for the correct format.
+`thinking_config` 用来设置模型的推理模式。设为 `null` 时，客户端会省略相关参数，使用提供商的服务端默认值。部分模型接受 `"high"`、`"medium"` 或 `"minimal"` 等档位，另一些模型需要指定推理 token 上限。具体格式请参阅模型提供商文档。也可以直接测试配置值，如果值不兼容，程序会返回格式建议。
 
+## 在 Vertex AI 中启用模型
 
-## Enabling Models in Vertex AI
-
-To enable Claude models in Vertex:
-
-1. Go to your project in [Pantheon](https://console.cloud.google.com/).
-2. Ensure the **Vertex AI API** is enabled by searching for "Vertex AI API" in the API library.
-3. Navigate to **Model Garden** (search for it in the console).
-4. Search for the relevant model (e.g., `claude-opus-4-6`) and click **Enable**.
-5. Fill out the enablement form using your credentials.
-
+1. 在 [Google Cloud 控制台](https://console.cloud.google.com/)中打开项目。
+2. 在 API 库里搜索并启用 **Vertex AI API**。
+3. 打开 **Model Garden**。
+4. 找到相应的模型（例如 `claude-opus-4-6`），点击 **Enable**。
+5. 使用你的身份凭据填写启用表单。

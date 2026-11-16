@@ -1,52 +1,34 @@
-# Worldwide Model of Cardiac Physiology
+# 全球心脏生理模型
 
-Code accompanying the paper
+本目录提供论文《Global Geographic, Seasonal, Environmental and Demographic Drivers of Variations in Longitudinal Cardiac Physiology in 5 million Fitbit Users》对应的代码。研究考察了 500 万名 Fitbit 用户的纵向心脏生理指标与地理、季节、环境及人口学因素之间的关系。
 
-> **Global Geographic, Seasonal, Environmental and Demographic Drivers of
-> Variations in Longitudinal Cardiac Physiology in 5 million Fitbit Users**
+仓库包含完整统计流程，包括队列统计、按贝叶斯信息准则（BIC）选择模型的六阶段线性混合效应（LME）比较，以及生成论文表格和图形的代码。模型分析静息心率（RHR）和心率变异性（HRV）。
 
-The repository contains the complete statistical pipeline: cohort statistics,
-the six-stage BIC-selected linear mixed-effects (LME) model competition for
-resting heart rate (RHR) and heart-rate variability (HRV), and the producers of
-the publication tables and figures.
+原始 Fitbit 队列数据未随本仓库发布。编号为 00 的 Notebook 会按公开的输入格式生成一份小型合成数据，供端到端运行流程。基于这份数据的估计值仅用于演示。
 
-The Fitbit cohort itself is **not** redistributed. A step-0 notebook writes a
-small synthetic dataset in the public input schema so that the whole pipeline
-can be run end to end; nothing estimated from it is meaningful.
+## 作者和联系方式
 
-## Authors & Contacts
+- 主要作者 Katarina Vukosavljević
+- 联系人和代码审阅 Daniel Roggen（`roggen@google.com`）
 
-*   Primary Author: Katarina Vukosavljević
-*   Point of Contact / Code Review: Daniel Roggen (`roggen@google.com`)
+## 目录结构
 
-## Repository structure
+| 路径 | 用途 |
+| --- | --- |
+| `src/file_io.py` | 文件系统适配和输入输出路径 |
+| `src/cohort_io.py` | 按公开 CSV 字段结构加载队列 |
+| `src/generate_dummy_data.py` | 生成合成 `dummy_data*.csv` |
+| `src/seasonality_lib.py` | 下采样、特征工程、模型统计与绘图 |
+| `src/lme_binned.py` | 用分箱似然加速随机截距 LME 的拟合 |
+| `src/stage_competition.py` | 六阶段逐步比较和 `STAGE_OVERRIDES` |
+| `src/paper_tables.py` | 生成模型比较、系数和人口统计的 LaTeX 表格 |
+| `src/publication_figures.py` | 生成论文图形 |
+| `notebooks/` | 四个可运行的分析 Notebook |
+| [`data/README.md`](data/README.md) | 输入字段结构和可选参考表 |
 
-```text
-worldwide_model_cardiac_physiology/
-├── LICENSE.txt                        # Apache License 2.0
-├── README.md                          # this file
-├── requirements.txt                   # Python dependencies (pip)
-├── src/                               # library modules
-│   ├── file_io.py                     # filesystem adapter + data-layout helpers (./data or $WPM_DATA_DIR)
-│   ├── cohort_io.py                   # cohort loader (public CSV schema)
-│   ├── generate_dummy_data.py         # synthetic data/dummy_data*.csv
-│   ├── seasonality_lib.py             # thinning, feature engineering, model statistics, plotting
-│   ├── lme_binned.py                  # fast random-intercept LME (binned likelihood) == statsmodels MixedLM
-│   ├── stage_competition.py           # six-stage progressive model competition + STAGE_OVERRIDES
-│   ├── paper_tables.py                # LaTeX tables (model competition, coefficients, demographics)
-│   └── publication_figures.py         # publication figures
-├── notebooks/
-│   ├── 00_generate_dummy_data.ipynb   # writes the synthetic input CSVs into data/
-│   ├── 01_cohort_stats.ipynb          # model-free: demographics tables, distributions, observed maps, thinning validation
-│   ├── 02_modelling.ipynb             # six-stage BIC-selected LME competition (one run per metric)
-│   └── 03_model_results.ipynb         # model-derived tables/figures from a run
-└── data/
-    └── README.md                      # input schema and optional reference tables
-```
+## 安装
 
-## Installation
-
-Python ≥ 3.10.
+需要 Python 3.10 或更高版本。
 
 ```bash
 python3 -m venv .venv
@@ -54,107 +36,57 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Data
+## 数据
 
-`file_io.get_data_dir()` is `./data` (or the directory in the `WPM_DATA_DIR`
-environment variable). Layout:
+`file_io.get_data_dir()` 默认返回 `./data`。可用环境变量 `WPM_DATA_DIR` 指定目录。
 
-```text
-<data>/dummy_data.csv, dummy_data_hrv.csv   cohort inputs (public schema, see data/README.md)
-<data>/extra_data/                          optional reference tables for the map figures
-<data>/results/<run_tag>/                   one modelling run (02)
-<data>/results/paper/                       optional: publication assets written by 01 + 03
-                                            when SAVE_PAPER_ASSETS = True
-```
+| 路径 | 用途 |
+| --- | --- |
+| `dummy_data.csv`、`dummy_data_hrv.csv` | 队列输入 |
+| `extra_data/` | 地图使用的参考表 |
+| `results/<run_tag>/` | Notebook 02 的单次运行产物 |
+| `results/paper/` | Notebook 01、03 在启用 `SAVE_PAPER_ASSETS` 时输出的图表 |
 
-Input schema (one row per user and calendar month): `id, month, age, sex,
-country, latitude, longitude, temperature, temperature min, temperature max, day
-light, resting heart rate | heart rate variability [, region]`. To analyse your
-own data, write it in this schema and point `WPM_DATA_DIR` at it (or place the
-files in `data/`). `cohort_io.load_cohort` maps the headers to the column names
-and units used by the code.
+输入按用户和自然月组织，每行包含 `id`、`month`、`age`、`sex`、`country`、`latitude`、`longitude`、`temperature`、`temperature min`、`temperature max`、`day light`，以及 `resting heart rate` 或 `heart rate variability`。 `region` 为可选列。使用自己的数据时，可按该格式写入并通过 `WPM_DATA_DIR` 指定路径，也可放入 `data/`。 `cohort_io.load_cohort` 会将表头和单位映射为程序要求的格式。
 
-The map figures (observed seasonal maps, world residual contours) additionally
-need two public reference files in `<data>/extra_data/` (Natural Earth admin-0
-geojson and the UNSD M49 table — sources and terms of use in `data/README.md`).
-They are skipped with a message when absent. The per-capita user-representation
-map of the paper is not included in this release.
+季节性观测地图和全球残差等值线图需要 `extra_data/` 下的 Natural Earth admin-0 GeoJSON 和 UNSD M49 表。文件缺失时，程序会提示并跳过相关绘图。来源及使用条件见[数据说明](data/README.md)。论文中按人均用户代表性绘制的地图未随代码发布。
 
-## Running the pipeline
+## 运行分析流程
 
-Launch Jupyter from the repository root (`jupyter lab`), open the notebooks in
-`notebooks/` and run them top to bottom:
+从仓库根目录执行 `jupyter lab`，依次打开并运行以下 Notebook。
 
-0.  **`00_generate_dummy_data.ipynb`** — writes `data/dummy_data.csv` and
-    `data/dummy_data_hrv.csv` (synthetic, seeded; skipped if present). Skip this
-    step when using your own data.
-1.  **`01_cohort_stats.ipynb`** — everything that does not need a fitted model:
-    RHR thinning of the age-22 reporting artefact
-    (`seasonality_lib.apply_density_based_thinning`), demographics tables by
-    latitude band, demographic distributions, observed seasonal maps,
-    within-user sensitivity and the thinning-validation figures.
-2.  **`02_modelling.ipynb`** — once per metric (`METRIC = 'rhr' | 'hrv'` in the
-    `CONFIG` cell). Feature engineering (Gelman standardisation, annual and
-    semi-annual harmonics, temperature residualised on latitude × season), then
-    the six-stage competition (`stage_competition.run_competition`): baseline
-    (age × sex) → seasonality (harmonics vs day length) → seasonal × day-length
-    (diagnostic: fitted and reported, not carried forward) → spatial (latitude
-    ± longitude) → temperature (mean vs max/min) → joint competition. Every
-    candidate is a participant random-intercept LME fitted with
-    `lme_binned.BinnedMixedLM` (identical estimates to `statsmodels.MixedLM`,
-    O(#group sizes) instead of O(N)); each stage carries its lowest-BIC
-    candidate forward, the overall winner is refitted with REML.
-    `STAGE_OVERRIDES` forces a different candidate to progress (counterfactual
-    paths); runs are resumable. Outputs to `results/<run_tag>/`.
-3.  **`03_model_results.ipynb`** — from a run (`RUN_TAGS`) and either its
-    best-performing model or a chosen model folder (`MODEL_DIRS`): all LME
-    tables, empirical-Bayes random intercepts for every user, residual / QQ
-    diagnostics and, with both metrics, the combined latitude-band, country,
-    demographic-calibration and world-residual figures. Section 2 compares two
-    runs model by model.
+0. **`00_generate_dummy_data.ipynb`** 按固定随机种子生成 `data/dummy_data.csv` 和 `data/dummy_data_hrv.csv`，已有文件时跳过。也可以改用自己的数据。
+1. **`01_cohort_stats.ipynb`** 执行无需拟合模型的统计，包括通过 `seasonality_lib.apply_density_based_thinning` 对 22 岁处的 RHR 报告异常密集点下采样，生成按纬度分组的人口统计表、人口分布、季节性观测地图、用户内敏感性分析和下采样验证图。
+2. **`02_modelling.ipynb`** 对每个指标各执行一次，在 `CONFIG` 中设定 `METRIC = 'rhr'` 或 `'hrv'`。特征工程包括 Gelman 标准化、年度及半年度谐波、对纬度与季节效应进行残差化处理的温度。 `stage_competition.run_competition` 比较六个阶段：基线（年龄与性别）、季节性（谐波或日照长度）、季节性与日照长度的交互（仅用于诊断）、空间（纬度及可选经度）、温度（均值或最高与最低温度）和联合比较。候选模型均为参与者随机截距 LME，由 `lme_binned.BinnedMixedLM` 拟合，估计与 `statsmodels.MixedLM` 相同，计算量随不同组大小的数量增长。每阶段取 BIC 最低的候选进入下一阶段，最终用限制最大似然（REML）重新拟合。 `STAGE_OVERRIDES` 可强制选择其他候选，分析替代路径。运行支持续跑，结果写入 `results/<run_tag>/`。
+3. **`03_model_results.ipynb`** 通过 `RUN_TAGS` 选定一次运行，使用最优模型或通过 `MODEL_DIRS` 指定模型目录。输出 LME 表、每位用户的经验贝叶斯随机截距、残差诊断和 Q–Q 图。提供两个指标时，还生成按纬度带、国家和人口特征分析的图，以及全球残差图。第 2 节支持按模型比较两次运行。
 
-Notebooks 01 and 03 are **reports**: every table and figure is rendered inline
-(tables as a readable preview with the LaTeX source folded underneath) and
-nothing is written to disk. Set `SAVE_PAPER_ASSETS = True` in their `CONFIG`
-cell to also write the publication assets — `.tex` tables and 300-dpi PNG,
-SVG and PDF figures — to `results/paper/`.
+Notebook 01 和 03 在页面内展示图表，LaTeX 源码折叠在表格预览下方。在 `CONFIG` 中设置 `SAVE_PAPER_ASSETS = True` 可将 `.tex` 表格、300 DPI PNG 以及 SVG 和 PDF 图形保存到 `results/paper/`。
 
-The UN-region and country trend plots of notebook 02 require at least 500
-users per group (`MIN_USERS_PER_GROUP` in its `CONFIG` cell; lower it for
-smaller cohorts), the demographic and thinning-validation figures of notebook
-01 apply minimum-count thresholds per age and latitude band, and the map
-figures need the reference files described above.
+Notebook 02 绘制联合国地区和国家趋势时，每组默认至少需要 500 名用户，可在 `CONFIG` 中调整 `MIN_USERS_PER_GROUP`。Notebook 01 的人口统计和下采样验证也会对年龄和纬度带应用最小样本数阈值。
 
-## Output → code map
+## 输出与代码对应关系
 
-Output                                                   | Notebook | Producer
-:------------------------------------------------------- | :------- | :-------
-Demographics by latitude band (`tab:*_demographics_*`)   | 01       | `paper_tables.demographics_table`
-Demographic distributions, thinning validation           | 01       | `publication_figures.generate_figure_1 / _a1 / _a2 / _a3`
-fig:{rhr,hrv}_observed_map                               | 01       | `publication_figures.plot_seasonal_maps_2x2`
-fig:within_user_sensitivity                              | 01       | `publication_figures.make_within_user_sensitivity`
-tab:results_*, *_full_grid, supp_results_*, *_ols_params | 03       | `paper_tables.generate_all_tables`
-fig:{rhr,hrv}_residuals, fig:{rhr,hrv}_qq                | 03       | `publication_figures.make_model_residuals_plot / make_random_intercepts_plot`
-fig:lat_bin_fits, fig:countries_prediction_fit           | 03       | `publication_figures.make_combined_seasonal_fit_lat_bin / _country`
-fig:demographic_fit                                      | 03       | `publication_figures.make_joint_demographics_calibration`
-fig:global_residuals_grid                                | 03       | `publication_figures.make_world_contour_residuals`
+| 输出 | Notebook | 生成函数 |
+| --- | --- | --- |
+| 按纬度带的人口统计（`tab:*_demographics_*`） | 01 | `paper_tables.demographics_table` |
+| 人口分布和下采样验证 | 01 | `publication_figures.generate_figure_1 / _a1 / _a2 / _a3` |
+| `fig:{rhr,hrv}_observed_map` | 01 | `publication_figures.plot_seasonal_maps_2x2` |
+| `fig:within_user_sensitivity` | 01 | `publication_figures.make_within_user_sensitivity` |
+| `tab:results_*` 等模型结果表 | 03 | `paper_tables.generate_all_tables` |
+| `fig:{rhr,hrv}_residuals`、`fig:{rhr,hrv}_qq` | 03 | `publication_figures.make_model_residuals_plot / make_random_intercepts_plot` |
+| `fig:lat_bin_fits`、`fig:countries_prediction_fit` | 03 | `publication_figures.make_combined_seasonal_fit_lat_bin / _country` |
+| `fig:demographic_fit` | 03 | `publication_figures.make_joint_demographics_calibration` |
+| `fig:global_residuals_grid` | 03 | `publication_figures.make_world_contour_residuals` |
 
-## Third-party software
+## 第三方软件
 
-The code builds on the open-source scientific Python stack listed in
-`requirements.txt` (NumPy, pandas, SciPy, statsmodels, scikit-learn, matplotlib,
-seaborn, plotly, GeoPandas, Jupyter), each distributed under its own licence
-(BSD-3-Clause, MIT or similar). In particular `src/lme_binned.py` subclasses
-`statsmodels.regression.mixed_linear_model.MixedLM` (statsmodels, BSD-3-Clause,
-Copyright © 2009–2018 statsmodels Developers) and returns genuine
-`MixedLMResults` objects; no third-party source code is vendored in this
-repository.
+依赖列于 `requirements.txt`，包括 NumPy、pandas、SciPy、statsmodels、scikit-learn、matplotlib、seaborn、plotly、GeoPandas 和 Jupyter，各自采用自己的许可证。 `src/lme_binned.py` 继承采用 BSD-3-Clause 的 `statsmodels.regression.mixed_linear_model.MixedLM`（© 2009–2018 statsmodels Developers），并返回 `MixedLMResults`。第三方源代码不随本仓库分发。
 
-## Citation
+## 引用方式
 
-If you use this code, please cite the paper above.
+使用该代码时，请引用文首论文。
 
-## License
+## 许可证
 
 Copyright 2026 Google LLC
 
@@ -171,14 +103,6 @@ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 
-## Disclaimers
+## 免责声明
 
-This is not an officially supported Google product. This project is not eligible
-for the
-[Google Open Source Software Vulnerability Rewards Program](https://bughunters.google.com/open-source-security).
-This project is intended for demonstration purposes only. It is not intended for
-use in a production environment.
-
-NOTE: the content of this research code repository (i) is not intended to be a
-medical device; and (ii) is not intended for clinical use of any kind, including
-but not limited to diagnosis, prognosis, or treatment recommendations.
+本项目不是 Google 官方提供支持的产品，也不属于 [Google 开源软件漏洞奖励计划](https://bughunters.google.com/open-source-security)的覆盖范围。它仅用于演示，不适合生产环境。此研究代码不属于医疗器械，也不适用于诊断、预后判断、治疗建议等临床用途。

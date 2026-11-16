@@ -17,8 +17,8 @@ Usage:
     response = orchestrator.respond("How is my sleep quality?")
 """
 
-# Version for debugging
-__version__ = "1.9.0"  # Added end-of-request summary
+# 调试版本
+__version__ = "1.9.0"  # 添加了请求结束摘要
 
 import copy
 import json
@@ -29,12 +29,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Tuple
 
-# Import shared request stats
+# 导入共享请求数据
 from ..utils.request_stats import request_stats
 
 
 # =============================================================================
-# Agent Call Logging
+# 代理呼叫日志
 # =============================================================================
 
 def _log_agent_call(agent_name: str, query: str = None, response: str = None, error: str = None, flag_full_content: bool = False):
@@ -47,7 +47,7 @@ def _log_agent_call(agent_name: str, query: str = None, response: str = None, er
         error: Error message if the call failed.
         flag_full_content: If True, log the full content.
     """
-    # Record stats
+    # 记录数据
     request_stats.record_agent(agent_name)
     
     timestamp = datetime.now().strftime("%H:%M:%S")
@@ -101,43 +101,43 @@ def clean_agent_response(text: str) -> str:
     if not text:
         return text
     
-    # Handle JSON-escaped newlines (convert \n literal to actual newlines)
+    # 处理 JSON - 逃逸的新线(将\n字转换为实际的新线)
     if '\\n' in text:
         text = text.replace('\\n', '\n')
     
-    # Remove surrounding quotes if the entire text is quoted
+    # 如果引用了整个文字，删除周围的引文
     text = text.strip()
     if (text.startswith('"') and text.endswith('"')) or (text.startswith("'") and text.endswith("'")):
         text = text[1:-1]
     
-    # Remove [SUMMARY] and [CODE UPDATE] tags (keep content after)
+    # 删除 SUMMARY ]和 CODEUPDATE 标记(在之后保留内容)
     text = re.sub(r'^\s*\[SUMMARY\]\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'^\s*\[CODE UPDATE\]\s*', '', text, flags=re.MULTILINE)
     
-    # Remove Coach: prefix at start of response
+    # 删除教练： 响应开始前缀
     text = re.sub(r'^Coach:\s*', '', text, flags=re.MULTILINE)
     
-    # Remove Expert: prefix at start of response  
+    # 删除专家： 响应开始前缀
     text = re.sub(r'^Expert:\s*', '', text, flags=re.MULTILINE)
     
-    # Remove [Finish]: prefix (ReAct final answer marker)
-    # Handle various formats: [Finish]:, [Finish]: , [Finish]:\n, etc.
+    # 删除 [完成]:前缀 (ReAct 最终答案标记)
+    # 处理各种格式：[完成]:,[完成]:,[完成]:,[完成]:\n等。
     text = re.sub(r'^\s*\[Finish\]:\s*', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\[Finish\]:\s*\n*', '', text)  # Also catch mid-text occurrences
+    text = re.sub(r'\[Finish\]:\s*\n*', '', text)  # 还要抓住中文本的出现
     
-    # Remove internal agent name references (users shouldn't see implementation details)
-    # Patterns: "The Data Science agent...", "According to the domain_expert_agent...", etc.
+    # 删除内部代理名称引用( 用户不应该看到执行细节)
+    # 图案："数据科学 Agent...","根据domain_expert_agent......"等。
     agent_ref_patterns = [
-        # Bracketed agent insights markers (must be exact match, case insensitive)
+        # 裂缝特工洞察标记(必须精确匹配，大小写不敏感)
         r'\[DATA_SCIENCE_AGENT_INSIGHTS\]\s*\n?',
         r'\[DOMAIN_EXPERT_AGENT_INSIGHTS\]\s*\n?',
         r'\[HEALTH_COACH_AGENT_INSIGHTS\]\s*\n?',
         r'\[SUPPORTING_AGENT_INSIGHTS\]\s*\n?',
-        # Full phrases with various structures - greedy match to capture continuation
+        # 带有各种结构的完整短语 - 贪婪匹配以捕捉续作
         r'(?:The |According to (?:the )?|Based on (?:the )?)?Data Science [Aa]gent(?:\'s)?(?:\s+(?:analysis|findings|calculations?|results?|data|insights?))?(?:\s+(?:found|reported|calculated|determined|analyzed|shows?|indicates?|suggests?|reveals?))?(?:\s+that)?[,:]?\s*',
         r'(?:The |According to (?:the )?|Based on (?:the )?)?Domain Expert [Aa]gent(?:\'s)?(?:\s+(?:analysis|findings|assessment|interpretation|insights?))?(?:\s+(?:found|reported|determined|analyzed|shows?|indicates?|suggests?|reveals?))?(?:\s+that)?[,:]?\s*',
         r'(?:The |According to (?:the )?|Based on (?:the )?)?Health Coach [Aa]gent(?:\'s)?(?:\s+(?:recommendations?|suggestions?|advice|guidance|insights?))?(?:\s+(?:found|reported|suggests?|recommends?|advises?))?(?:\s+that)?[,:]?\s*',
-        # Snake_case versions
+        # Snake_case版本 互联网档案馆的存檔，存档日期2014-09-02.
         r'(?:The |According to (?:the )?|Based on (?:the )?)?data_science_agent(?:\'s)?(?:\s+(?:analysis|findings))?(?:\s+(?:found|reported|calculated))?(?:\s+that)?[,:]?\s*',
         r'(?:The |According to (?:the )?|Based on (?:the )?)?domain_expert_agent(?:\'s)?(?:\s+(?:analysis|findings))?(?:\s+(?:found|reported))?(?:\s+that)?[,:]?\s*',
         r'(?:The |According to (?:the )?|Based on (?:the )?)?health_coach_agent(?:\'s)?(?:\s+(?:recommendations?|suggestions?))?(?:\s+(?:found|reported))?(?:\s+that)?[,:]?\s*',
@@ -145,25 +145,25 @@ def clean_agent_response(text: str) -> str:
     for pattern in agent_ref_patterns:
         text = re.sub(pattern, '', text, flags=re.IGNORECASE)
     
-    # Clean up any leftover punctuation/whitespace artifacts
-    text = re.sub(r'^\s*[,;:]\s*', '', text)  # Remove leading punctuation
-    # Normalize only horizontal whitespace (spaces/tabs), preserve newlines for markdown
-    text = re.sub(r'[^\S\n]+', ' ', text)  # Collapse spaces/tabs but keep \n
-    text = re.sub(r' *\n *', '\n', text)    # Clean spaces around newlines
-    text = re.sub(r'\n{3,}', '\n\n', text)  # Cap consecutive blank lines at 2
+    # 清理任何残存的孔隙/白空间文物
+    text = re.sub(r'^\s*[,;:]\s*', '', text)  # 删除主标
+    # 只规范水平白空间( 空格/tabs), 保留新线以标记下移
+    text = re.sub(r'[^\S\n]+', ' ', text)  # 折叠空格/tabs但保留 \n
+    text = re.sub(r' *\n *', '\n', text)    # 新线周围的空格
+    text = re.sub(r'\n{3,}', '\n\n', text)  # 2 的连续空白行
     
-    # Capitalize first letter if it's now lowercase
+    # 如果第一个字母是小写，请大写
     text = text.strip()
     if text and text[0].islower():
         text = text[0].upper() + text[1:]
     
-    # Detect and reject system prompt leakage
-    # These patterns indicate the model is outputting its instructions instead of a response
-    # Normalize text for detection (handle ellipsis, extra spaces, etc.)
+    # 检测和拒绝系统即时泄漏
+    # 这些模式显示模型正在输出指令，而不是响应
+    # 将文本规范化以供检测(手性椭圆、额外空格等)
     text_normalized = text.lower().replace('…', '...').replace('  ', ' ')
     
     prompt_leak_indicators = [
-        # From orchestrator/domain expert prompts
+        # 来自编排器/域专家提示
         'you must do so safely and transparently',
         'quantify uncertainty when appropriate',
         'avoid diagnosing or prescribing',
@@ -171,7 +171,7 @@ def clean_agent_response(text: str) -> str:
         'you should use the provided tools',
         'if a tool fails or required user context',
         'explicitly state the limitation',
-        # From domain expert agent
+        # 从 领域专家 Agent
         'clinically accurate, evidence-based',
         'safety-conscious guidance',
         'explicitly separate objective findings',
@@ -182,20 +182,20 @@ def clean_agent_response(text: str) -> str:
         'request only the minimum additional data',
         'wearables, labs, imaging, notes',
         'urgent/emergent evaluation when red flags',
-        # Generic instruction patterns
+        # 一般教学模式
         'you will analyze and synthesize',
         'you will avoid',
         'you will cite',
         'you will request',
         'with the goal of delivering',
         'delivering clinically accurate',
-        # Tool instruction patterns (shouldn't be in final response)
+        # 工具指令模式( 不应该在最后回复中)
         'e.g., `tool_code` for math',
         'for math, `compare_blood_test',
         '`datacommons_natural_language_query`',
         'via the `search` tool',
         'use the provided tools',
-        # Instruction-style patterns
+        # 指令式图案
         'you are tasked with',
         'as a domain expert',
         'you are a domain expert',
@@ -204,7 +204,7 @@ def clean_agent_response(text: str) -> str:
     ]
     for indicator in prompt_leak_indicators:
         if indicator.lower() in text_normalized:
-            # Log the leak for terminal debugging, but surface it in the response too
+            # 记录终端调试的漏水情况，但也会在响应中显示
             print(f"[clean_agent_response] PROMPT LEAK detected: matched '{indicator}'")
             print(f"[clean_agent_response] Raw text (first 300 chars): {text[:300]}")
             return (
@@ -215,13 +215,13 @@ def clean_agent_response(text: str) -> str:
                 "or switch to a different model."
             )
     
-    # Clean up any extra whitespace
+    # 清除任何额外的空白
     text = text.strip()
     
     return text
 
 
-# Try to import LLM backends
+# 尝试导入 LLM 后端
 _GENAI_AVAILABLE = False
 try:
     import google.genai as genai
@@ -278,25 +278,25 @@ class MultiAgentOrchestrator:
         self.system_prompt = system_prompt or ORCHESTRATOR_PREAMBLE
         self.debug_verbose = debug_verbose
         
-        # Agent references
+        # 代理参考
         self.data_science_agent = None
         self.domain_expert_agent = None
         self.health_coach_agent = None
         self.multi_agent_team: Dict[str, Any] = {}
         self.agent_name_list: List[str] = []
         
-        # Team structure state
+        # 团队结构状态
         self.main_agent = ""
         self.supporting_agents = ""
         self.supporting_agents_complete = ""
         self.collaboration_workflow = ""
         
-        # Conversation state
+        # 对话状态
         self.conv_context = ""
         self.conv_utterances = ""
         self.question_last = ""
         
-        # Memory states
+        # 内存状态
         self.memory = {
             "topic": "",
             "goal": "",
@@ -306,16 +306,16 @@ class MultiAgentOrchestrator:
             "health_coach_agent_insights": "",
         }
         
-        # Reflection state
+        # 反射状态
         self.flag_reflection_mode = False
         self.reflection_round_counter = 0
         self.reflection_round_upper_bound = 1
         self.rephrase_prompt_record: Dict[str, List[str]] = {}
         
-        # Stats
+        # 点数
         self.log_number_of_turns = 0
         
-        # LLM configuration
+        # LLM 配置
         self._client = None
         self._model_name = "models/gemini-3.1-flash-lite-preview"
         self._temperature = 0.7
@@ -326,7 +326,7 @@ class MultiAgentOrchestrator:
         provider: Optional[str] = None,
         model_name: Optional[str] = None,
         temperature: float = 0.7,
-        # Legacy parameter for backwards compatibility
+        # 向后兼容的遗留参数
         gemini_api_key: Optional[str] = None,
     ) -> "MultiAgentOrchestrator":
         """Configure the LLM backend.
@@ -341,19 +341,19 @@ class MultiAgentOrchestrator:
         Returns:
             Self for chaining.
         """
-        # Handle legacy parameter
+        # 处理遗留参数
         if gemini_api_key and not api_key:
             api_key = gemini_api_key
             if not provider:
                 provider = "gemini"
         
-        # If provider not specified, get from global config
+        # 如果未指定提供者，请从全局配置中获取
         from ..llm.config import get_config
         config = get_config()
         if not provider:
             provider = config.provider
             
-        # Update global configuration
+        # 更新全球配置
         from ..llm.config import configure_global
         configure_global(
             provider=provider,
@@ -362,7 +362,7 @@ class MultiAgentOrchestrator:
             temperature=temperature,
         )
         
-        # Initialize backend
+        # 初始化后端
         from ..llm.backend_multimodel import get_llm_backend
         self._backend = get_llm_backend(
             backend_type=provider,
@@ -402,14 +402,14 @@ class MultiAgentOrchestrator:
         if health_coach_agent is not None:
             self.health_coach_agent = health_coach_agent
             self.multi_agent_team[AGENT_NAME_HEALTH_COACH] = health_coach_agent
-            # Save initial system prompt for coach
+            # 为导师保存初始系统提示
             self._health_coach_initial_prompt = copy.deepcopy(
                 health_coach_agent.system_prompt
             )
         
         self.agent_name_list = list(self.multi_agent_team.keys())
         
-        # Always log which agents are registered
+        # 总是记录注册的代理
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"\n{'═' * 60}")
         print(f"🤖 [{timestamp}] ORCHESTRATOR AGENTS REGISTERED")
@@ -487,7 +487,7 @@ class MultiAgentOrchestrator:
         """
         conv_history = self.get_conversation_history()
         
-        # All 3 extractions are independent — run in parallel
+        # 所有3提取都是独立的——并行运行。
         with ThreadPoolExecutor(max_workers=3) as executor:
             topic_future = executor.submit(self._call_llm, TOPIC_PROMPT + conv_history)
             goal_future = executor.submit(self._call_llm, GOAL_PROMPT + conv_history)
@@ -510,7 +510,7 @@ class MultiAgentOrchestrator:
         for attempt in range(5):
             response = self._call_llm(prompt)
             try:
-                # Log the raw response for debugging
+                # 记录调试的原始响应
                 timestamp = datetime.now().strftime("%H:%M:%S")
                 print(f"\n[{timestamp}] Team structure LLM response (attempt {attempt+1}):")
                 print(f"   {response[:300]}..." if len(response) > 300 else f"   {response}")
@@ -518,18 +518,18 @@ class MultiAgentOrchestrator:
                 response = self._clear_json_format(response)
                 result = json.loads(response)
                 
-                # Note: dict.get(key, default) only returns `default` when the
-                # key is missing — not when its value is "". Some models (notably
-                # Claude Sonnet 4.5) occasionally return empty agent strings,
-                # which previously short-circuited the entire team and made
-                # the orchestrator fall back to a context-less LLM call.
+                # 注意： dict.get( 密钥，默认) 仅在返回时返回 `default`
+                # 键缺失，而不是值为“”时。一些模型(特别是)
+                # Claude Sonnet 4.5)偶尔会返回空代理字符串，
+                # 之前短路 整个团队，并做了
+                # 编排器回归无上下文LLM呼叫。
                 raw_main = (result.get("main_agent") or "").strip()
                 if raw_main and raw_main in self.agent_name_list:
                     self.main_agent = raw_main
                 else:
-                    # No valid main agent chosen — use health coach if available
-                    # (it's typically the user-facing voice), otherwise the first
-                    # available agent.
+                    # 没有选择有效的主要代理——如果有的话使用健康导师
+                    # (一般是用户发音),否则第一个
+                    # 可用代理服务器。
                     self.main_agent = (
                         AGENT_NAME_HEALTH_COACH
                         if AGENT_NAME_HEALTH_COACH in self.agent_name_list
@@ -543,10 +543,10 @@ class MultiAgentOrchestrator:
                         if a and a != self.main_agent and a in self.agent_name_list
                     ])
                 else:
-                    # Empty supporting list paired with a successfully chosen
-                    # main agent is fine. But if the model returned empty for
-                    # both, route every other available agent as supporting so
-                    # we don't silently lose data-access (e.g. data_science).
+                    # 空支持列表与成功选中的列表对齐
+                    # 主干员没事，但如果模型空空归来
+                    # 两者都通过 其它所有可用的代理作为支持
+                    # 我们不会默默失去数据访问(例如data_science).
                     if not raw_main:
                         self.supporting_agents = ";".join([
                             a for a in self.agent_name_list if a != self.main_agent
@@ -556,7 +556,7 @@ class MultiAgentOrchestrator:
 
                 self.collaboration_workflow = result.get("collaboration_workflow", "")
 
-                # Always log team structure for debugging
+                # 调试时总是日志团队结构
                 timestamp = datetime.now().strftime("%H:%M:%S")
                 print(f"\n{'═' * 60}")
                 print(f"📋 [{timestamp}] TEAM STRUCTURE DECISION")
@@ -568,7 +568,7 @@ class MultiAgentOrchestrator:
                 break
             except Exception as e:
                 if attempt == 4:
-                    # Fallback: health coach as main, others as supporting
+                    # 倒计时:保健教练为主，其他人为辅助
                     self.main_agent = AGENT_NAME_HEALTH_COACH if AGENT_NAME_HEALTH_COACH in self.agent_name_list else self.agent_name_list[0]
                     self.supporting_agents = ";".join([a for a in self.agent_name_list if a != self.main_agent])
                     self.collaboration_workflow = "Supporting agents provide insights, main agent responds."
@@ -627,7 +627,7 @@ class MultiAgentOrchestrator:
                 continue
 
         for agent_name in supporting_agent_list:
-            # Keep data science on raw question for analysis fidelity.
+            # 保持原始数据科学，以分析忠诚性。
             if agent_name == AGENT_NAME_DATA_SCIENCE:
                 self.rephrase_prompt_record[agent_name] = [self.question_last]
                 continue
@@ -664,7 +664,7 @@ class MultiAgentOrchestrator:
         old_insights = str(self.memory.get(memory_key, "") or "").strip()
         cleaned_new = clean_agent_response(str(new_insights or "")).strip()
 
-        # Ignore empty or technical error payloads from supporting agents.
+        # 忽略辅助剂的空或技术错误有效载荷。
         if self._is_error_like_payload(cleaned_new):
             return
 
@@ -677,7 +677,7 @@ class MultiAgentOrchestrator:
 
         merged_response = clean_agent_response(self._call_llm(update_prompt)).strip()
         if not merged_response:
-            # If merge call is malformed, preserve old insights.
+            # 如果合并调用不当，请保留旧的见解。
             return
 
         if re.search(r"\bEMPTY\b", merged_response.upper()):
@@ -685,7 +685,7 @@ class MultiAgentOrchestrator:
             return
 
         if self._is_error_like_payload(merged_response):
-            # Guard against merge failures contaminating memory.
+            # 防范合并失败污染内存。
             if not old_insights:
                 self.memory[memory_key] = cleaned_new
             return
@@ -749,7 +749,7 @@ class MultiAgentOrchestrator:
                 if agent_name == AGENT_NAME_DATA_SCIENCE and self.data_science_agent:
                     result = self.data_science_agent.query(prompt)
                     # _log_agent_call(agent_name, response=str(result)[:500])
-                    # log the full response for debugging purposes
+                    # 为调试目的日志完整响应
                     _log_agent_call(agent_name, response=str(result), flag_full_content=True)
                     return agent_name, str(result)
                 
@@ -759,7 +759,7 @@ class MultiAgentOrchestrator:
                     return agent_name, str(result)
                 
                 elif agent_name == AGENT_NAME_HEALTH_COACH and self.health_coach_agent:
-                    # For health coach as supporting, just get a response
+                    # 医疗教练作为支援，只要得到一个回应
                     result = self.health_coach_agent.respond(prompt)
                     _log_agent_call(agent_name, response=str(result)[:500])
                     return agent_name, str(result)
@@ -773,14 +773,14 @@ class MultiAgentOrchestrator:
                 return agent_name, f"Error: {e}"
         
         if parallel and len(supporting_agent_list) > 1:
-            # Call agents in parallel
+            # 并行呼叫代理
             with ThreadPoolExecutor(max_workers=len(supporting_agent_list)) as executor:
                 futures = {executor.submit(call_agent, name): name for name in supporting_agent_list}
                 for future in as_completed(futures):
                     agent_name, result = future.result()
                     self._merge_and_store_agent_insights(agent_name, result)
         else:
-            # Call agents sequentially
+            # 按顺序拨打
             for agent_name in supporting_agent_list:
                 _, result = call_agent(agent_name)
                 self._merge_and_store_agent_insights(agent_name, result)
@@ -831,7 +831,7 @@ class MultiAgentOrchestrator:
         supporting_insights = self._organize_supporting_agent_insights()
         
         if self.main_agent == AGENT_NAME_HEALTH_COACH and self.health_coach_agent:
-            # Health coach as main agent with analysis from others
+            # 保健教练作为主要代理人，从他人那里进行分析
             _log_agent_call(f"{self.main_agent} (MAIN)", query=self.question_last)
             if supporting_insights:
                 response = self.health_coach_agent.respond_with_analysis(
@@ -844,7 +844,7 @@ class MultiAgentOrchestrator:
             return response, supporting_insights
         
         elif self.main_agent == AGENT_NAME_DOMAIN_EXPERT and self.domain_expert_agent:
-            # Domain expert as main with synthesis
+            # 主要从事合成工作的域专家
             prompt = self.question_last
             if supporting_insights:
                 prompt += f"\n\n[SUPPORTING_AGENT_INSIGHTS]\n{supporting_insights}"
@@ -854,16 +854,16 @@ class MultiAgentOrchestrator:
             return str(response), supporting_insights
         
         elif self.main_agent == AGENT_NAME_DATA_SCIENCE and self.data_science_agent:
-            # Data science as main
+            # 数据科学为主
             _log_agent_call(f"{self.main_agent} (MAIN)", query=self.question_last)
             response = self.data_science_agent.query(self.question_last)
             # _log_agent_call(f"{self.main_agent} (MAIN)", response=str(response)[:500])
-            # log the full response for debugging purposes
+            # 为调试目的日志完整响应
             _log_agent_call(f"{self.main_agent} (MAIN)", response=str(response), flag_full_content=True)
             return str(response), supporting_insights
         
         else:
-            # Fallback: use orchestrator LLM
+            # 倒计时:使用 编排器 LLM (中文(简体) ).
             prompt = FINAL_RESPONSE_PROMPT(
                 self.main_agent,
                 self.supporting_agents,
@@ -898,9 +898,9 @@ class MultiAgentOrchestrator:
         self.rephrase_prompt_record = {}
         
         # === Parallel memory + overlapped team structure ===
-        # Topic, goal, finish_desc are independent LLM calls.
-        # Team structure only needs topic, so we start it as soon as
-        # topic resolves — overlapping with the still-running goal/finish calls.
+        # 主题，目标，finish_desc是独立的LLM呼叫。
+        # 团队结构只需要话题，所以我们一开始
+        # 专题解决——与仍在运行的目标/最终呼号重叠。
         emit_step("Orch", "Analyzing query and updating memory...")
         conv_history = self.get_conversation_history()
         
@@ -915,50 +915,50 @@ class MultiAgentOrchestrator:
                 self._call_llm, FINISH_DESC_PROMPT + conv_history
             )
             
-            # Block on topic (required by team structure)
+            # 主题块(按团队结构要求)
             self.memory["topic"] = topic_future.result()
             
             if len(self.agent_name_list) > 1:
-                # Overlap: determine team structure while goal/finish still computing
+                # 重叠:在目标/完成仍在计算时确定团队结构
                 emit_step("Orch", "Determining which agents to use...")
                 self._update_agent_team_structure()
             
-            # Collect remaining memory results (likely already done by now)
+            # 收集剩余内存结果(可能已经完成)
             self.memory["goal"] = goal_future.result()
             self.memory["finish_desc"] = finish_future.result()
         
         if len(self.agent_name_list) > 1:
             emit_step("Orch", f"Team: main={self.main_agent}, supporting={self.supporting_agents or 'none'}")
             
-            # Call supporting agents
+            # 呼叫辅助人员
             if self.supporting_agents:
                 emit_step("Orch", f"Calling supporting agents: {self.supporting_agents}")
             self._call_supporting_agents(flag_rephrase_prompt=True)
             self._accumulate_supporting_agents_complete()
             
-            # Call main agent
+            # 调用主代理
             emit_step("Orch", f"Calling main agent: {self.main_agent}")
             main_response, supporting_insights = self._call_main_agent()
 
-            # Persist main-agent output as that agent's evolving insight memory.
-            # This preserves continuity when the same agent is a supporting agent later.
+            # 坚持主剂输出作为该剂不断发展的洞察力记忆。
+            # 这保留了同一剂日后成为辅助剂时的连续性。
             if self.main_agent in self.agent_name_list:
                 self._merge_and_store_agent_insights(self.main_agent, main_response)
             
-            # Reflect before final response (catch questions answerable by data)
+            # 在最后答复之前反映(渔获物问题按数据回答)
             emit_step("Orch", "Reflecting on response quality...")
             reflection_result = self._reflect_before_final_response(
                 main_response, supporting_insights
             )
             
-            # If reflection found improvements needed, call supporting agents again
+            # 如果反思发现需要改进，请再次拨打支助代理
             if reflection_result.get("decision") == "YES":
                 self.flag_reflection_mode = True
                 self.reflection_round_counter += 1
                 
                 if self.reflection_round_counter <= self.reflection_round_upper_bound:
                     emit_step("Orch", "Reflection found improvements needed — re-querying agents...")
-                    # Update rephrase prompts with reflection questions
+                    # 更新带有反射问题的提示
                     for agent_name, questions in reflection_result.get("reflection_questions", {}).items():
                         if isinstance(questions, list):
                             questions = ". ".join(questions)
@@ -969,11 +969,11 @@ class MultiAgentOrchestrator:
                         )
                     self._log_rephrase_prompt_record("reflection update")
                     
-                    # Call supporting agents again with new questions
+                    # 再给支援人员打电话 问些新问题
                     self._call_supporting_agents(flag_rephrase_prompt=False)
                     self._accumulate_supporting_agents_complete()
                     
-                    # Call main agent again with new insights
+                    # 再给主干员打个电话 说出新的见解
                     main_response, supporting_insights = self._call_main_agent()
                     if self.main_agent in self.agent_name_list:
                         self._merge_and_store_agent_insights(self.main_agent, main_response)
@@ -981,7 +981,7 @@ class MultiAgentOrchestrator:
             emit_step("Orch", "Composing final response...")
         
         elif len(self.agent_name_list) == 1:
-            # Single agent mode
+            # 单一代理模式
             self.main_agent = self.agent_name_list[0]
             emit_step("Orch", f"Single-agent mode: calling {self.main_agent}")
             main_response, _ = self._call_main_agent()
@@ -989,7 +989,7 @@ class MultiAgentOrchestrator:
                 self._merge_and_store_agent_insights(self.main_agent, main_response)
         
         else:
-            # No agents configured - use orchestrator directly
+            # 没有配置代理 - 直接使用 编排器
             main_response = self._call_llm(
                 self.system_prompt + 
                 "\n[CONVERSATION]\n" + self.get_conversation_history() +
@@ -1013,7 +1013,7 @@ class MultiAgentOrchestrator:
         print(f"\n{'═' * 60}")
         main_response = main_response_new
 
-        # Check for finish
+        # 检查完成
         if "FINISH" in self.memory.get("finish_desc", ""):
             return main_response + "\n\n I look forward to speaking with you again soon!"
         
@@ -1046,12 +1046,12 @@ class MultiAgentOrchestrator:
             "reflection_questions": {},
         }
         
-        # Skip if no supporting agents
+        # 如果没有辅助代理，则跳过
         if not self.supporting_agents:
             return reflection_results
         
-        # Skip if data science agent is not in supporting agents
-        # (reflection mainly catches data-answerable questions)
+        # 如果 数据科学 Agent 不属于辅助代理，请跳过
+        # (反应主要抓住数据可回答的问题)
         if AGENT_NAME_DATA_SCIENCE not in self.supporting_agents:
             return reflection_results
         
@@ -1073,13 +1073,13 @@ class MultiAgentOrchestrator:
                 reflection_results = json.loads(reflect_response)
                 
                 if "YES" in reflection_results.get("decision", ""):
-                    # Validate that reflection questions target known agents
+                    # 验证针对已知代理人的反思问题
                     reflection_agents = list(reflection_results.get("reflection_questions", {}).keys())
                     if not set(reflection_agents).issubset(set(self.agent_name_list)):
-                        # Invalid agents referenced, skip reflection
+                        # 引用无效的代理，跳过反射
                         reflection_results = {"decision": "NO", "reflection_questions": {}}
                     else:
-                        # Update supporting agents for next round
+                        # 更新下一轮的辅助代理
                         self.supporting_agents = ";".join(reflection_agents)
                 break
             except Exception as e:
@@ -1107,7 +1107,7 @@ class MultiAgentOrchestrator:
         print(f"[Orch:{ts}] Agents: {self.agent_name_list}")
         print(f"{'═' * 60}")
         
-        # Reset stats for this request
+        # 重置此请求的数据
         request_stats.reset()
         
         self.add_user_message(user_message)
@@ -1118,10 +1118,10 @@ class MultiAgentOrchestrator:
             
             print(f"[Orch:{ts}] take_turn returned ({len(response) if response else 0} chars): {repr(response[:200] if response else 'None')}...")
             
-            # Check for problematic response patterns before cleaning
+            # 清理前检查有问题的反应模式
             response_lower = response.lower() if response else ""
             
-            # Detect prompt leakage (model echoing instructions)
+            # 检测即时泄漏(模式呼应指示)
             prompt_leak_patterns = [
                 'you must do so safely',
                 'you will analyze and synthesize',
@@ -1131,7 +1131,7 @@ class MultiAgentOrchestrator:
             ]
             is_prompt_leak = any(p in response_lower for p in prompt_leak_patterns)
             
-            # Detect raw search results (not synthesized)
+            # 检测原始搜索结果(未合成)
             is_raw_search = response_lower.count('url:') >= 2 or response_lower.count('relevance score:') >= 2
             
             if is_prompt_leak:
@@ -1142,14 +1142,14 @@ class MultiAgentOrchestrator:
             if (is_prompt_leak or is_raw_search) and attempt < max_retries - 1:
                 print(f"[Orch:{ts}] Retrying due to problematic response...")
                 
-                # Add explicit synthesis request
+                # 添加明确的综合请求
                 synthesis_prompt = (
                     "Please provide a direct, synthesized answer to the user's question. "
                     "Do not output raw data or search results. "
                     "Summarize the key findings in natural language."
                 )
                 
-                # For raw search results, try to synthesize
+                # 原始搜索结果请尝试合成
                 if is_raw_search and self.domain_expert_agent:
                     try:
                         synthesis_request = f"Based on these search results, answer the user's question: {user_message}\n\nSearch results:\n{response[:2000]}\n\n{synthesis_prompt}"
@@ -1164,8 +1164,8 @@ class MultiAgentOrchestrator:
                     except Exception as e:
                         print(f"[Orch:{ts}] Synthesis failed: {e}")
 
-                # Handle problematic cases outside the raw-search + domain-expert path.
-                # Keep existing logic above unchanged, and add a fallback repair pass.
+                # 处理在原始搜索+域-专家路径以外的问题案件。
+                # 保持现有逻辑上方不变，并增加退后修补通行证。
                 if is_prompt_leak:
                     try:
                         fallback_request = (
@@ -1193,7 +1193,7 @@ class MultiAgentOrchestrator:
             request_stats.print_summary()
             return cleaned
         
-        # If all retries failed, return the last cleaned response
+        # 如果全部重试失败，请返回上次清理的响应
         cleaned = clean_agent_response(response)
         print(f"[Orch:{ts}] ✗ All retries exhausted, returning last response ({len(cleaned)} chars)")
         request_stats.print_summary()
@@ -1212,7 +1212,7 @@ class MultiAgentOrchestrator:
         self.log_number_of_turns = 0
         self.rephrase_prompt_record = {}
         
-        # Reset health coach conversation if present
+        # 重置健康导师对话(如果有的话)
         if self.health_coach_agent:
             self.health_coach_agent.reset_conversation()
     
@@ -1241,7 +1241,7 @@ def create_orchestrator(
     domain_expert_agent=None,
     health_coach_agent=None,
     debug_verbose: bool = False,
-    # Legacy parameter for backwards compatibility
+    # 向后兼容的遗留参数
     gemini_api_key: Optional[str] = None,
 ) -> MultiAgentOrchestrator:
     """Factory function to create a configured orchestrator.
@@ -1259,7 +1259,7 @@ def create_orchestrator(
     Returns:
         Configured MultiAgentOrchestrator.
     """
-    # Handle legacy parameter
+    # 处理遗留参数
     if gemini_api_key and not api_key:
         api_key = gemini_api_key
         provider = "gemini"

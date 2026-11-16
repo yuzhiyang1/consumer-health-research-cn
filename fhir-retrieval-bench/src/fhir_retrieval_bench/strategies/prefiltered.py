@@ -140,9 +140,9 @@ def _filter_fhir_bundle(
     elif r_type in ["Patient", "Encounter"]:
       filtered_resources.append(res)
 
-    # All other types are DROPPED (not included)
+    # 所有其他类型均为DROPPED(不包括)
 
-  # Selection Logic (Latest Only)
+  # 选择逻辑( 仅最晚)
   for group in obs_groups.values():
     group.sort(
         key=lambda r: fhir_utils.parse_fhir_date(
@@ -161,7 +161,7 @@ def _filter_fhir_bundle(
     )
     filtered_resources.append(group[0])
 
-  # Build Slim Bundle with index
+  # 以索引构建 Slim 套装
   return {
       "resourceType": "Bundle",
       "type": "collection",

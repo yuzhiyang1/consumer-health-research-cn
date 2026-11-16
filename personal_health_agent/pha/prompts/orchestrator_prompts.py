@@ -4,7 +4,7 @@ These prompts configure the orchestrator that coordinates between
 Data Science, Domain Expert, and Health Coach agents.
 """
 
-# Agent names for consistency
+# 用于一致性的代理名称
 AGENT_NAME_OVERALL = "Personal Health Agent"
 AGENT_NAME_DATA_SCIENCE = "data_science_agent"
 AGENT_NAME_DOMAIN_EXPERT = "domain_expert_agent"
@@ -12,7 +12,7 @@ AGENT_NAME_HEALTH_COACH = "health_coach_agent"
 
 
 # =============================================================================
-# Data Science Agent Data Access (what the orchestrator knows DS can access)
+# 数据科学 Agent数据访问(编排器知道DS可以访问).
 # =============================================================================
 
 DATA_SCIENCE_AGENT_DATA_ACCESS_PROMPT = """
@@ -43,7 +43,7 @@ Note: A pre-loaded `age_to_age_group(age)` helper converts integer age to the ma
 
 
 # =============================================================================
-# Multi-Agent Collaboration Examples (CRITICAL for proper agent selection)
+# 多 Agent 协作实例 CRITICAL (供选择适当的代理)
 # =============================================================================
 
 MULTI_AGENT_COLLABORATION_EXAMPLES = f"""
@@ -139,7 +139,7 @@ Workflow: Explain that this functionality is not currently supported and suggest
 
 
 # =============================================================================
-# Agent Descriptions
+# 代理描述
 # =============================================================================
 
 DATA_SCIENCE_AGENT_DESCRIPTION = f"""data_science_agent: a data scientist who can write and execute Python code to analyze the user's personal health records data.
@@ -158,7 +158,7 @@ IMPORTANT: The health coach should leverage data from the data science agent whe
 
 
 # =============================================================================
-# Orchestrator System Prompt
+# 编排器 系统提示
 # =============================================================================
 
 ORCHESTRATOR_PREAMBLE = f"""[SYSTEM PROMPT]
@@ -190,7 +190,7 @@ Output ONLY the improved response itself. Do NOT include any preamble, acknowled
 """
 
 # =============================================================================
-# Team Structure Prompts
+# 团队结构提示
 # =============================================================================
 
 TEAM_STRUCTURE_PROMPT = f"""Given the conversation history in [CONVERSATION], the user's question in [LAST_QUESTION], 
@@ -222,7 +222,7 @@ Output as JSON only (no explanation):
 
 
 # =============================================================================
-# Topic and Goal Prompts
+# 专题和目标提示
 # =============================================================================
 
 TOPIC_PROMPT = """Based on the [CONVERSATION], determine the current topic being discussed.
@@ -246,7 +246,7 @@ Otherwise output "CONTINUE".
 
 
 # =============================================================================
-# Rephrase Prompts
+# 重写提示
 # =============================================================================
 
 def REPHRASE_PROMPT_SUPPORTING_AGENTS(
@@ -286,7 +286,7 @@ Provide JSON only, no additional formatting or code blocks:
 
 
 # =============================================================================
-# Supporting Agent Prompts
+# 支持代理提示
 # =============================================================================
 
 def SUPPORTING_AGENT_ADDITIONAL_PROMPT(agent_name: str) -> str:
@@ -322,7 +322,7 @@ If the merged insight is empty, just return "EMPTY".
 
 
 # =============================================================================
-# Reflection Prompt
+# 反射提示
 # =============================================================================
 
 def REFLECT_PROMPT(
@@ -363,7 +363,7 @@ Return "NO" if the response is good enough. Return "YES" if it can be improved w
 
 
 # =============================================================================
-# Final Response Prompts  
+# 最后反应提示
 # =============================================================================
 
 def FINAL_RESPONSE_PROMPT(

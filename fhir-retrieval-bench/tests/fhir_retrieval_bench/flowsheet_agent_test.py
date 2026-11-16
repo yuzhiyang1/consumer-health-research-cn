@@ -20,7 +20,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
         "resourceType": "Bundle",
         "type": "collection",
         "entry": [
-            # Required Patient resource
+            # 所需患者资源
             {
                 "resource": {
                     "resourceType": "Patient",
@@ -31,7 +31,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "name": [{"given": ["Jane"], "family": "Doe"}],
                 }
             },
-            # Encounter with type array to hit type string extraction
+            # 与类型数组对接以击打类型字符串提取
             {
                 "resource": {
                     "resourceType": "Encounter",
@@ -45,7 +45,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     },
                 }
             },
-            # Encounter with malformed date to naturally hit exception block
+            # 遇到错误的日期自然击中例外区块
             {
                 "resource": {
                     "resourceType": "Encounter",
@@ -57,8 +57,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     },
                 }
             },
-            # Multiple Observations to elegantly test adaptive downsampling and
-            # date formatting
+            # 多重观测，以优雅地测试适应性下采样和
+            # 日期格式化
             {
                 "resource": {
                     "resourceType": "Observation",
@@ -87,8 +87,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "effectiveDateTime": "2141-05-29T10:00:00-04:00",
                 }
             },
-            # Observation occurring in a different month to naturally trigger
-            # tail slice dropping
+            # 不同月份发生的自然触发观测
+            # 尾片掉下来
             {
                 "resource": {
                     "resourceType": "Observation",
@@ -98,8 +98,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "effectiveDateTime": "2141-06-15T10:00:00-04:00",
                 }
             },
-            # Observation with valueCodeableConcept to hit coded display
-            # extraction
+            # 使用 valueCodeableConcept 来进行编码显示的观测
+            # 提取
             {
                 "resource": {
                     "resourceType": "Observation",
@@ -109,7 +109,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "effectiveDateTime": "2141-05-29T11:00:00-04:00",
                 }
             },
-            # Observation with component list to hit component extraction
+            # 带有组件列表的观测数据以击中组件提取
             {
                 "resource": {
                     "resourceType": "Observation",
@@ -126,8 +126,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     }],
                 }
             },
-            # Observation with hasMember and no direct value to hit parent panel
-            # skipping
+            # 与 hasMember 一起观测，没有直接值击打母板
+            # 跳过
             {
                 "resource": {
                     "resourceType": "Observation",
@@ -137,8 +137,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "hasMember": [{"reference": "Observation/obs-1"}],
                 }
             },
-            # Observation with tuple text to natively hit json.dumps
-            # serialization in _to_hashable
+            # 用翻转文字观察本地撞击的json.dumps
+            # _to_hashable中的序列化
             {
                 "resource": {
                     "resourceType": "Observation",
@@ -148,8 +148,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "effectiveDateTime": "2141-05-29T14:00:00-04:00",
                 }
             },
-            # Observation with unserializable mapping to natively hit TypeError
-            # block in _to_hashable
+            # 用无法序列的绘图进行本土撞击的观测TypeError
+            # 块，在 _to_hashable
             {
                 "resource": {
                     "resourceType": "Observation",
@@ -159,8 +159,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "effectiveDateTime": "2141-05-29T15:00:00-04:00",
                 }
             },
-            # Observation pointing to a nonexistent encounter to natively hit
-            # DA:267,0 return N/A
+            # 表明不存在遭遇本土袭击的观察
+            # DA: 267,0 返回号/A
             {
                 "resource": {
                     "resourceType": "Observation",
@@ -171,7 +171,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "encounter": {"reference": "Encounter/nonexistent-enc"},
                 }
             },
-            # Condition without code object to hit get_all_displays null shield
+            # 无代码对象的状态击打 get_all_displays 无效屏蔽
             {
                 "resource": {
                     "resourceType": "Condition",
@@ -180,8 +180,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "recordedDate": "2141-05-20T09:00:00-04:00",
                 }
             },
-            # Procedure with coding without display to hit get_all_displays code
-            # fallback
+            # 不显示的编码程序可以击打 get_all_displays 代码
+            # 倒置
             {
                 "resource": {
                     "resourceType": "Procedure",
@@ -191,7 +191,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "performedDateTime": "2141-05-20T11:00:00-04:00",
                 }
             },
-            # Basic MedicationRequest and Administration
+            # 基础 MedicationRequest 行政事务处
             {
                 "resource": {
                     "resourceType": "MedicationRequest",
@@ -230,8 +230,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     },
                 }
             },
-            # MedicationRequest pointing to a Medication with
-            # mimic-medication-name identifier
+            # MedicationRequest指出药剂与
+            # 仿真-药剂-名称标识符
             {
                 "resource": {
                     "resourceType": "MedicationRequest",
@@ -253,8 +253,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "amount": {"numerator": {"value": 10, "unit": "mg"}},
                 }
             },
-            # MedicationRequest pointing to a Medication with medication-mix
-            # identifier
+            # MedicationRequest 指用药物混合的药物
+            # 标识符
             {
                 "resource": {
                     "resourceType": "MedicationRequest",
@@ -273,8 +273,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     }],
                 }
             },
-            # MedicationRequest pointing to a parent Medication with ingredients
-            # referencing child Medication
+            # MedicationRequest指父母配药
+            # 参考儿童药剂
             {
                 "resource": {
                     "resourceType": "MedicationRequest",
@@ -306,8 +306,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     }],
                 }
             },
-            # MedicationRequest with coded frequency to hit
-            # timing.code.coding.display cascade
+            # MedicationRequest有编码的频率打击
+            # 时间级联. code.coding.display 级联
             {
                 "resource": {
                     "resourceType": "MedicationRequest",
@@ -319,8 +319,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     ],
                 }
             },
-            # MedicationRequest with repeat frequency only to hit f_val times
-            # cascade
+            # MedicationRequest,重复频率只能击中f_val倍
+            # 级联
             {
                 "resource": {
                     "resourceType": "MedicationRequest",
@@ -332,8 +332,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     ],
                 }
             },
-            # MedicationAdministration with rateQuantity only to hit rate
-            # fallback
+            # MedicationAdministration 与rateQuantity只打击速率
+            # 倒置
             {
                 "resource": {
                     "resourceType": "MedicationAdministration",
@@ -343,8 +343,8 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "dosage": {"rateQuantity": {"value": 100, "unit": "mL/hr"}},
                 }
             },
-            # Condition with missing clinicalStatus and dict verificationStatus
-            # to hit fallback
+            # 失踪的条件clinicalStatus和命令verificationStatus
+            # 击倒后退
             {
                 "resource": {
                     "resourceType": "Condition",
@@ -354,7 +354,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "recordedDate": "2141-05-20T09:00:00-04:00",
                 }
             },
-            # Procedure
+            # 程序
             {
                 "resource": {
                     "resourceType": "Procedure",
@@ -388,7 +388,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "daysSupply": {"value": 30, "unit": "days"},
                 }
             },
-            # Immunization
+            # 免疫
             {
                 "resource": {
                     "resourceType": "Immunization",
@@ -398,7 +398,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "occurrenceDateTime": "2141-05-20T12:00:00Z",
                 }
             },
-            # AllergyIntolerance with dict verificationStatus fallback
+            # AllergyIntolerance 带有命令 verificationStatus 倒下
             {
                 "resource": {
                     "resourceType": "AllergyIntolerance",
@@ -408,7 +408,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "recordedDate": "2141-05-20T13:00:00Z",
                 }
             },
-            # AllergyIntolerance with string verificationStatus fallback
+            # AllergyIntolerance 带弦 verificationStatus 倒置
             {
                 "resource": {
                     "resourceType": "AllergyIntolerance",
@@ -429,7 +429,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
                     "conclusion": "Normal results",
                 }
             },
-            # Specimen
+            # 样本
             {
                 "resource": {
                     "resourceType": "Specimen",
@@ -591,16 +591,16 @@ class FlowsheetAgentTest(parameterized.TestCase):
 
   def test_adaptively_downsample_trigger(self):
     store = flowsheet_agent._FlowsheetDataStore(self.bundle)
-    # Request max_rows=1 to naturally trigger adaptive downsampling compression
-    # over the multiple Observation rows
+    # 请求 max_rows = 1 自然触发适应性下采样压缩
+    # 在多个观察行之上
     res_compressed = store._get_dataframe_by_concept(
         "Platelet Count (Observation)", max_rows=1
     )
     self.assertIn("adaptively downsampled", res_compressed)
     self.assertIn("270", res_compressed)
 
-    # Test advanced retrieval exception block when invalid granularity string is
-    # passed
+    # 无效颗粒字符串时，测试高级 检索 例外块
+    # 通过了
     res_malformed_gran = store._get_dataframe_by_concept(
         "Platelet Count (Observation)", granularity="invalid-gran", max_rows=1
     )
@@ -658,13 +658,13 @@ class FlowsheetAgentTest(parameterized.TestCase):
 
     store = flowsheet_agent._FlowsheetDataStore(massive_bundle)
 
-    # Hit protection block via store APIs
+    # 通过商店打击保护块APIs
     group_md = store._get_dataframe_by_concept("Massive Test (Observation)")
     self.assertIn("adaptively downsampled", group_md)
 
   def test_downsample_public_edge_cases(self):
 
-    # 1. Empty DataFrame hits DA:88,0 early return
+    # 1. 空 DataFrame 点击 DA: 88,0 提前返回。
     empty_df = pd.DataFrame()
     flowsheet_agent._downsample(
         empty_df,
@@ -681,7 +681,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
     )
     self.assertTrue(empty_df.empty)
 
-    # 2. Custom DataFrame hitting nested JSON serialization blocks inside
+    # 2.自定义 DataFrame 击中巢 JSON 内部的序列化块
     # _to_hashable
     custom_df = pd.DataFrame({
         "ID": [
@@ -703,7 +703,7 @@ class FlowsheetAgentTest(parameterized.TestCase):
     )
 
     # 3. Hit non-downsampled rendering pathways (len <= 600) in full tables and
-    # groups
+    # 组
     store = flowsheet_agent._FlowsheetDataStore(self.bundle)
     small_group_md = store._get_dataframe_by_concept(
         "Platelet Count (Observation)"

@@ -11,7 +11,7 @@ from typing import Any, Dict, Literal, Optional, TypedDict
 import pandas as pd
 
 
-# Type definitions
+# 类型定义
 DType = Literal["datetime64[ns]", "float64", "str", "int"]
 
 
@@ -350,7 +350,7 @@ class PhdaDataFrame(pd.DataFrame):
   ) -> tuple[datetime.date, datetime.date]:
     """Gets the start and end dates for a given time expression."""
 
-    # Match the 'last X days' pattern
+    # 匹配“X天后” 模式
     match = re.match(r"last (\d+) days", time_expression)
 
     if time_expression == "today":
@@ -381,10 +381,10 @@ def enforce_persona_schema(
       schema: Dict[str, ColumnInfo],
       index_col: Optional[str] = None,
   ):
-    # Import here so that when we pull this into the sandbox it's available
-    # # pylint: disable=g-import-not-at-top
+    # 导入这里，这样我们把它拉进沙盒里就可以了
+    # # pylint: 禁用=g- import- not- at- top (中文(简体) ).
     from pandas.api import types
-    # pyformat: enable=g-import-not-at-top
+    # pyformat: 启用=g- import- not- at- top (帮助) 页面存档备份，存于互联网档案馆，存于互联网档案馆， pyformat
     columns = []
     for col, column_info in schema.items():
       datatype = column_info["dtype"]
@@ -393,7 +393,7 @@ def enforce_persona_schema(
             types.is_datetime64_any_dtype(df[col])
             and datatype == "datetime64[ns]"
         ):
-          # Pandas will throw a timezone warning if we do this naievely
+          # 熊猫会发出一个时区警告如果我们做这个无谓的。
           df[col] = df[col].dt.tz_localize(None)
           df[col] = df[col].astype("datetime64[ns]")
         else:

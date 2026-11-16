@@ -97,17 +97,17 @@ class TestOrchestratorPrompts:
     
     def test_team_structure_prompt_includes_agents(self):
         """Team structure prompt lists available agents."""
-        # TEAM_STRUCTURE_PROMPT is a string template, not a function
+        # TEAM_STRUCTURE_PROMPT 是一个字符串模板，不是函数
         prompt = TEAM_STRUCTURE_PROMPT
         
-        # Should contain placeholders or agent references
+        # 应包含占位符或代理引用
         assert "agent" in prompt.lower()
     
     def test_team_structure_prompt_requests_json(self):
         """Team structure prompt asks for JSON output."""
         prompt = TEAM_STRUCTURE_PROMPT
         
-        # Should mention JSON format
+        # 应提及JSON格式
         assert "json" in prompt.lower() or "JSON" in prompt
     
     def test_rephrase_prompt_is_callable(self):
@@ -170,7 +170,7 @@ class TestHealthCoachPrompts:
     
     def test_prompts_mention_conversation(self):
         """Prompts reference conversation context."""
-        # At least one prompt should mention conversation
+        # 至少应该有一个提示应该提到谈话
         prompts_text = GOAL_PROMPT + HEALTH_COACH_SIMPLE_PROMPT + FINISH_DESC_PROMPT
         assert "conversation" in prompts_text.lower() or "CONVERSATION" in prompts_text
 

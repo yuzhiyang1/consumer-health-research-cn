@@ -1,53 +1,35 @@
-# Google Heart Rate Measurement Study Dataset (rPPG)
+# Google 心率测量研究数据集（rPPG）
 
-Thank you for your interest in the **Google Heart Rate Measurement Study Dataset (the "HR Dataset")**. The HR Dataset is available solely for research purposes and is not intended for commercial use. 
+Google 心率测量研究数据集（以下简称 HR 数据集）仅供研究使用。数据来自同意参与研究的受试者，分别在实验室和日常生活场景采集，详见发表于《Nature》的论文[《在日常使用智能手机时进行被动心率监测》](https://www.nature.com/articles/s41586-026-10507-6)。
 
-The HR Dataset consists of data collected from consented research participants during laboratory and free-living studies as detailed in our Nature publication, **["Passive heart-rate monitoring during smartphone use in everyday life"](https://www.nature.com/articles/s41586-026-10507-6)**. The HR Dataset is available to qualified researchers for non-commercial, non-clinical research use only and for no other purpose, meaning that it is shared with other researchers in order to help advance research. The HR Dataset is only available upon request and includes: 
+符合条件的研究人员可申请访问，仅用于非商业、非临床研究。数据集包含肤色信息、面部视频和心率数据，还提供在该数据集上训练的心率估计模型 PHRM-mini。
 
-*   **Skin Tone Information**
-*   **Facial Video Recordings**
-*   **Heart Rate**
+实验室数据包括参与者的完整面部视频。为保护隐私，日常生活场景采集的视频仅保留经过去标识化的额头区域图像块，并下采样至 10 × 5 像素。具体采集和处理方式见论文。
 
-Facial video recordings captured during laboratory studies include video of study participants' full faces.  Facial video recordings captured under "free-living" conditions consist of de-identified patches from study participants' forehead regions (downsampled to 10x5 pixel patches) to preserve participant privacy.  The dataset additionally includes a heart rate estimation model ("PHRM-mini") trained on the dataset.  Please see the publication for more details.
+数据集禁止向第三方共享，禁止用于非商业、非临床研究以外的用途，禁止重新识别或尝试重新识别任何参与者。任何相关出版物或演示也不得包含可识别个人身份的信息，包括面部视频。
 
-You must not (i) share the HR Dataset with any third-parties, (ii) use it for any purpose other than non-commercial, non-clinical research purposes, (iii) re-identify or attempt to re-identify any individuals within the HR Dataset, or (iv) include any identifiable information (including face video recordings) in any related publications or presentations. 
+## 申请条件
 
----
+申请者需提供以下信息或承诺。
 
-## Participation Requirements
-Prior to receiving access to the HR Dataset, all applicants will need to provide:
-*   A verified academic email address (e.g., edu);
-*   A study protocol or plan that has been reviewed and approved by your institution's Institutional Review Board (IRB) or an equivalent ethics committee;
-*   A plan detailing how you will keep the HR Dataset secure, encrypted, and restricted to authorized researchers on your team;
-*   Affirmative consent that you will not share the HR Dataset with any third parties; and
-*   Affirmative consent that you will not display any explicit examples of the HR Dataset in any publications or presentations.
+- 经过验证的学术邮箱，例如以 `.edu` 结尾的邮箱。
+- 经所在机构的机构审查委员会（IRB）或同等伦理委员会审查并批准的研究方案。
+- 数据保护方案，说明如何安全存储和加密数据，以及如何将访问权限限制在团队内经授权的研究者。
+- 明确同意不会将数据集共享给第三方。
+- 明确同意不会在出版物或演示中展示数据集的实际样例。
 
----
+## 申请访问
 
-## Requesting Access
-Please complete the form below to apply for access to the HR Dataset. Access is granted only to approved researchers who meet specific criteria, including having a verified academic email address and agreeing not to share the HR Dataset with others. If you are approved to access the HR Dataset, your use is subject to the **[Google Heart Rate Measurement Study Dataset Terms of Service](term_of_service.md)**.
+请通过[数据集访问申请表](https://docs.google.com/forms/d/1ln6EmWYd_TqXhOmFxJsQ5sl0H4QtVyjlXGO5sn3LOZc/viewform)提交申请。仅符合条件且经过审批的研究者可获得访问权限。获批后的使用须遵守[数据集服务条款（英文）](term_of_service.md)。
 
-👉 **[Apply for Dataset Access here](https://docs.google.com/forms/d/1ln6EmWYd_TqXhOmFxJsQ5sl0H4QtVyjlXGO5sn3LOZc/viewform)**
+提交表单即表示同意项目组收集你提供的个人身份信息，用于评估和选择访问者以及留档。项目组可查看你通过表单提交的信息，包括姓名、邮箱和所属机构。
 
-By completing this form, you consent to the collection of the personally-identifiable information (“PII”) you submit, which will be used by the HR Dataset Project Team to evaluate and select researchers who will receive access to the HR Dataset, as well as for record-keeping purposes. The HR Dataset Project Team will also have access to the information that you submit through this form, including your name, email address, and institutional or organizational affiliation.
+个人身份信息受 [Google 服务条款](https://policies.google.com/terms?hl=en-US)、[数据集服务条款](term_of_service.md)和 [Google 隐私政策](https://policies.google.com/privacy)约束。为便于审计并满足适用条款和监管要求，这些信息将无限期保留。
 
-Your PII will be subject to the [Google Terms of Service](https://policies.google.com/terms?hl=en-US), the [Google Heart Rate Measurement Study Dataset Terms of Service](term_of_service.md), and the [Google Privacy Policy](https://policies.google.com/privacy). Your PII will be maintained indefinitely for auditing purposes, and to ensure compliance with the applicable terms and regulatory requirements.
+符合参与条件的申请者会收到包含进一步说明和后续步骤的邮件。提交表单即确认你年满 18 周岁，且填写的所有信息真实、准确。
 
-If you meet the participation criteria, you will be contacted via email and provided with additional details and next steps.
+如有问题或反馈，请联系 [数据集项目组](mailto:google-heart-rate-measurement-study@google.com)。
 
-By completing this form you attest that:
-*   you are 18 years of age or older; and
-*   all of the information you submit in this form is true and accurate.
+### 免责声明
 
-*For questions, feedback, or inquiries, please reach out to the project team at:*  
-📧 **[google-heart-rate-measurement-study@google.com](mailto:google-heart-rate-measurement-study@google.com)**
-
----
-
-### Disclaimers
-To the maximum extent permitted by applicable law:
-*   Google makes no claims, promises, representations, warranties or guarantees about the accuracy, completeness, fitness for purpose or adequacy of the contents of the HR Dataset;
-*   Google expressly disclaims any and all liability for any errors or omissions in the data;
-*   Google provides no warranty or representations of any kind (whether express or implied) with respect to the contents of the HR Dataset; and
-*   Google is not responsible for your use or misuse of the HR Dataset
-
+在适用法律允许的最大范围内，Google 不对数据集内容的准确性、完整性、适用性或充分性作出承诺或保证，不承担其中错误或遗漏造成的责任，不提供任何明示或默示的保证或陈述，也不对使用或滥用数据集的行为负责。

@@ -155,10 +155,10 @@ def build_case_study_dict(
     vertical: autoeval_data_lib.Vertical,
 ) -> dict[str, case_study_pb2.CaseStudy]:
   """Returns a mapping of case study ID to case study."""
-  del vertical  # Unused.
-  # Note: This function relied on internal Google storage systems and should
-  # be implemented sich that a mapping of case study IDs to case studies is
-  # returned.
+  del vertical  # 未用过。
+  # 注:此功能依赖于内部Google存储系统，并且应当
+  # 将个案研究IDs的图示用于个案研究
+  # 返回。。。
   case_study_id_to_case_study = dict()
   return case_study_id_to_case_study
 
@@ -214,17 +214,17 @@ def run_generate_for_vertical(
     vertical: autoeval_data_lib.Vertical, overwrite: bool
 ) -> None:
   """Generates AutoEval LLM TFRecords for a given vertical."""
-  # Build conversation ratings.
+  # 构建对话收视率。
   conversation_ratings = build_conversation_ratings(vertical)
 
-  # Collect all conversations by the target TFRecord output filepath prefix.
+  # 由目标收集全部对讲TFRecord输出文件路径前缀。
   filepath_prefix_to_conversation_ratings = collections.defaultdict(list)
   for conversation_rating in conversation_ratings:
     filepath_prefix_to_conversation_ratings[
         conversation_rating.get_filepath_prefix()
     ].append(conversation_rating)
 
-  # Convert conversation rating to tf examples and check if filepaths exists.
+  # 将对话评分转换为tf 示例，并检查文件路径是否存在。
   filepath_to_tf_examples = {}
   for (
       filepath_prefix,
@@ -237,7 +237,7 @@ def run_generate_for_vertical(
         rating.to_tf_example() for rating in ratings
     ]
 
-  # Write all conversation ratings out as a single shard.
+  # 把所有谈话的收视率都写成一个硬的
   for (
       filepath,
       tf_examples,
@@ -247,7 +247,7 @@ def run_generate_for_vertical(
       os.makedirs(dirpath)
     with tf.io.TFRecordWriter(str(filepath)) as writer:
       for example in tf_examples:
-        writer.write(example.SerializeToString())  # pytype: disable=attribute-error
+        writer.write(example.SerializeToString())  # pytype: 禁用=属性- 错误
 
 
 def run_generate(overwrite: bool) -> None:

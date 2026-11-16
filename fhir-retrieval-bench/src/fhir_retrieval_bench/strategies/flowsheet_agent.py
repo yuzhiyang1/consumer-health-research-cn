@@ -578,7 +578,7 @@ class _FlowsheetResource(abc.ABC):
         "context", {}
     ).get("reference")
 
-    # fallback to encounter date if resource date is missing
+    # 如果缺少资源日期，回落到相遇日期
     if not date and enc_ref:
       enc = registry.get_encounter(enc_ref)
       if enc and enc.period and enc.period.start:
@@ -778,13 +778,13 @@ class _MedicationBaseResource(_FlowsheetResource):
       self, med: _MedicationModel
   ) -> str | None:
     """Extracts dosage strictly from a _MedicationModel's ingredients or total amount."""
-    # Check ingredients
+    # 检查成份
     for ing in med.ingredient:
       num = ing.strength.numerator if ing.strength else None
       if num and num.value is not None:
         return f"{num.value} {num.unit or ''}".strip()
 
-    # Check total amount
+    # 检查总额
     num = med.amount.numerator if med.amount else None
     if num and num.value is not None:
       return f"{num.value} {num.unit or ''}".strip()
@@ -798,7 +798,7 @@ class _MedicationBaseResource(_FlowsheetResource):
     dose, freq, inst = "", "", ""
     r_type = res.get("resourceType")
 
-    # Base extraction driven by resource type
+    # 资源类型驱动的基底提取
     if r_type in ("MedicationRequest", "MedicationDispense"):
       dose, freq, inst = self._extract_instruction_dosage(
           res.get("dosageInstruction")
@@ -808,7 +808,7 @@ class _MedicationBaseResource(_FlowsheetResource):
     elif r_type == "MedicationAdministration":
       dose, inst = self._extract_administration_dosage(res.get("dosage", {}))
 
-    # Sequential fallbacks for missing dose
+    # 缺量的连续倒数
     if not dose or dose == "N/A":
       med_ref = res.get("medicationReference", {}).get("reference")
       if med := registry.get_medication(med_ref):
@@ -823,17 +823,17 @@ class _MedicationBaseResource(_FlowsheetResource):
   def _extract_instruction_dosage(self, dis: Any) -> tuple[str, str, str]:
     """Extracts dose, frequency, and instructions from a Dosage dictionary."""
 
-    # Normalize input: safely grab the first item if it's a list
+    # 将输入规范化:如果是列表，请安全抓取第一个项
     first_di = dis[0] if isinstance(dis, list) and dis else dis
     if not isinstance(first_di, dict):
       return "", "", ""
 
     dm = _DosageModel.model_validate(first_di)
 
-    # Extract Instructions
+    # 提取指令
     inst = dm.text or ""
 
-    # Extract Dose
+    # 提取剂量
     dose = ""
     first_dr = (
         dm.dose_and_rate[0]
@@ -851,7 +851,7 @@ class _MedicationBaseResource(_FlowsheetResource):
           .strip()
       )
 
-    # Extract Frequency
+    # 提取频率
     freq = ""
     if dm.timing:
       if dm.timing.code:
@@ -1341,13 +1341,13 @@ class _FlowsheetDataStore:
     """Finds the underlying display name and _FlowsheetResource matching the identifier."""
     cid_stripped = concept_identifier.strip()
 
-    # Try exact match with resource type suffix (e.g. "Concept (Resource)")
+    # 尝试精确匹配资源类型后缀(如“ 概念( 资源) ) )
     for name, res in self._resources.items():
       for k in res.dfs_by_display:
         if cid_stripped == f"{k} ({name})":
           return k, res
 
-    # Fallback to matching just the concept string
+    # 倒转到只匹配概念字符串
     for res in self._resources.values():
       if cid_stripped in res.dfs_by_display:
         return cid_stripped, res
@@ -1371,7 +1371,7 @@ class _FlowsheetDataStore:
 
     found_df = found_res.dfs_by_display[k].copy()
 
-    # Date Filtering
+    # 日期过滤
     if (
         (start_date or end_date)
         and "Date" in found_df.columns
@@ -1388,7 +1388,7 @@ class _FlowsheetDataStore:
         found_df = found_df[found_df["Date"].astype(str) <= norm_end]
       found_df = found_df.reset_index(drop=True)
 
-    # Downsampling
+    # 采样
     if len(found_df) > max_rows:
       try:
         target_gran = _DownsampleGranularity(granularity)
@@ -1414,7 +1414,7 @@ class _FlowsheetDataStore:
       )
       return md_str
 
-    # Standard Return
+    # 标准返回
     if "Date" in found_df.columns:
       _sort_by_datetime(found_df, datetime_col="Date", ascending=True)
     return str(found_df.to_markdown(index=False))
@@ -1546,8 +1546,8 @@ class FlowsheetAgentStrategy(base.Strategy):
           " tools."
       )
 
-    # Use a dynamic wrapper with custom signature because the built-in decorator
-    # reflection struggles with some edge types when doing pure pass-throughs
+    # 使用带有自定义签名的动态包装符，因为内置的装饰器
+    # 反射与某些边缘类型在做纯过关时发生斗争
     @functools.wraps(get_metadata)
     def custom_meta_func(*args, **kwargs):
       return get_metadata(*args, **kwargs)
@@ -1565,7 +1565,7 @@ class FlowsheetAgentStrategy(base.Strategy):
   def _create_dataframes_tool(self, store: _FlowsheetDataStore) -> Any:
     """Creates the appropriate dataframe retrieval tool."""
 
-    # Define the base logic once, accepting all possible parameters
+    # 定义基准逻辑一次，接受所有可能的参数
     def get_dataframes_by_display_names(
         concept_identifiers: list[str],
         granularity: str = "h",
@@ -1581,7 +1581,7 @@ class FlowsheetAgentStrategy(base.Strategy):
           end_date=end_date,
       )
 
-    # Procedurally build the signature parameters and docstring
+    # 在程序上构建签名参数和指示字符串
     params = [
         inspect.Parameter(
             "concept_identifiers",
@@ -1642,14 +1642,14 @@ class FlowsheetAgentStrategy(base.Strategy):
           "  end_date: Optional inclusive end date bound ('YYYY-MM-DD').",
       ])
 
-    # Create a wrapper and patch its metadata so the LLM reads it correctly.
+    # 创建一个包裹并补丁其元数据，因此LLM 读得正确。
     @functools.wraps(get_dataframes_by_display_names)
     def custom_tool_func(*args, **kwargs):
       return get_dataframes_by_display_names(*args, **kwargs)
 
-    # Override the signature the LLM framework will see
+    # 覆盖签名 LLM 框架将看到
     custom_tool_func.__signature__ = inspect.Signature(params)
-    # Stitch and override the docstring
+    # 断开并覆盖 docstring
     base_doc = (
         "Retrieves concatenated markdown DataFrames for multiple composite"
         " concepts.\n\nCRITICAL: Pass exact complete identifiers including"

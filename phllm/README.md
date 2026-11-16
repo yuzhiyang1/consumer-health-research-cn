@@ -1,122 +1,121 @@
-# A Personal Health Large Language Model for Sleep and Fitness Coaching
+# 面向睡眠与健身指导的个人健康大语言模型
 
-This repository contains [datasets](#datasets) and [reference code](#reference-code-structure) from the PH-LLM manuscript published in Nature Medicine: "[A personal health large language model for sleep and fitness coaching](https://www.nature.com/articles/s41591-025-03888-0)" ({Khasentino, Belyaeva, Liu, Yang, Furlotte}, et. al, 2025).
+本目录提供发表于《Nature Medicine》的 [PH-LLM 论文](https://www.nature.com/articles/s41591-025-03888-0)所对应的[数据集](#数据集)和[参考代码](#参考代码结构)。
 
+![PH-LLM 研究设计](docs/header.png)
 
-![PH-LLM: A Personal Health Large Language Model](docs/header.png)
+> PH-LLM 从三个方面接受评估。第一，通过专业认证考试形式的单选题测试知识水平。第二，结合用户在睡眠和运动方面的目标给出个性化分析和建议。第三，根据按日汇总的数值传感器数据预测用户自报的睡眠质量。
 
-> PH-LLM: A Personal Health Large Language Model. Schematic showing the overall experiment design of the study. PH-LLM was evaluated on three aspects of personal health: (i) assessing its level of expert knowledge based on certification examination-style multiple choice questions, (ii) generating personalized insights and recommendations for user goals in the sleep and fitness domains, and (iii) predicting patient-reported outcomes for sleep quality from aggregated daily-resolution numerical sensor data.
+## 概览
 
-## Overview
+PH-LLM 是在 Gemini 的基础上微调的模型，用于理解按日汇总的可穿戴传感器数据，并支持睡眠与健身场景。研究团队建立了三套基准数据集，评估专业知识、个性化建议和自报睡眠质量预测。在睡眠医学考试中，PH-LLM 与参与对照的人类专家分别得分 79% 和 76%，在健身考试中分别为 88% 和 71%。在 857 个真实案例中，模型处理健身任务的表现与专家相当，给出个性化睡眠分析的表现优于原始 Gemini 模型。模型还使用多模态编码预测自报睡眠质量。项目提供数据集、评分标准和基准结果，供后续研究使用。
 
-While large language models (LLMs) show promise for clinical healthcare applications, their utility for personalized health monitoring using wearable device data remains underexplored. Here we introduce the PH-LLM designed for applications in sleep and fitness. PH-LLM is a version of the Gemini LLM that was fine-tuned for text understanding and reasoning when applied to aggregated daily-resolution numerical sensor data. We created three benchmark datasets to assess multiple complementary aspects of sleep and fitness: expert domain knowledge, generation of personalized insights and recommendations, and prediction of self-reported sleep quality from longitudinal data. PH-LLM achieved scores that exceeded a sample of human experts on multiple-choice examinations in sleep medicine (79% vs. 76%) and fitness (88% vs. 71%). In a comprehensive evaluation involving 857 real-world case studies, PH-LLM performed comparably to human experts for fitness-related tasks and improved over the base Gemini model in providing personalized sleep insights. Finally, PH-LLM effectively predicted self-reported sleep quality using a multimodal encoding of wearable sensor data, further demonstrating its ability to effectively contextualize wearable modalities. This work highlights the potential of LLMs to revolutionize personal health monitoring via tailored insights and predictions from wearable data, and provides datasets, rubrics, and benchmark performance to further accelerate personal-health-related LLM research.
+## 数据集
 
-## Datasets
+我们创建了三个基准测试数据集用于培训和/或评价PH-LLM:
 
-We created three benchmark datasets for training and/or evaluating PH-LLM:
+1. 辅导建议
+2. 专业考试
+3. 病人报告的结果
 
-1. Coaching recommendations
-2. Professional examinations
-3. Patient-reported outcomes
+在这里，我们提供了与公开来源、匿名的辅导建议以及专业检查和病人报告结果的获取程序合作的详细信息。我们还详细介绍了人类专家在评定辅导建议评级时所用的评价主题、AutoEval评分，以及用于重现主要数据数字和扩展数据数字的辅助数据文件。
 
-Here we provide details for working with open-sourced, anonymized coaching recommendations as well as the processes for accessing professional examinations and patient-reported outcomes. We also detail the evaluation rubrics used by human experts when rating coaching recommendations, AutoEval ratings, and auxiliary data files used to recreate main and extended data figures.
+### 辅导建议
 
-### Coaching recommendations
+我们为这两个领域提供了用于培训PH-LLM的匿名辅导建议，作为[`.jsonl`](https://jsonlines.org/)的文件：
 
-We have made the anonymized coaching recommendations used to train PH-LLM available for both domains as [`.jsonl`](https://jsonlines.org/) files here:
+- 睡觉：[sleep_case_studies. all.jsonl (英语).](https://github.com/Google-Health/consumer-health-research/blob/main/phllm/data/sleep_case_studies.all.jsonl)
+- 适应性：[fitness_case_studies. all.jsonl (英语).](https://github.com/Google-Health/consumer-health-research/blob/main/phllm/data/fitness_case_studies.all.jsonl)
 
-- Sleep: [sleep_case_studies.all.jsonl](https://github.com/Google-Health/consumer-health-research/blob/main/phllm/data/sleep_case_studies.all.jsonl)
-- Fitness: [fitness_case_studies.all.jsonl](https://github.com/Google-Health/consumer-health-research/blob/main/phllm/data/fitness_case_studies.all.jsonl)
+每个睡眠案例研究都以一个单 `json` 对象表示，其中包含以下密钥： 1.
 
-Each sleep case study is represented as a single `json` object containing the following keys:
+- `vertical`:指案例研究域的字符串；`"sleep"`或`"fitness"`之一。
+- `case_study_id`:一个独特的字符串标识符，表示具体的案例研究。
+- `user_id`:一个独特的字符串标识符，表示与案例研究相关的用户。
+- `input`:一个包含聚合传感器数据和相关元数据，用作模型或测算器输入的字符串。
+- `split`:一串解码拆分;其中`"train"`,`"validation"`,`"test"`,`"holdout"`,或`"holdout_model"`.
+- `etiology_output`:包含人类专家对病理部分的响应的弦。
+- `insight_output`:包含人类专家对洞察部分的反应的弦。
+- `recommendation_output`:包含人类专家对建议部分的回应的串。
 
-- `vertical`: A string denoting the case study domain; one of `"sleep"` or `"fitness"`.
-- `case_study_id`: A unique string identifier denoting the specific case study.
-- `user_id`: A unique string identifier denoting the user associated with the case study.
-- `input`: A string containing aggregate sensor data and associated metadata that is used as inputs for models or raters.
-- `split`: A string denoting the split; one of `"train"`, `"validation"`, `"test"`, `"holdout"`, or `"holdout_model"`.
-- `etiology_output`: A string containing the human expert response for the etiology section.
-- `insight_output`: A string containing the human expert response for the insights section.
-- `recommendation_output`: A string containing the human expert response for the recommendations section.
+每项健身案例研究均作为单项`json`标注，包含下列密钥： 1.
 
-Each fitness case study is represented as a single `json` object containing the following keys:
+- `vertical`:指案例研究域的字符串；`"sleep"`或`"fitness"`之一。
+- `case_study_id`:一个独特的字符串标识符，表示具体的案例研究。
+- `user_id`:一个独特的字符串标识符，表示与案例研究相关的用户。
+- `demographics_input`:一个包含人口统计数据的字符串，作为模型或测算器的输入。
+- `health_metrics_input`:一个包含健康度量数据作为模型或测算器输入的字符串。
+- `sleep_input`:包含睡眠数据的字符串，用于模型或测算器的输入。
+- `training_load_input`:一个包含训练载荷数据的字符串，作为模型或测算器的输入。
+- `split`:一串解码拆分;其中`"train"`,`"validation"`,`"test"`,`"holdout"`,或`"holdout_model"`.
+- `demographics_output`:包含人口学部分人类专家反应的弦。
+- `health_metrics_output`:包含人类专家对健康度量衡部分的反应的串。
+- `muscle_soreness_input`:包含人体专家对肌肉疼痛部分的反应的弦。
+- `readiness_assessment_output`:包含人类专家对准备状态评估部分的反应的弦。
+- `sleep_output`:包含人类专家对睡眠部分的反应的弦。
+- `subjective_readiness_input`:包含人类专家对主观准备部分的反应的弦。
+- `training_load_output`:一个包含训练载荷部分的人类专家响应的字符串。
 
-- `vertical`: A string denoting the case study domain; one of `"sleep"` or `"fitness"`.
-- `case_study_id`: A unique string identifier denoting the specific case study.
-- `user_id`: A unique string identifier denoting the user associated with the case study.
-- `demographics_input`: A string containing demographics data that is used as inputs for models or raters.
-- `health_metrics_input`: A string containing health metrics data that is used as inputs for models or raters.
-- `sleep_input`: A string containing sleep data that is used as inputs for models or raters.
-- `training_load_input`: A string containing training load data that is used as inputs for models or raters.
-- `split`: A string denoting the split; one of `"train"`, `"validation"`, `"test"`, `"holdout"`, or `"holdout_model"`.
-- `demographics_output`: A string containing the human expert response for the demographics section.
-- `health_metrics_output`: A string containing the human expert response for the health metrics section.
-- `muscle_soreness_input`: A string containing the human expert response for the muscle soreness section.
-- `readiness_assessment_output`: A string containing the human expert response for the readiness assessment section.
-- `sleep_output`: A string containing the human expert response for the sleep section.
-- `subjective_readiness_input`: A string containing the human expert response for the subjective readiness section.
-- `training_load_output`: A string containing the human expert response for the training load section.
+此外，我们还发布了健身案例研究的更新版本，并作了进一步的改进：
 
-Additionally, we have released an updated version of the fitness case studies with further improvements:
+- 适应性：[fitness_case_studies. all.v2.jsonl (英语).](https://github.com/Google-Health/consumer-health-research/blob/main/phllm/data/fitness_case_studies.all.v2.jsonl)
 
-- Fitness: [fitness_case_studies.all.v2.jsonl](https://github.com/Google-Health/consumer-health-research/blob/main/phllm/data/fitness_case_studies.all.v2.jsonl)
+这些案例研究已作了修订，以提高事实准确性，例如，对先前提到的数字和趋势作了具体更正。
 
-These case studies have been revised to improve factual accuracy, for example, with specific corrections made to previously cited numbers and trends.
+个案研究是根据论文补充表格9中界定的标题进行的。
 
-Case studies were evaluated according to the rubric defined in the paper's Supplementary Table 9.
+### 专业考试
 
-### Professional examinations
+睡眠和健身领域的多个选择问题(MCQs)应在相应的考试网站上访问。在这个仓库中，我们提供一个小演示CSV文件，其中包含我们参考代码执行所期望的格式的合成MCQs:[phllm/data/synthetic_mcq_data.csv](https://github.com/Google-Health/consumer-health-research/blob/main/phllm/data/synthetic_mcq_data.csv)。它预计有五个栏：
 
-Multiple choice questions (MCQs) for the sleep and fitness domains should be accessed on the corresponding examination websites. In this repository, we provide a small demo CSV file containing synthetic MCQs in the format expected by our reference code implementations: [phllm/data/synthetic_mcq_data.csv](https://github.com/Google-Health/consumer-health-research/blob/main/phllm/data/synthetic_mcq_data.csv). It expects five columns:
+- `question`:包含问题后继的MCQ选项(例如`"What shoulder movements and planes of action are involved in a tennis backhand? (A) Adduction/frontal (B) Abduction/frontal (C) Adduction/transverse (D) Abduction/transverse"`)的字符串。
+- `choices`: A JSON 对象字符串，包含每个字母选择的字典映射(即`"(A)"`)到相应的长式答案(如`"{'(A)': 'Adduction/frontal', '(B)': 'Abduction/frontal', '(C)': 'Adduction/transverse', '(D)': 'Abduction/transverse'}"`).
+- `domain`:指标域的字符串；`"Sleep"`或`"Fitness"`之一。
+- `difficulty`:指题难度的可选字符串；`"Easy"`,`"Moderate"`,`"Hard"`,或`None`.
+- `answer`:正确答案(如`"(A)"`).
 
-- `question`: A string containing the question followed by MCQ options (e.g., `"What shoulder movements and planes of action are involved in a tennis backhand? (A) Adduction/frontal (B) Abduction/frontal (C) Adduction/transverse (D) Abduction/transverse"`).
-- `choices`: A JSON object string containing a dictionary mapping each alphanumeric choice (i.e., `"(A)"`) to its corresponding long-form answer (e.g.,`"{'(A)': 'Adduction/frontal', '(B)': 'Abduction/frontal', '(C)': 'Adduction/transverse', '(D)': 'Abduction/transverse'}"`).
-- `domain`: A string denoting the target domain; one of `"Sleep"` or `"Fitness"`.
-- `difficulty`: An optional string denoting the difficulty of the question; one of `"Easy"`, `"Moderate"`, `"Hard"`, or `None`.
-- `answer`: The correct answer (e.g., `"(A)"`).
+请注意，MCQs没有用于示范培训，所有样本都用于评价。
 
-Note that MCQs were not used for model training–all samples were used in evaluation.
+#### 睡眠考试
 
-#### Sleep Exams
+我们编译的 629 多重选择问题 MCQs 从。[BoardVitals](https://www.boardvitals.com) 我们用美国医学协会 AMA ) 物理学家表彰奖(Physician's Awards). PRA )"类别 1 - "睡眠医学"问题库，它仿照了美国内科医学委员会考试的内容( ABIM 睡眠医学认证考试，我们还使用了睡眠医学认证维护(英语:Sleep Medicine Certification Exampion). MOC 考试和纵向知识评估审查问题库，该库仿照考试内容 ABIM 睡眠医学 MOC 考试和 ABIM 纵向知识评估。MCQs 涉及与睡眠有关的广泛专题:正常睡眠和替代(N= 127 ),呼吸障碍(N= 84 ),超全息(N= 60 ),失眠症(N= 85 ),运动障碍(N= 23 ),寄生虫(N= 57 ),在其他疾病中睡觉(N= 112 ),和睡眠- wake 计时(N= 81 ).
 
-We compiled 629 multiple choice questions (MCQs) from [BoardVitals](https://www.boardvitals.com) sleep medicine board review question banks. We used the American Medical Association (AMA) Physician's Recognition Award (PRA) "Category 1 - Sleep Medicine'" question bank, which emulates exam content for the American Board of Internal Medicine (ABIM) Sleep Medicine Certification Exam. We also used the Sleep Medicine Maintenance of Certification (MOC) Exam and Longitudinal Knowledge Assessment Review question bank, which emulates exam content for the ABIM Sleep Medicine MOC Exam and ABIM Longitudinal Knowledge Assessment. This compiled set of MCQs spanned a wide range of sleep-related topics: Normal Sleep and Variants (N=127), Breathing Disorders (N=84), Hypersomnolence (N=60), Insomnias (N=85), Movement Disorders (N=23), Parasomnias (N=57), Sleep in Other Disorders (N=112), and Sleep-Wake Timing (N=81).
+#### 适应性考试
 
-#### Fitness Exams
+我们汇编了99MCQs,来源于仿照认证实力和条件专家(CSCS)考试内容的多个问题库[编制手册](https://www.nsca.com/certification/cscs/certified-strength-and-conditioning-specialist-exam-description),由[国家力量与条件协会 NSCA )](https://ncsf.org/)提供，我们使用了NSCA-CSCS教科书"实力训练和条件要素"中的考试问题。
 
-We compiled 99 MCQs sourced from multiple question banks that emulate exam content for the Certified Strength and Conditioning Specialists (CSCS) exam [preparation book](https://www.nsca.com/certification/cscs/certified-strength-and-conditioning-specialist-exam-description) that the [National Strength and Conditioning Association (NSCA)](https://ncsf.org/) provides. We used the test exam questions from the NSCA-CSCS textbook "Essentials of Strength Training and Conditioning".
+### 病人报告的结果
 
-### Patient-reported outcomes
+评估 PH-LLM 预测病人报告的结果( PROs 从纵向被动传感器数据，我们使用了一个大型的 IRB -经核准的研究，为下列人口收集了可穿戴数据： 10,099 同意的个人，为期四周：[Google 健康数字福祉研究:数字设备使用与福祉研究议定书](https://www.researchprotocols.org/2024/1/e49189/) .
 
-To evaluate the ability of PH-LLM to predict patient-reported outcomes (PROs) from longitudinal passive sensor data, we used a large IRB-approved study in which wearable data was collected for a population of 10,099 consented individuals for a four-week period: [The Google Health Digital Well-Being Study: Protocol for a Digital Device Use and Well-Being Study](https://www.researchprotocols.org/2024/1/e49189/).
+所有输入和目标预测数据，包括桶化年龄、20传感器在15天的日传感器读数和16二进制调查答复，对于PRO任务中的所有4,163样本，均以JSON格式存储。为确保参与者的隐私，在登记和证明数据使用协议后，经批准的研究人员可得到PRO任务所用的数据，用于非商业研究。请求应提交[google-digital-wellbeing-dataset@google.com](mailto:google-digital-wellbeing-dataset@google.com),并将每周评估一次。在请求批准时，将提供关于准确数据格式的其他细节。
 
-All input and target prediction data, which include bucketized age, daily sensor readings for 20 sensors over 15 days, and 16 binary survey responses, for all 4,163 samples in the PRO task are stored in JSON format. To ensure privacy of participants, data used for the PRO task are available to approved researchers for noncommercial research following registration and attestation of a data use agreement. Requests should be made to [google-digital-wellbeing-dataset@google.com](mailto:google-digital-wellbeing-dataset@google.com) and will be evaluated on a weekly basis. Additional details on the exact data format will be made available at time of request approval.
+### 辅助数据
 
-### Auxiliary data
+这仓库还包含辅助数据，如人类专家以及AutoEval的评级，用于复制主数据及扩展数据数字。
 
-This repository also contains auxiliary data, such as human expert and AutoEval ratings, for reproducing main and extended data figures. Specifically:
+- `data/autoeval_ratings/fitness_autoeval_external_ratings.tsv`:AutoEval全场收视率PH-LLM和健身领域的外部模型响应(扩展数据图7).
+- `data/autoeval_ratings/fitness_autoeval_subsample_ratings.tsv`:AutoEval 健身领域各分样本的收视率PH-LLM(扩展数据图8).
+- `data/autoeval_ratings/fitness_human_expert_ratings.tsv`:健身领域各回应来源的人类专家评级(主图2cd).
+- `data/autoeval_ratings/sleep_autoeval_external_ratings.tsv`: AutoEval 收视率横跨PH-LLM 睡眠域的外部模型响应(扩展数据图7).
+- `data/autoeval_ratings/sleep_autoeval_subsample_ratings.tsv`: AutoEval 亚采样的睡眠域中PH-LLM的响应(扩展数据图8)的收视率。
+- `data/autoeval_ratings/sleep_human_expert_ratings.tsv`:睡眠域中不同响应源的人类专家评级(主图2cd).
+- `data/pro_preds_bootstrap.tsv`: 启动 PROs 跨模型和目标的预测性能指标(主图3cd).
+- `data/pro_prevalence.tsv`:PROs 病例流行跨目标。
 
-- `data/autoeval_ratings/fitness_autoeval_external_ratings.tsv`:AutoEval ratings across PH-LLM and external model responses in the fitness domain (Extended Data Figure 7).
-- `data/autoeval_ratings/fitness_autoeval_subsample_ratings.tsv`: AutoEval ratings across subsampled PH-LLM responses in the fitness domain (Extended Data Figure 8).
-- `data/autoeval_ratings/fitness_human_expert_ratings.tsv`: Human expert ratings across response sources in the fitness domain (Main Figure 2cd).
-- `data/autoeval_ratings/sleep_autoeval_external_ratings.tsv`: AutoEval ratings across PH-LLM and external model responses in the sleep domain (Extended Data Figure 7).
-- `data/autoeval_ratings/sleep_autoeval_subsample_ratings.tsv`: AutoEval ratings across subsampled PH-LLM responses in the sleep domain (Extended Data Figure 8).
-- `data/autoeval_ratings/sleep_human_expert_ratings.tsv`: Human expert ratings across response sources in the sleep domain (Main Figure 2cd).
-- `data/pro_preds_bootstrap.tsv`: Bootstrapped PROs prediction performance metrics across models and targets (Main Figure 3cd).
-- `data/pro_prevalence.tsv`: PROs case prevalence across targets.
+## 参考代码结构
 
-## Reference Code Structure
+- `autoeval`:包含运行自动评价生成的案例研究的脚本和参考代码。
+- `case_studies`:用于检查和直观化所创建的案例研究的哥拉布笔记本。
+- `data`:此目录保存了我们的研究中使用的所有数据文件。详情请参见以上各节。
+- `figures`:用于生成手稿主要数据及扩展数据数字的专用笔记本。
+- `multimodal`:一个Colab笔记本，演示如何执行LLM多模态数据适配器，处理原始可穿戴感应数据。
+- `professional_exams`:一个旨在运行MCQ的图书馆，专门对与睡眠和健身相关的专业考试进行评价。
+- `protos`:包含用于构建我们案例研究数据的协议缓冲文件。
 
-- `autoeval`: Contains scripts and reference code for running automated evaluations on the generated case studies.
-- `case_studies`: A colab notebook for inspecting and visualizing the case studies that were created.
-- `data`: This directory holds all the data files used in our research. See the sections above for details.
-- `figures`: A dedicated notebook for generating the manuscript’s main and extended data figures.
-- `multimodal`: A colab notebook demonstrating how to implement an LLM multimodal data adapter to process raw wearable sensor data.
-- `professional_exams`: A library designed to run MCQ evaluations specifically on professional exams related to sleep and fitness.
-- `protos`: Contains the protocol buffer files used for structuring our case study data.
+## 依赖关系
 
-## Dependencies
-
-Reference code dependencies include:
+引用代码依赖性包括：
 
 ```
 absl-py==2.3.1
@@ -127,11 +126,11 @@ tensorflow==2.18.0
 # saxml==0.0.1  # https://github.com/google/saxml
 ```
 
-All python code was run using [python 3.11](https://www.python.org/downloads/release/python-3110/). Notebooks were run using [Google Colab](https://colab.research.google.com). All code was run on internal Google systems using a custom Linux kernel. Similar SKUs are available on [Google Cloud](https://cloud.google.com). See module-level documentation for details on running each component.
+所有蟒蛇代码都使用 [蟒蛇 3.11 (英语).](https://www.python.org/downloads/release/python-3110/)。使用 [Google Colab](https://colab.research.google.com)。所有代码都在内部运行 Google 使用自定义 Linux 内核的系统。类似 SKUs 可在下列网址查阅：[Google 云头](https://cloud.google.com)。关于每个组件运行的细节，请参见模块级文件。
 
-## Citing PH-LLM
+## 引用 PH-LLM
 
-If you use PH-LLM datasets or code in your research, please cite the manuscript using:
+如果您在研究中使用了PH-LLM数据集或代码，请引用手稿使用：
 
 ```
 @article{khasentino2025phllm,
@@ -147,10 +146,10 @@ url={https://www.nature.com/articles/s41591-025-03888-0}
 }
 ```
 
-## Contributing
+## 参与贡献
 
-For details on contributing to this repository, please see [CONTRIBUTING.md](https://github.com/Google-Health/consumer-health-research/blob/main/CONTRIBUTING.md).
-## License
+有关促进这方面工作的详细情况 仓库 请看 [CONTRIBUTING.md](https://github.com/Google-Health/consumer-health-research/blob/main/CONTRIBUTING.md) .
+## 许可证
 
 Copyright 2025 Google LLC
 
@@ -166,8 +165,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-## Disclaimers
+## 免责声明
 
-This is not an officially supported Google product. This project is not eligible for the [Google Open Source Software Vulnerability Rewards Program](https://bughunters.google.com/open-source-security). This project is intended for demonstration purposes only. It is not intended for use in a production environment.
+这不是官方支持的 Google 产品。该项目没有资格进入 [Google 开源软件脆弱性奖励方案](https://bughunters.google.com/open-source-security)。此项目仅用于演示目的，并非用于生产环境。
 
-NOTE: the content of this research code repository (i) is not intended to be a medical device; and (ii) is not intended for clinical use of any kind, including but not limited to diagnosis or prognosis.
+NOTE:本研究代码仓库的内容(一)无意成为医疗器械;和(二)无意用于任何种类的临床用途，包括但不限于诊断或预后。

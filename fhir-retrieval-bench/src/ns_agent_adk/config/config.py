@@ -90,7 +90,7 @@ class Config:
     max_agent_steps: Maximum number of steps the agent can take.
   """
 
-  # Embedder settings
+  # 嵌入器设置
   embedding_use_vertex_ai: bool = False
   embedding_api_key: str | None = os.getenv(
       "GENAI_API_KEY"
@@ -98,7 +98,7 @@ class Config:
   embedding_gcp_project_and_locations: str | None = None
   embedding_model_name: str = "gemini-embedding-001"
 
-  # LLM Client settings
+  # LLM 客户端设置
   llm_use_vertex_ai: bool = False
   llm_api_key: str | None = os.getenv(
       "GENAI_API_KEY"
@@ -109,16 +109,16 @@ class Config:
   llm_thinking_config: int | str | None = None
   temporal_parser_model_name: str = "gemini-2.5-flash"
 
-  # Linearizer settings
+  # 线性化设置
   saliency_threshold: float = 0.5
-  max_linearization_tokens: int = 4000 # Be careful with increasing this since it can lead to TPM quota issues
+  max_linearization_tokens: int = 4000 # 注意增加这一指标，因为它可导致TPM配额问题
   recency_weight: float = 0.5
   always_include_types: list[str] = dataclasses.field(
       default_factory=lambda: ["Condition", "AllergyIntolerance", "Patient"]
   )
   linearization_strategy: Literal["greedy", "chronological"] = "greedy"
 
-  # Agent settings
+  # 代理设置
   max_agent_steps: int = 15
   enabled_tools: list[
       Literal[
@@ -136,7 +136,7 @@ class Config:
       ]
   )
 
-  # Cached instances
+  # 缓存实例
   _embedder: Any = dataclasses.field(default=None, init=False)
 
   def get_embedder(self):
@@ -196,8 +196,8 @@ class Config:
       An instance of an ADK LLM model (e.g., GeminiWithCreds, Claude,
       LiteLlm).
     """
-    # if self.llm_api_key:
-    #   os.environ["GEMINI_API_KEY"] = self.llm_api_key
+    # 狦 llm_api_key :
+    #   os.environ ["GEMINI_API_KEY"]=自译llm_api_key.
     if self.llm_model_name.startswith("gemini"):
       if self.llm_use_vertex_ai:
         if not self.llm_gcp_project_and_locations:
@@ -216,8 +216,8 @@ class Config:
             model=self.llm_model_name, api_key=self.llm_api_key.split(",")[0]
         )
     elif self.llm_model_name.startswith("claude"):
-      # Uses ADK's native Claude class which wraps AsyncAnthropicVertex.
-      # Requires GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION env vars.
+      # 使用 ADK 的本地克劳德类，它包 AsyncAnthropicVertex.
+      # 需要GOOGLE_CLOUD_PROJECT和GOOGLE_CLOUD_LOCATION env vars.
       if not self.llm_gcp_project_and_locations:
         raise ValueError(
             "LLM on Vertex AI requires project_id and location."
@@ -237,5 +237,5 @@ class Config:
       raise ValueError(f"Unsupported LLM model: {self.llm_model_name}")
 
 
-# Default configuration
+# 默认配置
 CONFIG = Config()

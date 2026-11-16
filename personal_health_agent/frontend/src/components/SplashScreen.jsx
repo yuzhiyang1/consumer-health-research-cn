@@ -3,7 +3,7 @@ import './SplashScreen.css'
 
 const API_BASE = '/api'
 
-// localStorage keys
+// localStorage 密钥
 const STORAGE_KEYS = {
   gemini: 'pha_gemini_key',
   openai: 'pha_openai_key',
@@ -19,10 +19,10 @@ const STORAGE_KEYS = {
 function SplashScreen({ config, onStart, loading, error }) {
   const userStudyMode = config?.user_study_mode ?? false
 
-  // User study defaults fetched from backend (config/user_study_defaults.json)
+  // 从后端获取的用户研究默认值( config/user_study_defaults.json)
   const [userStudyDefaults, setUserStudyDefaults] = useState(null)
 
-  // Load saved values from localStorage
+  // 从 localStorage 装入保存的值
   const savedProvider = localStorage.getItem(STORAGE_KEYS.provider) || config?.defaults?.provider || 'gemini'
   const savedBaseline = localStorage.getItem(STORAGE_KEYS.baseline) || config?.defaults?.baseline || 'pha'
   const savedPersona = localStorage.getItem(STORAGE_KEYS.persona) || config?.defaults?.persona || 'sample'
@@ -45,7 +45,7 @@ function SplashScreen({ config, onStart, loading, error }) {
   const [checkingAvailability, setCheckingAvailability] = useState(false)
   const isFirstAvailabilityRun = useRef(true)
 
-  // Fetch user study defaults when in user study mode
+  // 在用户学习模式下获取用户学习默认值
   useEffect(() => {
     if (!userStudyMode) return
     const fetchDefaults = async () => {
@@ -64,10 +64,10 @@ function SplashScreen({ config, onStart, loading, error }) {
     fetchDefaults()
   }, [userStudyMode])
 
-  // Re-check model availability whenever any API key changes.
-  // - On first mount: fire immediately so saved keys are validated up front.
-  // - On subsequent key changes: debounce 500ms so we don't fetch on every keystroke.
-  // - If no keys are entered, do nothing (keep curated list with all-available defaults).
+  // 任何 API 关键更改时重新检查模型可用性。
+  // -在第一舱： 立即开火，所以节省的钥匙在前面被验证。
+  // - 之后的关键改变： 卸下500米这样我们就不会在每次键盘中取回。
+  // -如果没有输入密钥，则不做任何动作(保留所有可用默认的全程目录)。
   useEffect(() => {
     const hasAnyKey = !!(apiKeys.gemini || apiKeys.openai || apiKeys.anthropic)
     if (!hasAnyKey) {
@@ -109,13 +109,13 @@ function SplashScreen({ config, onStart, loading, error }) {
     return () => clearTimeout(timer)
   }, [userStudyMode, apiKeys.gemini, apiKeys.openai, apiKeys.anthropic])
 
-  // Use dynamic models if available, otherwise fall back to static config
+  // 如果可用，使用动态模型，否则会回到静态配置
   const effectiveConfig = useMemo(() => ({
     ...config,
     models: dynamicModels || config?.models,
   }), [config, dynamicModels])
 
-  // Save API keys to localStorage whenever they change
+  // API当它们改变时，保存 localStorage 的密钥
   useEffect(() => {
     if (apiKeys.gemini) localStorage.setItem(STORAGE_KEYS.gemini, apiKeys.gemini)
     if (apiKeys.openai) localStorage.setItem(STORAGE_KEYS.openai, apiKeys.openai)
@@ -123,7 +123,7 @@ function SplashScreen({ config, onStart, loading, error }) {
     if (apiKeys.tavily) localStorage.setItem(STORAGE_KEYS.tavily, apiKeys.tavily)
   }, [apiKeys])
 
-  // Save preferences to localStorage
+  // 将首选项保存到 localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.provider, provider)
   }, [provider])
@@ -136,20 +136,20 @@ function SplashScreen({ config, onStart, loading, error }) {
     localStorage.setItem(STORAGE_KEYS.persona, persona)
   }, [persona])
 
-  // Save userId to localStorage
+  // 保存 userId 改为： localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.userId, userId)
   }, [userId])
 
-  // Save model to localStorage
+  // 将模型保存到 localStorage
   useEffect(() => {
     if (modelId) {
       localStorage.setItem(STORAGE_KEYS.model, modelId)
     }
   }, [modelId])
 
-  // Initialize model when config loads or provider changes (skip in user study mode).
-  // Preference order: stored model if available; first available model; first model.
+  // 当配置负载或提供者改变时初始化模型(在用户学习模式下进行skip).
+  // 优惠顺序:如果有的话，存储模型;第一个可用模型;第一个模型。
   useEffect(() => {
     if (userStudyMode || !effectiveConfig?.models) return
 
@@ -169,7 +169,7 @@ function SplashScreen({ config, onStart, loading, error }) {
     setModelId((firstAvailable || providerModels[0]).id)
   }, [userStudyMode, effectiveConfig, provider, baseline])
 
-  // Update model when provider changes — pick first available, or first as fallback.
+  // 当提供者改变时更新模型——先选择可用，或先作为倒置。
   const handleProviderChange = (newProvider) => {
     setProvider(newProvider)
     const providerModels = effectiveConfig?.models?.[newProvider] || []
@@ -180,13 +180,13 @@ function SplashScreen({ config, onStart, loading, error }) {
     setValidationError(null)
   }
 
-  // Handle baseline change - set appropriate defaults
+  // 处理 基线 更改 - 设置适当的默认
   const handleBaselineChange = (newBaseline) => {
     setBaseline(newBaseline)
     setValidationError(null)
     
-    // PHIA doesn't support Anthropic (no OneTwo backend)
-    // If currently on Anthropic when switching to PHIA, switch to Gemini
+    // PHIA不支持Anthropic(没有OneTwo后端).
+    // 如果正在运行 Anthropic 切换到 PHIA 切换到 Gemini
     if (newBaseline === 'phia' && provider === 'anthropic') {
       setProvider('gemini')
       const geminiModels = effectiveConfig?.models?.gemini || []
@@ -199,19 +199,19 @@ function SplashScreen({ config, onStart, loading, error }) {
     }
   }
 
-  // Determine which API key is required based on selections
+  // 确定根据所选选项需要哪个 API 密钥
    const getRequiredKeyType = () => {
-    // Return the selected provider (PHIA now supports both Gemini and OpenAI)
+    // 返回选中的提供者( PHIA现在既支持 Gemini 也支持 OpenAI )
     return provider
   }
 
   const requiredKeyType = getRequiredKeyType()
   const hasRequiredKey = userStudyMode ? true : (apiKeys[requiredKeyType]?.trim().length > 0)
   
-  // Provider selection
+  // 提供方选择
   const providerDisabled = false
   
-  // Get current effective provider (for model list)
+  // 获取当前有效的提供者( 用于模型列表)
   const effectiveProvider = provider
 
   const keyInfo = {
@@ -229,9 +229,9 @@ function SplashScreen({ config, onStart, loading, error }) {
       return
     }
 
-    // Block submission if the selected model is known to be unavailable for
-    // the supplied key. This prevents the user from kicking off a chat session
-    // that will fail at the first LLM call.
+    // 如果已知选定模型无法使用，则块提交
+    // 键。这阻止用户踢出聊天会话
+    // 第一次会失败 LLM 打电话。
     if (!userStudyMode) {
       const picked = currentModels.find(m => m.id === modelId)
       if (picked && picked.available === false) {
@@ -244,7 +244,7 @@ function SplashScreen({ config, onStart, loading, error }) {
 
     setValidationError(null)
 
-    // Build the session config
+    // 构建会话配置
     const submittedProvider = userStudyMode ? (userStudyDefaults?.provider || provider) : provider
     const effectiveModelId = userStudyMode ? (userStudyDefaults?.model || modelId) : modelId
     const sessionConfig = {
@@ -255,7 +255,7 @@ function SplashScreen({ config, onStart, loading, error }) {
       user_id: userId,
     }
     
-    // API keys: in user study mode backend injects from config file; otherwise from form
+    // API 密钥:在用户学习模式后端从配置文件注入;否则从形式中注入
     if (!userStudyMode) {
       if (apiKeys.gemini) sessionConfig.gemini_api_key = apiKeys.gemini
       if (apiKeys.openai) sessionConfig.openai_api_key = apiKeys.openai
@@ -285,7 +285,7 @@ function SplashScreen({ config, onStart, loading, error }) {
 
         <form onSubmit={handleSubmit} className="config-form">
           
-          {/* User ID Entry */}
+          {/* 用户 ID 条目 */}
           <section className="config-section user-id-section">
             <h2>User ID</h2>
             <input
@@ -297,7 +297,7 @@ function SplashScreen({ config, onStart, loading, error }) {
             />
           </section>
 
-          {/* Step 1: Baseline Selection */}
+          {/* 步骤 1 : 基线 选择 */}
           <section className="config-section">
             <h2>1. Select System Architecture</h2>
             <div className="baseline-grid">
@@ -324,7 +324,7 @@ function SplashScreen({ config, onStart, loading, error }) {
             </div>
           </section>
 
-          {/* Step 2: Provider Selection (hidden in user study mode) */}
+          {/* 步骤 2: 提供者选择(隐藏在用户学习模式中) */}
           {!userStudyMode && (
           <section className="config-section">
             <h2>
@@ -333,8 +333,8 @@ function SplashScreen({ config, onStart, loading, error }) {
             <div className="provider-grid">
               {config?.providers?.map(p => {
                 const isAnthropic = p === 'anthropic'
-                // Anthropic is supported by PHA and Parallel baselines (multimodel
-                // backend), but not by PHIA (which uses OneTwo / no Anthropic backend).
+                // Anthropic由PHA和并行基线(多型号)支持。
+                // 后端),但不由PHIA(使用OneTwo/没有Anthropic后端).
                 const isDisabled = isAnthropic && baseline === 'phia'
 
                 let disabledReason = ''
@@ -371,7 +371,7 @@ function SplashScreen({ config, onStart, loading, error }) {
           </section>
           )}
 
-          {/* Step 3: Model Selection (hidden in user study mode) */}
+          {/* 步骤 3:模型选择(隐藏在用户学习模式中) */}
           {!userStudyMode && (
           <section className="config-section">
             <h2>3. Select Model</h2>
@@ -429,7 +429,7 @@ function SplashScreen({ config, onStart, loading, error }) {
           </section>
           )}
 
-          {/* Step 4: Persona Selection */}
+          {/* 步骤 4:人物选择 */}
           <section className="config-section">
             <h2>{userStudyMode ? '2. Select User Profile' : '4. Select User Profile'}</h2>
             <select
@@ -452,12 +452,12 @@ function SplashScreen({ config, onStart, loading, error }) {
             )}
           </section>
 
-          {/* Step 5: API Keys (hidden in user study mode) */}
+          {/* 步 5: API 键(隐藏在用户学习模式中) */}
           {!userStudyMode && (
           <section className="config-section">
             <h2>5. API Keys</h2>
             
-            {/* Required API Key */}
+            {/* 需要的 API 密钥 */}
             <div className="api-key-group">
               <h3 className="api-key-title">
                 <span className="required-dot"></span>
@@ -483,7 +483,7 @@ function SplashScreen({ config, onStart, loading, error }) {
               </a>
             </div>
             
-            {/* Optional Tavily Key */}
+            {/* 可选 Tavily 密钥 */}
             <div className="api-key-group optional">
               <h3 className="api-key-title">
                 <span className="optional-dot"></span>
@@ -516,14 +516,14 @@ function SplashScreen({ config, onStart, loading, error }) {
           </section>
           )}
 
-          {/* Error display */}
+          {/* 显示错误 */}
           {(validationError || error) && (
             <div className="config-error">
               ⚠️ {validationError || error}
             </div>
           )}
 
-          {/* Start button */}
+          {/* 启动按钮 */}
           <button type="submit" className="start-btn" disabled={loading}>
             {loading ? (
               <>
@@ -535,7 +535,7 @@ function SplashScreen({ config, onStart, loading, error }) {
             )}
           </button>
 
-          {/* Summary */}
+          {/* 概要 */}
           <div className="config-summary">
             <span>{selectedBaseline?.name}</span>
             <span>•</span>

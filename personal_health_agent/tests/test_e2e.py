@@ -16,7 +16,7 @@ import pandas as pd
 
 
 # =============================================================================
-# Orchestrator Unit Tests
+# 编排器 单元测试
 # =============================================================================
 
 class TestOrchestratorUnit:
@@ -88,9 +88,9 @@ class TestOrchestratorPrompts:
         """Rephrase prompt function is defined and callable."""
         from pha.prompts.orchestrator_prompts import REPHRASE_PROMPT_SUPPORTING_AGENTS
         
-        # It's a function, not a constant
+        # 这是功能，不是常数
         assert callable(REPHRASE_PROMPT_SUPPORTING_AGENTS)
-        # Test that it returns a string when called with required args
+        # 测试当它用需要的参数调用时会返回字符串
         result = REPHRASE_PROMPT_SUPPORTING_AGENTS(
             original_prompt="How is my sleep?",
             main_agent="health_coach_agent",
@@ -104,9 +104,9 @@ class TestOrchestratorPrompts:
         """Reflect prompt function is defined and callable."""
         from pha.prompts.orchestrator_prompts import REFLECT_PROMPT
         
-        # It's a function, not a constant
+        # 这是功能，不是常数
         assert callable(REFLECT_PROMPT)
-        # Test that it returns a string when called with required args
+        # 测试当它用需要的参数调用时会返回字符串
         result = REFLECT_PROMPT(
             original_prompt="How is my sleep?",
             main_agent="health_coach_agent",
@@ -134,13 +134,13 @@ class TestAgentRouting:
         assert AGENT_NAME_DOMAIN_EXPERT is not None
         assert AGENT_NAME_HEALTH_COACH is not None
         
-        # Should be distinct
+        # 应该是不同的
         names = [AGENT_NAME_DATA_SCIENCE, AGENT_NAME_DOMAIN_EXPERT, AGENT_NAME_HEALTH_COACH]
         assert len(names) == len(set(names))
     
     def test_query_classification_patterns(self):
         """Common query patterns should route to expected agents."""
-        # These are heuristic expectations - actual routing depends on LLM
+        # 这些是热度预期——实际路径取决于LLM.
         data_queries = [
             "What are my average steps?",
             "Show me a trend of my sleep",
@@ -159,14 +159,14 @@ class TestAgentRouting:
             "What should I do to be healthier?",
         ]
         
-        # Just verify these are valid query strings
+        # 只要确认这些是有效的查询字符串
         for q in data_queries + expert_queries + coach_queries:
             assert isinstance(q, str)
             assert len(q) > 10
 
 
 # =============================================================================
-# End-to-End Integration Tests
+# 端到端一体化测试
 # =============================================================================
 
 @pytest.mark.e2e
@@ -192,7 +192,7 @@ class TestOrchestratorIntegration:
             HealthCoachAgent,
         )
         
-        # Create agents
+        # 创建代理
         ds_agent = DataScienceAgent()
         ds_agent.configure(gemini_api_key=gemini_api_key)
         ds_agent.load_dataframes(all_sample_dataframes)
@@ -200,7 +200,7 @@ class TestOrchestratorIntegration:
         coach = HealthCoachAgent(simple_mode=True)
         coach.configure(gemini_api_key=gemini_api_key)
         
-        # Set up orchestrator
+        # 设置 编排器
         orchestrator = MultiAgentOrchestrator()
         orchestrator.configure(gemini_api_key=gemini_api_key)
         orchestrator.set_agents(
@@ -228,20 +228,20 @@ class TestFullPipeline:
             HealthCoachAgent,
         )
         
-        # Data Science Agent
+        # 数据科学 Agent
         ds_agent = DataScienceAgent()
         ds_agent.configure(gemini_api_key=gemini_api_key)
         ds_agent.load_dataframes(all_sample_dataframes)
         
-        # Domain Expert Agent
+        # 领域专家 Agent
         expert = DomainExpertAgent()
         expert.get_agent(gemini_api_key=gemini_api_key)
         
-        # Health Coach Agent
+        # 健康教练 Agent
         coach = HealthCoachAgent(simple_mode=True)
         coach.configure(gemini_api_key=gemini_api_key)
         
-        # Orchestrator
+        # 编排器
         orchestrator = MultiAgentOrchestrator()
         orchestrator.configure(gemini_api_key=gemini_api_key)
         orchestrator.set_agents(
@@ -260,7 +260,7 @@ class TestFullPipeline:
         
         assert response is not None
         assert len(response) > 0
-        # Should contain numeric information or mention steps
+        # 应包含数字信息或提及步骤
         assert "step" in response.lower() or any(c.isdigit() for c in response)
     
     def test_health_interpretation_query(self, configured_orchestrator):
@@ -271,7 +271,7 @@ class TestFullPipeline:
         
         assert response is not None
         assert len(response) > 0
-        # Should mention heart rate or health
+        # 应提及心率或健康
         response_lower = response.lower()
         assert ("heart" in response_lower or 
                 "rate" in response_lower or 
@@ -286,7 +286,7 @@ class TestFullPipeline:
         
         assert response is not None
         assert len(response) > 0
-        # Should provide actionable advice
+        # 应提供可采取行动的咨询意见
         response_lower = response.lower()
         assert ("sleep" in response_lower or 
                 "bed" in response_lower or
@@ -301,7 +301,7 @@ class TestFullPipeline:
         )
         
         assert response is not None
-        assert len(response) > 50  # Should be a substantial response
+        assert len(response) > 50  # 应该是实质性的回答
     
     def test_response_is_coherent(self, configured_orchestrator):
         """Pipeline produces coherent responses."""
@@ -310,15 +310,15 @@ class TestFullPipeline:
         )
         
         assert response is not None
-        # Response should be readable text (not error messages or raw data)
+        # 答复应为可读文本(不是错误信息或原始数据)
         assert not response.startswith("Error")
-        assert not response.startswith("{")  # Not raw JSON
-        # Should have multiple words
+        assert not response.startswith("{")  # 非生 JSON (中文(简体) ).
+        # 应该有多个词
         assert len(response.split()) > 10
 
 
 # =============================================================================
-# Agent Collaboration Tests
+# 代理协作测试
 # =============================================================================
 
 @pytest.mark.e2e
@@ -331,14 +331,14 @@ class TestAgentCollaboration:
         """Data Science results can be passed to Domain Expert."""
         from pha.agents import DataScienceAgent, DomainExpertAgent
         
-        # Get data analysis
+        # 获取数据分析
         ds_agent = DataScienceAgent()
         ds_agent.configure(gemini_api_key=gemini_api_key)
         ds_agent.load_dataframes(all_sample_dataframes)
         
         data_response = ds_agent.query("What is my average resting heart rate?")
         
-        # Pass to domain expert for interpretation
+        # 传至域专家进行口译
         expert = DomainExpertAgent()
         expert.get_agent(gemini_api_key=gemini_api_key)
         
@@ -354,7 +354,7 @@ class TestAgentCollaboration:
         """Domain Expert insights can inform Health Coach."""
         from pha.agents import DomainExpertAgent, HealthCoachAgent
         
-        # Get expert interpretation
+        # 找专家翻译
         expert = DomainExpertAgent()
         expert.get_agent(gemini_api_key=gemini_api_key)
         
@@ -362,7 +362,7 @@ class TestAgentCollaboration:
             "A person has a resting heart rate of 75 bpm. Is this concerning?"
         )
         
-        # Get coaching based on interpretation
+        # 根据解释得到辅导
         coach = HealthCoachAgent(simple_mode=True)
         coach.configure(gemini_api_key=gemini_api_key)
         
@@ -376,7 +376,7 @@ class TestAgentCollaboration:
 
 
 # =============================================================================
-# Error Handling Tests
+# 处理错误测试
 # =============================================================================
 
 class TestErrorHandling:
@@ -388,13 +388,13 @@ class TestErrorHandling:
         
         orchestrator = MultiAgentOrchestrator()
         
-        # Should not crash, should indicate configuration needed
+        # 不应崩溃，应显示所需的配置
         try:
             response = orchestrator.respond("test query")
-            # If it returns, should indicate an issue
+            # 如果返回，请注明问题
             assert response is not None
         except (ValueError, RuntimeError, AttributeError):
-            # Expected - not configured
+            # 预期 -未配置
             pass
     
     @pytest.mark.integration
@@ -407,12 +407,12 @@ class TestErrorHandling:
         agent.configure(gemini_api_key=gemini_api_key)
         agent.load_dataframes(all_sample_dataframes)
         
-        # Should handle gracefully
+        # 应该很优雅地处理
         try:
             response = agent.query("")
-            assert response is not None  # Should return something, even if error message
+            assert response is not None  # 即使错误消息，也该返回一些信息
         except (ValueError, RuntimeError):
-            # Also acceptable - rejecting empty query
+            # 又可接受 - 拒绝空查询
             pass
     
     @pytest.mark.integration
@@ -426,13 +426,13 @@ class TestErrorHandling:
         
         long_query = "How can I improve my health? " * 100
         
-        # Should handle without crashing
+        # 应不坠机处理
         response = agent.respond(long_query)
         assert response is not None
 
 
 # =============================================================================
-# Response Quality Tests
+# 反应质量测试
 # =============================================================================
 
 @pytest.mark.e2e
@@ -452,7 +452,7 @@ class TestResponseQuality:
         
         response = agent.query("What was my step count yesterday?")
         
-        # Response should contain numbers (actual data)
+        # 答复应包含数字(实际数据)
         has_numbers = any(c.isdigit() for c in response)
         assert has_numbers or "step" in response.lower()
     
@@ -467,11 +467,11 @@ class TestResponseQuality:
         
         response_lower = response.lower()
         
-        # Should contain actionable language
+        # 应包含可操作语言
         actionable_words = ["try", "consider", "should", "recommend", "can", "start", "avoid", "limit"]
         has_actionable = any(word in response_lower for word in actionable_words)
         
-        assert has_actionable or len(response) > 100  # Either actionable or detailed
+        assert has_actionable or len(response) > 100  # 可诉或详细
     
     @pytest.mark.xfail(
         reason=(
@@ -493,8 +493,8 @@ class TestResponseQuality:
 
         response_lower = response.lower()
 
-        # Should contain explanatory content
-        assert len(response) > 100  # Substantial explanation
+        # 应包含解释性内容
+        assert len(response) > 100  # 实质性解释
         assert ("hrv" in response_lower or
                 "variability" in response_lower or
                 "heart" in response_lower)

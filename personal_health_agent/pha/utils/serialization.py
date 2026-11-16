@@ -79,14 +79,14 @@ class DataSerializer(DataSerializerBase):
     elif dtype == bool:
       properties["dtype"] = "boolean"
     elif dtype == object:
-      # Check if the string column can be cast to a valid datetime
+      # 检查字符串列是否可投放到有效的日期时间
       try:
         with warnings.catch_warnings():
           warnings.filterwarnings("ignore", category=Warning)
           pd.to_datetime(series, errors="raise")
         properties["dtype"] = "date"
       except (ValueError, TypeError):
-        # Check if the string column has a limited number of values
+        # 检查字符串列的值是否有限
         if series.nunique() / len(series) < 0.5:
           properties["dtype"] = "category"
         else:
@@ -98,7 +98,7 @@ class DataSerializer(DataSerializerBase):
     else:
       properties["dtype"] = str(dtype)
 
-    # add min max if dtype is date
+    # 如果 Dtype是日期，则添加最小分数
     if properties["dtype"] == "date":
       try:
         properties["min"] = str(series.min())
@@ -107,7 +107,7 @@ class DataSerializer(DataSerializerBase):
         cast_date_col = pd.to_datetime(series, errors="coerce")
         properties["min"] = str(cast_date_col.min())
         properties["max"] = str(cast_date_col.max())
-    # Add additional properties to the output dictionary
+    # 在输出词典中添加其它属性
     nunique = series.nunique()
     if "samples" not in properties:
       non_null_values = series[series.notnull()].unique()
@@ -209,7 +209,7 @@ def serialize_dataframes(
   s = ""
   for df, df_info in zip(dfs, dfs_info):
     s += f"#### {df_info['name']}\n"
-    if len(df) <= 10:  # We will show the entire dataframe for small dataframes.
+    if len(df) <= 10:  # 我们将显示小数据框架的全部数据框架。
       s += f"\n{str(df)}"
     else:
       s += df_serializer.serialize(df, df_info, use_yaml)

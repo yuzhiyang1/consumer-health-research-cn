@@ -71,7 +71,7 @@ class EvalResult:
     context_fit_pct: The percentage of the context window used, or None if not
       applicable.
   """
-  # Instance metadata
+  # 实例元数据
   instance_id: str
   patient_id: str
   question: str
@@ -79,21 +79,21 @@ class EvalResult:
   ground_truth: str
   source_meta: dict[str, Any]
   bundle_preview: str
-  # Config details
+  # 配置细节
   strategy: str
   model: str
-  # Prediction details
+  # 预测细节
   run_success: bool
   run_error: str | None
   prompt_preview: str
   prediction: str | None
   run_extra_data: dict[str, Any] | None
-  # Judgement details
+  # 判决详情
   judge_success: bool | None
   judge_error: str | None
   is_correct: bool | None
   eval_reason: str | None
-  # Runtime & resource details
+  # 运行时间和资源细节( R)
   execution_time: datetime.timedelta
   context_token_count: int
   context_window_limit: int
@@ -180,7 +180,7 @@ def _load_checkpoint(path: str) -> list[EvalResult]:
               "Skipping malformed line %d in %s: %s", lineno, path, e
           )
   except OSError:
-    # File does not exist or other OS error, treat as no checkpoint.
+    # 文件不存在或其他 OS 错误，不作为检查点处理。
     return []
   return results
 
@@ -266,7 +266,7 @@ def process_single_record(
   prompt_preview = prompt[:1000] + "..." if len(prompt) > 1000 else prompt
   if prediction is None:
     return EvalResult(
-        # Instance metadata
+        # 实例元数据
         instance_id=instance.instance_id,
         patient_id=instance.patient_id,
         question=instance.question,
@@ -274,21 +274,21 @@ def process_single_record(
         ground_truth=instance.ground_truth,
         source_meta=instance.source_meta,
         bundle_preview=bundle_preview,
-        # Config details
+        # 配置细节
         strategy=experiment_config.strategy.name,
         model=experiment_config.models.answer.model,
-        # Prediction details
+        # 预测细节
         run_success=False,
         run_error=run_error,
         prompt_preview=prompt_preview,
         prediction=prediction,
         run_extra_data=run_extra_data,
-        # Judgement details
+        # 判决详情
         judge_success=None,
         judge_error=None,
         is_correct=None,
         eval_reason=None,
-        # Runtime & resource details
+        # 运行时间和资源细节( R)
         execution_time=datetime.timedelta(seconds=time.time() - start_time),
         context_token_count=prompt_token_count,
         context_window_limit=strategy.context_window_limit,
@@ -335,7 +335,7 @@ def process_single_record(
   )
 
   return EvalResult(
-      # Instance metadata
+      # 实例元数据
       instance_id=instance.instance_id,
       patient_id=instance.patient_id,
       question=instance.question,
@@ -343,21 +343,21 @@ def process_single_record(
       ground_truth=instance.ground_truth,
       source_meta=instance.source_meta,
       bundle_preview=bundle_preview,
-      # Config details
+      # 配置细节
       strategy=experiment_config.strategy.name,
       model=experiment_config.models.answer.model,
-      # Prediction details
+      # 预测细节
       run_success=True,
       run_error=None,
       prompt_preview=prompt_preview,
       prediction=prediction,
       run_extra_data=run_extra_data,
-      # Judgement details
+      # 判决详情
       judge_success=judge_success,
       judge_error=judge_error,
       is_correct=is_correct,
       eval_reason=eval_reason,
-      # Runtime & resource details
+      # 运行时间和资源细节( R)
       execution_time=datetime.timedelta(seconds=total_elapsed),
       context_token_count=prompt_token_count,
       context_window_limit=strategy.context_window_limit,
@@ -392,14 +392,14 @@ def run_experiment(
   if not os.path.exists(experiment_output_dir):
     os.makedirs(experiment_output_dir)
 
-  # Save/verify config.yaml
+  # 保存/核查 config.yaml
   config_path = experiment_output_dir / "config.yaml"
   existing_config_dict = None
   try:
     with open(str(config_path), "rt") as f:
       existing_config_dict = yaml.safe_load(f)
   except OSError:
-    # Config file doesn't exist, will write a new one.
+    # 配置文件不存在，将会写一个新的文件。
     pass
 
   if existing_config_dict:
@@ -438,14 +438,14 @@ def run_experiment(
         checkpoint_results_by_instance_id[instance_id] = r
         break  
   # checkpoint_results_by_instance_id = {
-  #     r.instance_id: r for r in _load_checkpoint(ckpt_path)
+  #     r. instance_id : r 表示 r 单位 _load_checkpoint ( ckpt_path )
   # }
 
   pending_instances: list[data_base.EvalInstance] = []
   results: list[EvalResult] = []
   pbar = tqdm.tqdm(total=len(instances), desc="Processing Instances")
 
-  # 1. Filter out already completed records ()
+  # 1. 过滤已经完成的记录 ()
   for instance in instances:
     if instance.instance_id in checkpoint_results_by_instance_id:
       results.append(checkpoint_results_by_instance_id[instance.instance_id])
@@ -458,7 +458,7 @@ def run_experiment(
     else:
       pending_instances.append(instance)
 
-  # 2. Execute pending records natively
+  # 2. 执行尚待记录的本土记录
   if pending_instances:
     logging.info(
         "Launching ThreadPoolExecutor for %d pending records",

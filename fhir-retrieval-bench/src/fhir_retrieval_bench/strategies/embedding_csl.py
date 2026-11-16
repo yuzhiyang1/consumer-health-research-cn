@@ -369,8 +369,8 @@ def load_or_compute_node_embeddings(
     if embedding_pool:
       logging.info("Loaded %d embeddings from cache.", len(embedding_pool))
 
-  # Prepare text data for all nodes and identify missing embeddings.
-  # Update embeddding_pool when necessary
+  # 为所有节点准备文本数据，并识别缺失嵌入。
+  # 必要时更新embeddding_pool
   texts_not_in_cache = collections.OrderedDict()
   for text in text_to_compute:
     text_hash = embeddings.get_cache_hash(text, embedder.model_name)
@@ -384,13 +384,13 @@ def load_or_compute_node_embeddings(
     if cache_path:
       embeddings.save_embedding_pool(embedding_pool, cache_path)
 
-  # Construct the final result map.
+  # 构造最终结果映射。
   text_embeddings = [
       embedding_pool[embeddings.get_cache_hash(text, embedder.model_name)]
       for text in text_to_compute
   ]
 
-  # Verify consistency of embedding dimensions.
+  # 验证嵌入维度的一致性。
   if text_embeddings:
     embedding_dims = {vec.shape[0] for vec in text_embeddings}
     if len(embedding_dims) > 1:
@@ -418,7 +418,7 @@ class EmbeddingCSLStrategy(base.RAGStrategy):
       cache_dir: str | None = None,
   ):
     super().__init__(creds=creds, answer_config=answer_config)
-    # Embeddings only run through the public GenAI API in this build.
+    # 嵌入只通过公众GenAIAPI在这个建筑中运行。
     if embedding_config.backend == "vertex":
       embedding_backend = api.GenAIBackend(
           use_vertex_ai=True,
@@ -520,18 +520,18 @@ class EmbeddingCSLStrategy(base.RAGStrategy):
         llm_text = f"[{date_str}] {text_rep} (Relevance Score: {score:.2f})"
         scored_items.append((score, date_obj, llm_text))
 
-    # Save similarity scores locally for observability
-    # if record.patient_id:
+    # 本地保存相似性分数以备观察
+    # 如果记录。patient_id :
     #   query_hash = abs(hash(record.question)) % 100000000
     #   sim_path = os.path.join(
-    #       self.similarities_dir, f"{record.patient_id}_{query_hash}.json"
+    #       自己来。similarities_dir , f"{记录. patient_id }_{ query_hash . . 贾森"
     #   )
-    #   try:
-    #     with open(sim_path, "w") as f:
+    #   尝试：
+    #     开(sim_path,"w")作为 f:
     #       json.dump(similarities_log, f, indent=2)
-    #   except Exception as e:  # pylint: disable=broad-exception-caught
-    #     logging.warning(
-    #         "Failed to save similarities for %s: %s", record.patient_id, e
+    #   除例外为 e:# pylint: 禁用=宽度- 例外- 抓取
+    #     记录. warning ()
+    #         “未能保存%s:%s 的相似性”,记录。patient_id, e
     #     )
 
     top_items = sorted(scored_items, key=lambda x: x[0], reverse=True)[:10000]

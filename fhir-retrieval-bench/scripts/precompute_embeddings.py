@@ -113,7 +113,7 @@ def main(argv):
         )
         continue
 
-      # 1. Precompute for Embedding CSL strategy
+      # 1. 预置嵌入CSL战略
       if run_embedding_csl:
         serialized_resources, _ = embedding_csl.serialize_fhir_bundle(
             fhir_bundle
@@ -128,7 +128,7 @@ def main(argv):
               resource_texts, bench_embedder, cache_path=csl_cache_path
           )
 
-      # 2. Precompute for NSAgent Strategy
+      # 2. NSAgent战略的预算
       if run_ns_agent:
         graph = graph_module.ChronologicalHypergraph()
         graph.build_from_bundle(fhir_bundle)

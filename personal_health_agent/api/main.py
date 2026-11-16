@@ -23,7 +23,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-# Add parent to path for imports
+# 将父目录添加到导入路径
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -49,7 +49,7 @@ from pha.utils.request_stats import request_stats
 
 GLOBAL_USER_STUDY_FLAG = False
 
-# Path to user study defaults (gitignored; copy from user_study_defaults.example.json)
+# 用户学习默认的路径( gitignored; 复制自 user_study_defaults. example.json ).
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 USER_STUDY_DEFAULTS_PATH = PROJECT_ROOT / "config" / "user_study_defaults.json"
 
@@ -66,10 +66,10 @@ def _load_user_study_defaults() -> Optional[Dict[str, Any]]:
 
 
 # =============================================================================
-# Application Setup
+# 应用程序设置
 # =============================================================================
 
-# Store active sessions
+# 存储活动会话
 sessions: Dict[str, "ChatSession"] = {}
 
 
@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
     print("🚀 PHA Portal API starting...")
     yield
     print("👋 PHA Portal API shutting down...")
-    # Close all session loggers before clearing
+    # 清除前关闭全部会话日志
     for session in sessions.values():
         if hasattr(session, 'logger') and session.logger:
             try:
@@ -96,7 +96,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS for React frontend
+# CORS用于React前端
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173", "*"],
@@ -107,7 +107,7 @@ app.add_middleware(
 
 
 # =============================================================================
-# Pydantic Models
+# 模拟模型
 # =============================================================================
 
 class ModelOption(BaseModel):
@@ -154,7 +154,7 @@ class SessionConfig(BaseModel):
     persona_id: str = "sample"
     user_id: str = "test"
     
-    # API keys (optional, can use env vars)
+    # API 密钥(可选，可以使用env vars)
     gemini_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
@@ -205,7 +205,7 @@ class SessionState(BaseModel):
 
 
 # =============================================================================
-# Chat Session Manager
+# 聊天会话管理器
 # =============================================================================
 
 class ChatSession:
@@ -220,7 +220,7 @@ class ChatSession:
         self.agent = None
         self._initialized = False
         
-        # Initialize structured logger
+        # 初始化结构记录器
         from pathlib import Path
         logs_root = Path(__file__).parent.parent / "chat_logs"
         self.logger = ChatSessionLogger(
@@ -251,7 +251,7 @@ class ChatSession:
         """
         context_parts = ["[USER PROFILE]"]
         
-        # Extract profile information
+        # 提取配置信息
         if profile_df is not None and not profile_df.empty:
             row = profile_df.iloc[0]
             if 'age' in profile_df.columns:
@@ -267,7 +267,7 @@ class ChatSession:
             if 'cluster' in profile_df.columns:
                 context_parts.append(f"Activity profile: {row['cluster']}")
         
-        # Add summary of available data
+        # 增加现有数据摘要
         if summary_df is not None and not summary_df.empty:
             date_range = ""
             if 'datetime' in summary_df.columns or summary_df.index.name == 'datetime':
@@ -300,12 +300,12 @@ class ChatSession:
             
             tavily_key = self.config.tavily_api_key or os.environ.get("TAVILY_API_KEY")
             
-            # Get persona data directory
+            # 获取个人数据目录
             from pathlib import Path
             data_dir = Path(__file__).parent.parent / "data" / self.config.persona_id
             print(f"Loading data from {data_dir}")
             
-            # Create settings with correct data directory
+            # 使用正确的数据目录创建设置
             settings = Settings(
                 data_dir=data_dir,
                 llm_backend=self.config.provider,
@@ -316,23 +316,23 @@ class ChatSession:
                 tavily_api_key=tavily_key,
             )
             
-            # Initialize the appropriate baseline
+            # 启动适当的基线
             if self.config.baseline == "pha":
                 from pha.agents import create_orchestrator
                 from pha.agents import DataScienceAgent, DomainExpertAgent, HealthCoachAgent
                 from pha.utils import load_persona
                 
-                # Load persona data for context
+                # 为上下文装入人称数据
                 summary_df, activities_df, profile_df, population_df = load_persona(settings=settings)
                 
-                # Create user context string from profile
+                # 从配置文件创建用户上下文字符串
                 user_context = self._create_user_context(profile_df, summary_df)
                 
-                # Get provider and model info
+                # 获取提供者和模型信息
                 provider = self.config.provider
                 model_id = self.config.model_id
                 
-                # Create individual agents with multi-provider support
+                # 创建有多提供者支持的单个代理
                 ds_agent = DataScienceAgent(settings=settings)
                 ds_agent.configure(
                     api_key=api_key,
@@ -340,17 +340,17 @@ class ChatSession:
                     model_name=model_id,
                 )
                 
-                # DomainExpertAgent ReAct now supports Gemini, OpenAI, and
-                # Anthropic. The Anthropic path uses our OneTwo-compatible
-                # AnthropicAPI wrapper (pha/llm/onetwo_anthropic.py).
+                # DomainExpertAgent ReAct现在支持Gemini,OpenAI,和。
+                # Anthropic. Anthropic路径使用我们的OneTwo - 兼容
+                # AnthropicAPI包装机(pha/llm/onetwo_anthropic.py.
                 de_agent = DomainExpertAgent(tavily_api_key=tavily_key)
                 de_agent.get_agent(
                     api_key=api_key,
                     provider=provider,
                     model_name=model_id,
                 )
-                # Pass user health data to domain expert
-                # Combine profile and summary data for comprehensive context
+                # 将用户健康数据传递给域专家
+                # 将概况和汇总数据综合起来，以综合背景
                 health_data_md = f"## User Profile\n{profile_df.to_string()}\n\n## Recent Health Summary\n{summary_df.head(30).to_string()}"
                 de_agent.set_user_health_data(health_data_md)
                 
@@ -360,10 +360,10 @@ class ChatSession:
                     provider=provider,
                     model_name=model_id,
                 )
-                # Initialize coach with user context so it knows about the user
+                # 初始化包含用户背景的导师，使其了解用户
                 coach_agent.initialize_context(user_context)
                 
-                # Create orchestrator with agents
+                # 与代理创建 编排器
                 self.agent = create_orchestrator(
                     api_key=api_key,
                     provider=provider,
@@ -372,7 +372,7 @@ class ChatSession:
                     domain_expert_agent=de_agent,
                     health_coach_agent=coach_agent,
                 )
-                # Log version for debugging
+                # 调试的日志版本
                 try:
                     from pha.agents.orchestrator import __version__ as orch_version
                     print(f"[API] PHA orchestrator version: {orch_version}")
@@ -395,7 +395,7 @@ class ChatSession:
                     get_onetwo_import_error,
                 )
                 
-                # PHIA baseline uses OneTwo which supports Gemini and OpenAI
+                # PHIA 基线使用OneTwo支持Gemini和OpenAI.
                 if not is_onetwo_available():
                     import_error = get_onetwo_import_error() or "Unknown error"
                     raise ValueError(
@@ -403,9 +403,9 @@ class ChatSession:
                         "Run setup.sh or install with: pip install --no-deps git+https://github.com/google-deepmind/onetwo"
                     )
                 
-                # Check provider support
-                # PHIA now supports OpenAI with tool call format transformation
-                # (see _patch_openai_for_compatibility in phia_baseline.py)
+                # 检查提供者支持
+                # PHIA现在支持OpenAI 工具调用格式转换
+                # (见_patch_openai_for_compatibility in phia_baseline.py).
                 if self.config.provider == "anthropic":
                     raise ValueError(
                         f"PHIA baseline does not support Anthropic models (no OneTwo backend). "
@@ -425,7 +425,7 @@ class ChatSession:
                     few_shot_dir="few_shots/phia",
                     model_name=self.config.model_id,
                 )
-                # Log version for debugging
+                # 调试的日志版本
                 try:
                     from pha.agents.phia_baseline import __version__ as phia_version
                     print(f"[API] PHIA baseline version: {phia_version}")
@@ -455,17 +455,17 @@ class ChatSession:
         
         self.last_activity = datetime.now()
         
-        # Add user message to history
+        # 添加用户消息到历史
         self.messages.append(ChatMessage(
             role="user",
             content=user_message,
             timestamp=datetime.now().isoformat(),
         ))
         
-        # Begin logging this turn — capture all stdout/stderr
+        # 开始记录此转弯—— 抓取全部stdout/stderr
         capture = self.logger.begin_turn(user_message)
         
-        # Get response from agent (run in thread pool to not block)
+        # 获取代理端的响应(在线程池中运行到不屏蔽)
         start_time = datetime.now()
         try:
             with capture:
@@ -477,7 +477,7 @@ class ChatSession:
                 )
         except Exception as e:
             processing_ms = (datetime.now() - start_time).total_seconds() * 1000
-            # Still log the failed turn
+            # 仍然登录失败的转弯
             self.logger.end_turn(
                 assistant_response=f"[ERROR] {e}",
                 processing_time_ms=processing_ms,
@@ -493,7 +493,7 @@ class ChatSession:
         
         processing_ms = (datetime.now() - start_time).total_seconds() * 1000
         
-        # Finalize the turn log with stats from request_stats
+        # 将转弯记录与来自request_stats的数据最后完成
         self.logger.end_turn(
             assistant_response=response,
             processing_time_ms=processing_ms,
@@ -502,7 +502,7 @@ class ChatSession:
             errors=request_stats.errors,
         )
         
-        # Add assistant message to history
+        # 向历史添加助理消息
         self.messages.append(ChatMessage(
             role="assistant",
             content=response,
@@ -524,7 +524,7 @@ class ChatSession:
 
 
 # =============================================================================
-# API Endpoints
+# API 终点
 # =============================================================================
 
 @app.get("/")
@@ -548,7 +548,7 @@ async def health_check():
 async def get_config():
     """Get all configuration options for the portal splash screen."""
     
-    # Get models for each provider
+    # 为每个提供者获取模型
     models = {
         "gemini": [
             ModelOption(
@@ -579,7 +579,7 @@ async def get_config():
         ],
     }
     
-    # Get personas
+    # 来人啊
     personas_raw = list_personas()
     personas = [
         PersonaOption(
@@ -592,7 +592,7 @@ async def get_config():
         for p in personas_raw
     ]
     
-    # Define baselines
+    # 定义 基线
 
     if GLOBAL_USER_STUDY_FLAG:
         baselines = [
@@ -687,7 +687,7 @@ async def get_models(request: ModelsRequest):
     This endpoint discovers actual available models from each provider,
     returning more accurate model lists than the static defaults.
     """
-    # Get curated lists annotated with live availability per the supplied keys.
+    # 获取带有备注的目录，并按所提供密钥提供现场可用性。
     gemini_models = get_gemini_models(request.gemini_api_key)
     openai_models = get_openai_models(request.openai_api_key)
     anthropic_models = get_anthropic_models(request.anthropic_api_key)
@@ -713,7 +713,7 @@ async def create_session(config: SessionConfig):
     """Create a new chat session with the specified configuration."""
     session_id = str(uuid.uuid4())[:8]
     
-    # In user study mode, inject provider/model/api_keys from config file
+    # 在用户学习模式中，从配置文件注入提供者/模型/ api_keys
     if GLOBAL_USER_STUDY_FLAG:
         defaults = _load_user_study_defaults()
         if not defaults:
@@ -743,9 +743,9 @@ async def create_session(config: SessionConfig):
             updates["tavily_api_key"] = api_keys["tavily"]
         config = config.model_copy(update=updates)
     
-    # Validate persona exists
+    # 验证人a 存在
     try:
-        # Just check it exists, don't load yet
+        # 只要检查它的存在，不要装入了
         from pha.utils.personas import get_persona_ids
         if config.persona_id not in get_persona_ids():
             raise HTTPException(
@@ -755,7 +755,7 @@ async def create_session(config: SessionConfig):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    # Create session
+    # 创建会话
     session = ChatSession(session_id, config)
     sessions[session_id] = session
     
@@ -782,7 +782,7 @@ async def delete_session(session_id: str):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    # Close the session logger (writes final summary)
+    # 关闭会话记录器( 写入最后摘要)
     session = sessions[session_id]
     if hasattr(session, 'logger') and session.logger:
         session.logger.close()
@@ -855,12 +855,12 @@ async def stream_chat_message(session_id: str, request: ChatRequest):
     session = sessions[session_id]
     emitter_id = create_emitter()
     
-    # Agent work runs in a background thread
+    # 代理工作运行在背景线条中
     def run_agent():
         bind_thread(emitter_id)
         start = datetime.now()
         
-        # Begin logging this turn — capture all stdout/stderr from agent
+        # 开始记录此转弯——从代理中捕获全部stdout/stderr
         capture = session.logger.begin_turn(request.message)
         
         try:
@@ -883,7 +883,7 @@ async def stream_chat_message(session_id: str, request: ChatRequest):
             
             elapsed_ms = (datetime.now() - start).total_seconds() * 1000
             
-            # Finalize the turn log with stats
+            # 将转弯日志与数据连接完成
             session.logger.end_turn(
                 assistant_response=response_text,
                 processing_time_ms=elapsed_ms,
@@ -898,7 +898,7 @@ async def stream_chat_message(session_id: str, request: ChatRequest):
             import traceback
             traceback.print_exc()
             elapsed_ms = (datetime.now() - start).total_seconds() * 1000
-            # Log the failed turn
+            # 记录失败的回合
             session.logger.end_turn(
                 assistant_response=f"[ERROR] {e}",
                 processing_time_ms=elapsed_ms,
@@ -913,7 +913,7 @@ async def stream_chat_message(session_id: str, request: ChatRequest):
     agent_thread = threading.Thread(target=run_agent, daemon=True)
     agent_thread.start()
     
-    # Async SSE generator — polls the queue without blocking the event loop
+    # Async SSE 生成器—在不阻碍事件循环的情况下进行队列投票
     async def event_stream():
         from queue import Empty
         queue = get_queue(emitter_id)
@@ -921,7 +921,7 @@ async def stream_chat_message(session_id: str, request: ChatRequest):
             return
         try:
             while True:
-                # Non-blocking poll + async sleep = no event-loop starvation
+                # 非阻断民意调查+Aync睡眠=无事件-饥饿
                 try:
                     event = queue.get_nowait()
                 except Empty:
@@ -966,7 +966,7 @@ async def list_sessions():
 
 
 # =============================================================================
-# Utility Endpoints
+# 工具端点
 # =============================================================================
 
 @app.get("/models/{provider}")
@@ -1001,7 +1001,7 @@ async def get_persona_detail(persona_id: str):
     raise HTTPException(status_code=404, detail="Persona not found")
 
 # =============================================================================
-# Run with: uvicorn api.main:app --reload
+# 运行与:乌维柯尔阿皮. main:app --reload
 # =============================================================================
 
 if __name__ == "__main__":

@@ -11,16 +11,16 @@ from typing import Literal, Optional
 
 
 # =============================================================================
-# Default paths - can be overridden via Settings class or environment variables
+# 默认路径 -通过设置类或环境变量可覆盖
 # =============================================================================
 
-# Get the root directory of the project (assumes config/ is one level down from root)
+# 获取工程的根目录( assumes config/是从根向下一个关卡)
 _PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
-# Default data directory
+# 默认数据目录
 DEFAULT_DATA_DIR = _PROJECT_ROOT / "data" / "sample"
 
-# Default paths for sample data files
+# 样本数据文件的默认路径
 DEFAULT_SUMMARY_PATH = DEFAULT_DATA_DIR / "summary.csv"
 DEFAULT_ACTIVITIES_PATH = DEFAULT_DATA_DIR / "activities.csv"
 DEFAULT_PROFILE_PATH = DEFAULT_DATA_DIR / "profile.csv"
@@ -28,13 +28,13 @@ DEFAULT_POPULATION_PATH = DEFAULT_DATA_DIR / "population_percentiles.csv"
 
 
 # =============================================================================
-# LLM Configuration
+# LLM 配置
 # =============================================================================
 
-# Supported LLM backends
+# 支持的 LLM 后端
 LLMBackend = Literal["gemini", "openai", "anthropic"]
 
-# Default model names for each backend
+# 每个后端的默认模型名称
 DEFAULT_MODELS = {
     "gemini": "models/gemini-3.1-flash-lite-preview",
     "openai": "gpt-4o",
@@ -43,10 +43,10 @@ DEFAULT_MODELS = {
 
 
 # =============================================================================
-# Agent Configuration Constants
+# 代理配置常数
 # =============================================================================
 
-# Code execution retry settings
+# 代码执行重试设置
 DEFAULT_NUM_CODE_RETRIES = 3
 DEFAULT_TOTAL_CODE_RETRIES = 5
 
@@ -71,49 +71,49 @@ class Settings:
         settings = Settings()  # Reads GEMINI_API_KEY, OPENAI_API_KEY, etc.
     """
     
-    # Data paths
+    # 数据路径
     data_dir: Path = field(default_factory=lambda: DEFAULT_DATA_DIR)
     summary_path: Optional[Path] = None
     activities_path: Optional[Path] = None
     profile_path: Optional[Path] = None
     population_path: Optional[Path] = None
     
-    # LLM settings
+    # LLM 设置
     llm_backend: LLMBackend = "gemini"
     model_name: Optional[str] = None
     temperature: float = 0.0
     max_tokens: int = 8192
     
-    # API keys (loaded from environment if not provided)
+    # API 密钥(如果未提供，则从环境装入)
     gemini_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
     
-    # Search API key for domain expert agent
+    # 搜索 API 领域专家 Agent 键
     tavily_api_key: Optional[str] = None
     
-    # Agent settings
+    # 代理设置
     num_code_retries: int = DEFAULT_NUM_CODE_RETRIES
     total_code_retries: int = DEFAULT_TOTAL_CODE_RETRIES
     
-    # Whether to temporally localize data (shift dates to appear as "today")
+    # 是否在时间上将数据定位( 转换日期为“今天 ” )
     temporally_localize: bool = True
     
-    # Debug settings
+    # 调试设置
     debug_verbose: bool = False
     
     def __post_init__(self):
         """Initialize paths and load API keys from environment."""
-        # Convert string paths to Path objects and resolve relative paths
+        # 将字符串路径转换为路径对象并解析相对路径
         if isinstance(self.data_dir, str):
             self.data_dir = Path(self.data_dir)
         
-        # Resolve the data_dir to an absolute path
-        # This handles cases where the path is relative to the current working directory
+        # 解决data_dir 走向一条绝对的道路
+        # 处理路径相对于当前工作目录的情况
         if not self.data_dir.is_absolute():
             self.data_dir = self.data_dir.resolve()
         
-        # Set default file paths based on data_dir if not explicitly provided
+        # 如果未明确提供基于 data_dir 的默认文件路径
         if self.summary_path is None:
             self.summary_path = self.data_dir / "summary.csv"
         if self.activities_path is None:
@@ -123,7 +123,7 @@ class Settings:
         if self.population_path is None:
             self.population_path = self.data_dir / "population_percentiles.csv"
         
-        # Convert to Path objects if strings and resolve relative paths
+        # 如果字符串并解析相对路径，则转换为路径对象
         for attr in ['summary_path', 'activities_path', 'profile_path', 'population_path']:
             val = getattr(self, attr)
             if isinstance(val, str):
@@ -132,11 +132,11 @@ class Settings:
                 val = val.resolve()
             setattr(self, attr, val)
         
-        # Set default model name based on backend if not provided
+        # 如果未提供，则根据后端设置默认模式名称
         if self.model_name is None:
             self.model_name = DEFAULT_MODELS.get(self.llm_backend)
         
-        # Load API keys from environment if not provided
+        # 如果不提供，从环境中装入 API 密钥
         if self.gemini_api_key is None:
             self.gemini_api_key = os.environ.get("GEMINI_API_KEY")
         if self.openai_api_key is None:
@@ -162,7 +162,7 @@ class Settings:
         Raises:
             ValueError: If required settings are missing.
         """
-        # Check API key for selected backend
+        # 选中后端的 API 密钥
         api_key = self.get_api_key()
         if api_key is None:
             raise ValueError(
@@ -171,12 +171,12 @@ class Settings:
                 f"or pass {self.llm_backend}_api_key to Settings."
             )
         
-        # Check that data files exist (warn but don't error - they might be created later)
+        # 检查数据文件是否存在( 警告但不要出错 -它们可能稍后创建)。
         for path_attr in ['summary_path', 'activities_path', 'profile_path', 'population_path']:
             path = getattr(self, path_attr)
             if path and not path.exists():
                 print(f"Warning: {path_attr} not found at {path}")
 
 
-# Create a default settings instance for convenience
+# 为方便创建默认设置实例
 default_settings = Settings()

@@ -20,7 +20,7 @@ from fhir_retrieval_bench.utils import api
 
 
 DEFAULT_VECTOR_SIZE = 768
-# Known model -> dimension mappings; used to validate returned embeddings.
+# 已知模型 -> 维度映射;用于验证返回嵌入。
 MODEL_VECTOR_SIZES = immutabledict({"gemini-embedding-001": 3072})
 
 

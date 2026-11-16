@@ -8,7 +8,7 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* Header */
+/* 页眉 */
 .chat-header {
   display: flex;
   justify-content: space-between;
@@ -86,7 +86,7 @@
   background: rgba(255, 255, 255, 0.24);
 }
 
-/* Messages area */
+/* 信件区域 */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -97,7 +97,7 @@
   background: var(--bg);
 }
 
-/* Message */
+/* 消息 */
 .message {
   display: flex;
   gap: 0.75rem;
@@ -143,7 +143,7 @@
   line-height: 1.5;
 }
 
-/* ── Markdown body styles for assistant messages ── */
+/* Markdown 助理消息的体型 {} */
 .markdown-body {
   font-size: 0.95rem;
   line-height: 1.6;
@@ -158,7 +158,7 @@
   margin-bottom: 0;
 }
 
-/* Headings */
+/* 标题 */
 .markdown-body h1,
 .markdown-body h2,
 .markdown-body h3,
@@ -174,7 +174,7 @@
 .markdown-body h3 { font-size: 1.05rem; }
 .markdown-body h4 { font-size: 0.95rem; font-weight: 600; }
 
-/* Paragraphs */
+/* 段次页次 */
 .markdown-body p {
   margin-bottom: 0.6rem;
 }
@@ -183,11 +183,11 @@
   margin-bottom: 0;
 }
 
-/* Bold / Italic */
+/* 粗体/斜体 */
 .markdown-body strong { font-weight: 600; }
 .markdown-body em { font-style: italic; }
 
-/* Lists */
+/* 列表 */
 .markdown-body ul,
 .markdown-body ol {
   margin: 0.4rem 0 0.6rem 0;
@@ -208,7 +208,7 @@
   margin-bottom: 0.2rem;
 }
 
-/* Inline code */
+/* 内置代码 */
 .markdown-body code {
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
   font-size: 0.85em;
@@ -217,7 +217,7 @@
   border-radius: 3px;
 }
 
-/* Code blocks */
+/* 代码块 */
 .markdown-body pre {
   margin: 0.6rem 0;
   padding: 0.75rem 1rem;
@@ -236,7 +236,7 @@
   font-size: inherit;
 }
 
-/* Tables */
+/* 表格 */
 .markdown-body table {
   width: 100%;
   border-collapse: collapse;
@@ -260,7 +260,7 @@
   background: rgba(0, 0, 0, 0.02);
 }
 
-/* Blockquotes */
+/* 块数 */
 .markdown-body blockquote {
   margin: 0.5rem 0;
   padding: 0.4rem 0.8rem;
@@ -273,25 +273,25 @@
   margin-bottom: 0;
 }
 
-/* Horizontal rule */
+/* 水平规则 */
 .markdown-body hr {
   margin: 0.8rem 0;
   border: none;
   border-top: 1px solid var(--border, #e2e8f0);
 }
 
-/* Links */
+/* 链接 */
 .markdown-body a {
   color: var(--primary, #2563eb);
   text-decoration: underline;
 }
 
-/* Make sure user message bubbles don't get markdown styling */
+/* 确保用户信息泡不会出现减速型态 */
 .message.user .markdown-body {
   font-size: 1rem;
 }
 
-/* Error messages - code blocks should have a red-ish tint */
+/* 错误消息 - 代码块应该有红色的字形 */
 .message.error .markdown-body pre {
   background: #2e1515;
   color: #f8a0a0;
@@ -320,7 +320,7 @@
   border-radius: 3px;
 }
 
-/* ── Thinking Indicator (Gemini-style) ── */
+/* 思考指标(Gemini -style) */
 .thinking-indicator {
   margin-bottom: 0.5rem;
   border-radius: 8px;
@@ -411,7 +411,7 @@
   transform: rotate(-90deg);
 }
 
-/* Expanded step list (shown on click when done) */
+/* 扩展步骤列表( 完成时单击时显示) */
 .thinking-expanded {
   padding: 0.25rem 0 0.25rem 1.5rem;
   border-left: 2px solid #e2e8f0;
@@ -444,7 +444,7 @@
   font-size: 0.68rem;
 }
 
-/* Typing indicator */
+/* 打字指标 */
 .typing-indicator {
   display: flex;
   gap: 4px;
@@ -478,7 +478,7 @@
   }
 }
 
-/* Input form */
+/* 输入表单 */
 .chat-input-form {
   padding: 1rem 1.5rem;
   background: var(--bg-card);
@@ -536,7 +536,7 @@
   text-align: center;
 }
 
-/* Responsive */
+/* 响应 */
 @media (max-width: 640px) {
   .chat-header {
     padding: 0.75rem 1rem;

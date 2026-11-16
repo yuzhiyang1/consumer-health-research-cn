@@ -20,7 +20,7 @@ from pha.tools.web_search import (
 
 
 # =============================================================================
-# SearchResult Tests
+# SearchResult 测试
 # =============================================================================
 
 class TestSearchResult:
@@ -50,7 +50,7 @@ class TestSearchResult:
 
 
 # =============================================================================
-# WebSearchTool Unit Tests (Mocked)
+# WebSearchTool 单位测试(模拟).
 # =============================================================================
 
 class TestWebSearchToolInit:
@@ -65,7 +65,7 @@ class TestWebSearchToolInit:
     def test_init_with_tavily_no_key_raises_error(self):
         """Raises ValueError when no tavily key provided."""
         import pytest
-        # Ensure env var is not set
+        # 保证未设置 var
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("TAVILY_API_KEY", None)
             with pytest.raises(ValueError) as exc_info:
@@ -109,7 +109,7 @@ class TestWebSearchToolTavily:
             ]
         }
         
-        # Create mock module and client
+        # 创建模拟模块和客户端
         mock_tavily_module = MagicMock()
         mock_client = Mock()
         mock_client.search.return_value = mock_response
@@ -129,7 +129,7 @@ class TestWebSearchToolTavily:
         import pytest
         tool = WebSearchTool(backend="tavily", api_key="test-key")
         
-        # Tavily import fails
+        # Tavily 导入失败
         with patch.dict("sys.modules", {"tavily": None}):
             with pytest.raises(ImportError) as exc_info:
                 tool._search_tavily("test query", max_results=5, include_domains=None)
@@ -139,14 +139,14 @@ class TestWebSearchToolTavily:
         """Raises exception on Tavily API error."""
         tool = WebSearchTool(backend="tavily", api_key="test-key")
         
-        # Create mock Tavily that errors
+        # 创建错误的模拟 Tavily
         mock_tavily_module = MagicMock()
         mock_client = Mock()
         mock_client.search.side_effect = Exception("API Error")
         mock_tavily_module.TavilyClient.return_value = mock_client
         
         with patch.dict("sys.modules", {"tavily": mock_tavily_module}):
-            # Should raise the exception, not fall back
+            # 应该提高例外，而不是退缩
             with pytest.raises(Exception) as exc_info:
                 tool._search_tavily("test query", max_results=5, include_domains=None)
             assert "API Error" in str(exc_info.value)
@@ -159,7 +159,7 @@ class TestWebSearchToolDuckDuckGo:
         """DuckDuckGo search returns formatted results."""
         tool = WebSearchTool(backend="duckduckgo")
         
-        # Create mock DDG module
+        # 创建模拟 DDG 模块
         mock_ddg_module = MagicMock()
         mock_ddgs_instance = MagicMock()
         mock_ddgs_instance.__enter__ = Mock(return_value=mock_ddgs_instance)
@@ -190,7 +190,7 @@ class TestWebSearchToolDuckDuckGo:
         """Raises ImportError if duckduckgo-search not installed."""
         tool = WebSearchTool(backend="duckduckgo")
         
-        # Remove the module from sys.modules to trigger ImportError
+        # 从 sys.modules 中移除模块以触发 ImportError
         with patch.dict("sys.modules", {"duckduckgo_search": None}):
             with pytest.raises(ImportError) as exc_info:
                 tool._search_duckduckgo("test query", max_results=5)
@@ -200,7 +200,7 @@ class TestWebSearchToolDuckDuckGo:
         """DuckDuckGo gracefully handles search errors."""
         tool = WebSearchTool(backend="duckduckgo")
         
-        # Create mock DDG module that errors on search
+        # 创建在搜索时出错的模拟 DDG 模块
         mock_ddg_module = MagicMock()
         mock_ddgs_instance = MagicMock()
         mock_ddgs_instance.__enter__ = Mock(return_value=mock_ddgs_instance)
@@ -209,7 +209,7 @@ class TestWebSearchToolDuckDuckGo:
         mock_ddg_module.DDGS.return_value = mock_ddgs_instance
         
         with patch.dict("sys.modules", {"duckduckgo_search": mock_ddg_module}):
-            # Should not raise, should return empty list
+            # 不应升起，应返回空列表
             results = tool._search_duckduckgo("test query", max_results=5)
             assert results == []
 
@@ -221,7 +221,7 @@ class TestWebSearchToolFormatted:
         """search_formatted returns (urls, snippets) tuple."""
         tool = WebSearchTool(backend="duckduckgo")
         
-        # Create mock DDG module
+        # 创建模拟 DDG 模块
         mock_ddg_module = MagicMock()
         mock_ddgs_instance = MagicMock()
         mock_ddgs_instance.__enter__ = Mock(return_value=mock_ddgs_instance)
@@ -255,7 +255,7 @@ class TestGetWebSearchTool:
 
 
 # =============================================================================
-# DataCommonsClient Tests
+# DataCommonsClient 测试
 # =============================================================================
 
 class TestDataCommonsClient:
@@ -345,7 +345,7 @@ class TestDataCommonsClient:
 
 
 # =============================================================================
-# Integration Tests (require API keys)
+# 集成测试(需要 API 密钥)
 # =============================================================================
 
 @pytest.mark.integration
@@ -371,14 +371,14 @@ class TestWebSearchToolIntegration:
         tool = WebSearchTool(backend="tavily")
         results = tool.search("what is a healthy resting heart rate", max_results=5)
         
-        # At least one result should be from a health domain
+        # 至少一个结果应该来自健康领域
         health_domains = ["mayoclinic", "cdc.gov", "nih.gov", "who.int", "healthline", "webmd"]
         has_health_domain = any(
             any(domain in r.url.lower() for domain in health_domains)
             for r in results
         )
-        # Note: This may not always pass depending on search results
-        # So we just check we got results
+        # 注意:这不一定总是取决于搜索结果
+        # 所以我们只要检查一下结果
         assert len(results) > 0
 
 
@@ -392,12 +392,12 @@ class TestDuckDuckGoIntegration:
         
         try:
             results = tool.search("python programming language", max_results=3)
-            # DDG may rate limit, so we accept empty results
+            # DDG 可能会被限制，所以我们接受空结果
             assert isinstance(results, list)
             if len(results) > 0:
                 assert all(isinstance(r, SearchResult) for r in results)
         except Exception:
-            # DDG can be flaky, don't fail the test
+            # DDG 可以是片面的，不要失败测试
             pytest.skip("DuckDuckGo search unavailable")
 
 
@@ -411,7 +411,7 @@ class TestDataCommonsIntegration:
         
         try:
             result = client.query("population of United States")
-            # Should get some response (may or may not have data)
+            # 应获得一些答复(可能或可能没有数据)
             assert isinstance(result, dict)
         except Exception:
             pytest.skip("Data Commons API unavailable")
@@ -422,11 +422,11 @@ class TestDataCommonsDomainExpertIntegration:
     
     def test_datacommons_client_used_in_tool(self):
         """Verify DataCommonsClient is properly integrated."""
-        # Just verify the import works and client can be instantiated
+        # 只要核实导入工程，客户端就可以被即时处理
         client = DataCommonsClient()
         assert client.BASE_URL == "https://api.datacommons.org"
         
-        # Verify query method exists and has correct signature
+        # 校验查询方法存在且有正确的签名
         import inspect
         sig = inspect.signature(client.query)
         assert "query" in sig.parameters
@@ -445,12 +445,12 @@ class TestDataCommonsDomainExpertIntegration:
         with patch("pha.tools.web_search.requests.get", return_value=mock_response):
             result = client.query("test health query")
             
-            # Verify structure matches what domain expert expects
+            # 校验符合域专家期望的结构
             assert "charts" in result or "error" in result
     
     def test_datacommons_tool_example_format(self):
         """Verify the DC_EXAMPLE_RESPONSE format is valid."""
-        # Import the example from domain expert agent
+        # 从 领域专家 Agent 导入示例
         try:
             from pha.agents.domain_expert_agent import DC_EXAMPLE_RESPONSE
             assert "datacommons_natural_language_query" in DC_EXAMPLE_RESPONSE

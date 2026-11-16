@@ -106,26 +106,26 @@ def setup_nature_style() -> None:
   plt.rcParams['lines.linewidth'] = 1.2
   plt.rcParams['lines.markersize'] = 3.5
   plt.rcParams['svg.fonttype'] = (
-      'none'  # Keep text as editable vector glyphs in SVGs
+      'none'  # 在 SVGs 中将文本保留为可编辑矢量 glyphs
   )
   plt.rcParams['pdf.fonttype'] = 42
   plt.rcParams['ps.fonttype'] = 42
 
 
-# Colorblind-safe palette (Wong / Okabe-Ito inspired, avoiding red-green
-# collision)
+# 彩盲-安全调色板( Wong / Okabe- Ito 启发，避免红绿)
+# 碰撞)
 BAND_COLORS = {
-    'Overall': '#111111',  # Black dashed
-    'Mid South': '#2c7bb6',  # Deep steel blue
-    'S. Tropics': '#80cdc1',  # Muted aqua / teal
-    'N. Tropics': '#e66101',  # Warm amber / terracotta
-    'Mid North': '#b2abd2',  # Lavender purple
-    'Far North': '#5e3c99',  # Deep purple
+    'Overall': '#111111',  # 黑色破损
+    'Mid South': '#2c7bb6',  # 深钢蓝色
+    'S. Tropics': '#80cdc1',  # 静音aqua/tal
+    'N. Tropics': '#e66101',  # 温暖的琥珀/三角科塔
+    'Mid North': '#b2abd2',  # 紫色紫红色
+    'Far North': '#5e3c99',  # 深紫色( 深紫色 )
 }
 
 GENDER_COLORS = {
-    'Female': '#d95f02',  # Burnt Orange
-    'Male': '#2c7bb6',  # Cool Blue
+    'Female': '#d95f02',  # 烧橙色
+    'Male': '#2c7bb6',  # 凉爽的蓝色
 }
 
 LATITUDE_BANDS = [
@@ -171,7 +171,7 @@ def build_user_registry(
   if 'age' not in df_work.columns and 'birth_year' in df_work.columns:
     df_work['age'] = year_cohort - df_work['birth_year']
 
-  # Per-user lifetime aggregations
+  # 用户寿命总量
   user_modes = df_work.groupby('user_id')['lat_band'].agg(
       lambda s: s.mode()[0] if not s.empty else 'Unknown'
   )
@@ -238,7 +238,7 @@ def _plot_age_curves(
       & (user_df['age'] <= 80)
   ]
 
-  # 1. Plot individual latitude bands
+  # 1. 绘制单个纬度波段
   for band_name, _, _ in LATITUDE_BANDS:
     b_df = sub[sub['primary_band'] == band_name]
     if len(b_df) < 50:
@@ -260,7 +260,7 @@ def _plot_age_curves(
         edgecolor='none',
     )
 
-  # 2. Plot Overall (black dashed)
+  # 2. 地块整体(黑色破碎)
   all_stats = sub.groupby('age')['mean_val'].agg(['mean', 'sem', 'count'])
   all_stats = all_stats[all_stats['count'] >= 20]
   ages_all = all_stats.index.values
@@ -324,7 +324,7 @@ def _plot_density(
     color = BAND_COLORS.get(band_name, '#555555')
     ax.plot(xs, kde(xs), label=band_name, color=color, linewidth=1.1, alpha=0.9)
 
-  # Overall density
+  # 总密度
   all_vals = user_df['mean_val'].dropna()
   kde_all = stats.gaussian_kde(all_vals)
   ax.plot(
@@ -390,7 +390,7 @@ def generate_figure_1(
   """
   setup_nature_style()
 
-  # A4 width = 210mm (~8.27 inches), printable width ~7.2 - 8.0 inches
+  # A4宽=210毫米(~8.27英寸),可打印宽=7.2 - 8.0英寸
   fig = plt.figure(figsize=(7.4, 9.6))
   gs = GridSpec(3, 2, figure=fig, hspace=0.32, wspace=0.25)
 
@@ -401,7 +401,7 @@ def generate_figure_1(
   ax_e = fig.add_subplot(gs[2, 0])
   ax_f = fig.add_subplot(gs[2, 1])
 
-  # Prepare user-level data
+  # 编制用户级数据
   rhr_user = _registry_or_build(
       rhr_registry, df_rhr, rhr_col, lat_col, year_cohort
   )
@@ -409,7 +409,7 @@ def generate_figure_1(
       hrv_registry, df_hrv, hrv_col, lat_col, year_cohort
   )
 
-  # Row 1: RHR Age curves
+  # 1: RHR 年龄曲线
   _plot_age_curves(
       ax_a, rhr_user, 'Female', 'Resting Heart Rate (bpm)', y_lim=(61, 75)
   )
@@ -442,7 +442,7 @@ def generate_figure_1(
       prop={'size': 6.5},
   )
 
-  # Row 2: HRV Age curves
+  # 2: HRV 年龄曲线
   _plot_age_curves(
       ax_c, hrv_user, 'Female', 'Heart Rate Variability (ms)', y_lim=(24, 66)
   )
@@ -475,7 +475,7 @@ def generate_figure_1(
       prop={'size': 6.5},
   )
 
-  # Row 3: Population Densities
+  # 行3:人口密度
   _plot_density(
       ax_e,
       rhr_user,
@@ -590,11 +590,11 @@ def generate_figure_a1(
     ax.legend(title='Sex', frameon=False, loc='upper right', prop={'size': 6.5})
     ax.grid(True, linestyle=':', alpha=0.4, color='#cccccc')
 
-  # Top row: Raw (Before thinning)
+  # 顶行： Raw (在变薄之前)
   plot_lifespan(ax_a, user_raw, 'a)')
   plot_sex_density(ax_b, user_raw, 'b)')
 
-  # Bottom row: Thinned (After thinning)
+  # 下行： 细( 稀释后)
   plot_lifespan(ax_c, user_thin, 'c)')
   plot_sex_density(ax_d, user_thin, 'd)')
 
@@ -650,9 +650,9 @@ def generate_figure_a2(
       (name, name) for name, _, _ in LATITUDE_BANDS
   ]
   age_colors = {
-      21: '#2ca02c',  # Green
-      22: '#d62728',  # Red
-      23: '#1f77b4',  # Blue
+      21: '#2ca02c',  # 绿色
+      22: '#d62728',  # 红色
+      23: '#1f77b4',  # 蓝色
   }
 
   xs = np.linspace(40, 115, 200)
@@ -661,7 +661,7 @@ def generate_figure_a2(
     ax_left = axes[idx, 0]
     ax_right = axes[idx, 1]
 
-    # Filter data
+    # 过滤数据
     sub_raw = (
         user_raw
         if band_filter is None
@@ -759,12 +759,12 @@ def generate_figure_a3(
       (name, name) for name, _, _ in LATITUDE_BANDS
   ]
 
-  color_orig = '#d95f02'  # Orange-Red for Before (Original)
-  color_thinned = '#2c7bb6'  # Blue for After (Thinned)
+  color_orig = '#d95f02'  # 橙红色之前(原件)
+  color_thinned = '#2c7bb6'  # 蓝色后( 深色)
 
   for idx, (band_label, band_filter) in enumerate(row_specs):
-    ax_u = axes[idx, 0]  # Left: Unique Users vs Age
-    ax_r = axes[idx, 1]  # Right: Mean RHR vs Age
+    ax_u = axes[idx, 0]  # 左边： 唯一用户对年龄
+    ax_r = axes[idx, 1]  # 右： 平均 RHR对年龄
 
     sub_raw = (
         user_raw
@@ -777,7 +777,7 @@ def generate_figure_a3(
         else user_thin[user_thin['primary_band'] == band_filter]
     )
 
-    # Filter to ages 18 to 30
+    # 过滤到年龄 18到 30
     sub_raw = sub_raw[(sub_raw['age'] >= 18) & (sub_raw['age'] <= 30)]
     sub_thin = sub_thin[(sub_thin['age'] >= 18) & (sub_thin['age'] <= 30)]
 
@@ -786,7 +786,7 @@ def generate_figure_a3(
         ['mean', 'sem', 'count']
     )
 
-    # Left: User counts
+    # 左边： 用户数
     ax_u.plot(
         stats_raw.index,
         stats_raw['count'],
@@ -806,7 +806,7 @@ def generate_figure_a3(
         markersize=3.0,
     )
 
-    # Right: Mean RHR with 95% CI
+    # 右： 平均 RHR 与 95% CI (英语).
     ax_r.plot(
         stats_raw.index,
         stats_raw['mean'],
@@ -918,8 +918,8 @@ def _write_csv(df: pd.DataFrame, path: str, index: bool = False) -> None:
 # --- 6. Model-based figures: constants ---
 
 METRIC_TARGET_COLS = sl.METRIC_TARGET_COLS
-# Columns read from the clean user-month cohort frame for every model-based
-# figure (the target column of the metric is appended at load time).
+# 从每个基于模型的清洁用户月组框架中读取的列
+# 数字(在载荷时间后附上计量标准的目标栏)。
 MODEL_INPUT_COLS: List[str] = [
     'user_id',
     'activity_period',
@@ -933,8 +933,8 @@ MODEL_INPUT_COLS: List[str] = [
     'avg_temp_max',
     'dl_monthly',
 ]
-# pd.cut edges used by the lat-bin fit figure (legend shows the intervals,
-# e.g. "(-60, -30]", which is why assign_latitude_band is *not* used here).
+# pd.cut lat-bin 适配图所用的边缘( legend 显示间隔，)
+# 例如"(-60,-30]]),这就是为什么assign_latitude_band是*不在这里使用的*.
 MODEL_LAT_BINS: List[int] = [-60, -30, 0, 30, 60, 90]
 MONTH_LABELS: List[str] = [
     'Jan',
@@ -950,7 +950,7 @@ MONTH_LABELS: List[str] = [
     'Nov',
     'Dec',
 ]
-# Ordered: plotting order of the country-fit figure.
+# 命令:策划符合国情的人物的秩序。
 FIT_COUNTRY_NAMES: Dict[str, str] = {
     'US': 'United States',
     'GB': 'United Kingdom',
@@ -971,8 +971,8 @@ FIT_COUNTRY_COLORS: Dict[str, str] = {
     'South Africa': '#a65628',
     'Nigeria': '#f781bf',
 }
-# Age groups are left-closed intervals [lo, hi) with an open top edge, so the
-# youngest (18) and the oldest users are kept; see ``assign_age_group``.
+# 年龄组是左闭的间隔[lo,hi],顶端开阔，所以
+# 最年轻的(18)和最年长的用户被保留;参见``assign_age_group``.
 SENSITIVITY_AGE_BINS: List[float] = [18, 30, 45, 60, np.inf]
 SENSITIVITY_AGE_LABELS: List[str] = ['18-29', '30-44', '45-59', '60+']
 SENSITIVITY_AGE_COLORS: Dict[str, str] = {
@@ -1018,7 +1018,7 @@ DEMOGRAPHIC_SEX_STYLES: Dict[str, Dict[str, str]] = {
     'Female': {'linestyle': '-', 'marker': 'o'},
     'Male': {'linestyle': '--', 'marker': 's'},
 }
-# Desaturated latitude-band colours: pastel blues -> white -> amber/red.
+# 不饱和的纬带颜色:贴面蓝色 -> 白色 -> 琥珀/红色。
 CONTOUR_CMAP = LinearSegmentedColormap.from_list(
     'residual_cmap',
     ['#8faed4', '#d2e6f1', '#ffffff', '#ffbf7f', '#f18d8e'],
@@ -1035,7 +1035,7 @@ WORLD_GRID_COLS: List[str] = [
     'avg_temp_min',
     'dl_monthly',
 ]
-# Cohort column -> suffix of its per-cell mean `{metric}_{suffix}`.
+# cohort专栏 -> 其每个细胞的后缀表示`{metric}_{suffix}`.
 WORLD_GRID_ENV_COLS: Dict[str, str] = {
     'avg_temp_mean': 'temp_mean',
     'avg_temp_max': 'temp_max',
@@ -1614,8 +1614,8 @@ def extend_random_effects_to_cohort(
   out = os.path.join(model_dir, 'random_effects.parquet')
   backup = os.path.join(model_dir, 'random_effects_fit_sample.parquet')
   if not overwrite and fio.file_exists(backup):
-    # A previous call already extended this folder (the fit-sample BLUPs were
-    # backed up); `random_effects.parquet` therefore holds the full cohort.
+    # 先前的一次呼叫已经扩展了此文件夹( fit- sample BLUPs是
+    # 因此，`random_effects.parquet` 持有全部组。
     print(f'Random intercepts already extended in {model_dir}; reusing them.')
     return _read_parquet(out)
   row = _read_csv(os.path.join(model_dir, 'model-row.csv'))
@@ -1699,7 +1699,7 @@ def plot_combined_seasonal_fit_lat_bin(
       ),
   ]
   for ax, summary, title, ylabel in panels:
-    for grp in groups:  # observed means
+    for grp in groups:  # 观察手段
       g = summary[summary['lat_group'] == grp]
       if g.empty:
         continue
@@ -1714,13 +1714,13 @@ def plot_combined_seasonal_fit_lat_bin(
           alpha=0.4,
           label=str(grp),
       )
-    for grp in groups:  # model trajectory
+    for grp in groups:  # 模型轨迹
       g = summary[summary['lat_group'] == grp].sort_values('month')
       if not g.empty:
         ax.plot(
             g['month'], g['predicted_mean'], color=color_map[grp], linewidth=2.5
         )
-    for grp in groups:  # prediction band
+    for grp in groups:  # 预测波段
       g = summary[summary['lat_group'] == grp].sort_values('month')
       if not g.empty:
         ax.fill_between(
@@ -2536,8 +2536,8 @@ def make_world_contour_residuals(
     try:
       df = _load_cohort(data_dir, metric, cols)
     except KeyError:
-      # Day length is derived from latitude and month when the cohort lacks it
-      # (`compute_grid_residuals`); any other missing column raises here.
+      # 白天从纬度和月度中推导出来，当组群缺少时
+      # `compute_grid_residuals`]; 任何其他缺失的列在这里升起。
       df = _load_cohort(
           data_dir, metric, [c for c in cols if c != 'dl_monthly']
       )
@@ -2959,7 +2959,7 @@ def make_random_intercepts_plot(
 
 # --- 17. Map constants and geographic reference helpers ---
 
-# (season label, month-range label, months) used by the 2x2 observed maps.
+# (季节标签，月距标签，月度标签，月度标签),2x2观测地图使用。
 MAP_SEASONS: List[Tuple[str, str, List[int]]] = [
     ('Winter', 'January–March', [1, 2, 3]),
     ('Spring', 'April–June', [4, 5, 6]),
@@ -2970,7 +2970,7 @@ MAP_SEASONS: List[Tuple[str, str, List[int]]] = [
 MAP_XLIM = (-180.0, 180.0)
 MAP_YLIM = (-56.0, 85.0)
 
-# Blue -> light blue -> light orange -> orange -> red.
+# 蓝色 -> 浅蓝色 -> 淡橙色 -> 橙色 -> 红色。
 OBSERVED_MAP_CMAP_COLORS = [
     '#1f78b4',
     '#a6cee3',
@@ -2984,13 +2984,13 @@ OBSERVED_MAP_CBAR_LABELS = {
     'hrv': 'Observed Heart Rate Variability (ms)',
 }
 
-# Fallback colour range when a metric has no data.
+# 当一个公尺没有数据时，后退颜色范围。
 OBSERVED_MAP_FALLBACK_RANGE = {'rhr': (60.0, 72.0), 'hrv': (30.0, 55.0)}
 
 WORLD_GEOJSON_FILE = 'ne_110_admin_0_countries.geojson'
 UNSD_COUNTRIES_FILE = 'unsd-countries.csv'
-# ISO-2 codes that the UNSD M49 table does not list but Natural Earth draws
-# (ISO_A3_EH). Applied on top of the table by ``_load_iso2_to_iso3``.
+# ISO-2 代码 UNSD M49表没有列出，但自然地球画
+# ( ISO_A3_EH。在表顶应用 ``_load_iso2_to_iso3`` .
 ISO2_TO_ISO3_SUPPLEMENT: Dict[str, str] = {'TW': 'TWN'}
 
 
@@ -3018,8 +3018,8 @@ def _load_iso2_to_iso3(extra_dir: str) -> Dict[str, str]:
   return mapping
 
 
-# Natural Earth's ISO_A3 is -99 for a few countries (e.g. France, Norway);
-# ISO_A3_EH / ADM0_A3 are populated for all of them.
+# 天然地球ISO_A3是几个国家(如法国、挪威)的-99;
+# ISO_A3_EH/ADM0_A3他们所有人都是居民。
 _ISO3_COLUMN_CANDIDATES = (
     'ISO_A3_EH',
     'iso_a3_eh',
@@ -3161,7 +3161,7 @@ def build_country_gender_validation(
     )
     df['predicted_val'] = sl.predict_from_coefficients(df, coefs)
   else:
-    # Observed means only: no standardisation / residualisation needed.
+    # 被观察仅指： 不需要标准化/残留。
     df['month'] = df['activity_period'].dt.month
     df['target_log'] = (
         np.log(df[value_col])

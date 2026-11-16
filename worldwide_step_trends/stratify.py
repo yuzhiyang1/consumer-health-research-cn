@@ -80,7 +80,7 @@ import pandas as pd
 import pycountry
 import pytz
 
-# Constants
+# 常数
 _CKPT_FOLDER = 'stratify_steps'
 _COUNTRY_ALIASES = {
     'United States': 'United States of America',
@@ -150,7 +150,7 @@ _GENDER_LABELS = {
     0: 'male',
     1: 'female',
 }
-# Generic names for the demographics input file and the raw daily step column.
+# 人口统计输入文件和原始日阶列的通用名称。
 _DEFAULT_DEMO_QUERY_NAME = 'demographics'
 _DEFAULT_STEP_COL = 'daily_steps'
 
@@ -163,7 +163,7 @@ def _resolve_source_names() -> tuple[str, str]:
 _DEMO_QUERY_NAME, _STEP_COL = _resolve_source_names()
 
 
-# File handling abstraction layer
+# 文件处理抽象层
 
 
 def _resolve_local_data_dir(subpath: str, default_dir: str | None) -> str:
@@ -426,7 +426,7 @@ def load_un_population_data(
 
   un_pop['country'] = un_pop['country'].map(map_country)
 
-  # Check and pad projection years independently (e.g. 2024 and 2025)
+  # 独立地检查和铺垫投影年份(例如2024和2025)
   for target_year in (2024, 2025):
     if target_year not in un_pop['year'].unique():
       pop_pad = un_pop[un_pop['year'] == 2023].copy()
@@ -615,7 +615,7 @@ class StratifySteps:
     self._un_pop: pd.DataFrame | None = None
     self.demo: pd.DataFrame | None = None
 
-    # Compute hash of parameters to make checkpoints unique
+    # 计算参数散列，使检查站具有独特性
     self.params_hash = override_hash
     if self.params_hash is None:
       params_to_hash = (
@@ -788,7 +788,7 @@ class StratifySteps:
       instance.processed_shards = set(range(instance.n_shards))
       return instance
 
-    # Load existing checkpoints if available
+    # 如果有检查站，则装入现有检查站
     if file_exists(instance.checkpoint_state_file):
       logging.info('Loading state from combined checkpoint...')
       state = load_pickle(instance.checkpoint_state_file)
@@ -850,7 +850,7 @@ class StratifySteps:
 
     df_steps_grid = instance.summarize_dataframe(df_steps)
 
-    # Initialize results_grid with full Cartesian demographic grid
+    # 初始化results_grid 带全笛卡尔人口网
     empty_grid = pd.DataFrame(index=instance.get_grid())
     empty_grid['steps'] = 0.0
     empty_grid['steps_sq'] = 0.0
@@ -898,7 +898,7 @@ class StratifySteps:
       self.results_grid = self.results_grid.add(shard_renamed, fill_value=0)
       self.processed_shards.add(modulo)
 
-      # Save atomic combined checkpoint state
+      # 保存原子组合检查点状态
       checkpoint_state = {
           'results_grid': self.results_grid,
           'processed_shards': self.processed_shards,
@@ -907,7 +907,7 @@ class StratifySteps:
       save_pickle(checkpoint_state, tmp_state_file)
       rename_file(tmp_state_file, self.checkpoint_state_file, overwrite=True)
 
-      # Save checkpoints for backwards compatibility
+      # 将检查点保存为反向兼容性
       save_pickle(self.results_grid, self.checkpoint_grid_file)
       save_pickle(self.processed_shards, self.checkpoint_processed_file)
 

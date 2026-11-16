@@ -1,21 +1,23 @@
-# Exemplars for Personal Health Insights Agent (PHIA) Capabilities
+# 个人健康 Agent(PHIA)的示例
 
-These notebooks are parsed and converted into exemplars for a ReActAgent. Each
-notebook should follow the ReAct framework, adhering to the following format:
+[阅读少样本示例的中文对照](EXAMPLES.zh-CN.md)
 
-*   The first cell contains the problem statement.
-*   The second cell describes the initial thought process or context for solving
-    the problem.
-*   Subsequent cells follow this structure:
-    -   A text cell describing a thought or rationale behind the next action
-        (aligned with the ReAct framework's Thought step).
-    -   A code cell implementing the idea or action described in the previous
-        cell (aligned with the ReAct framework's Act step).
-    -   A result or observation from evaluating the previous code cell (aligned
-        with the ReAct framework's Observe step).
-*   The final cell provides a concluding thought and any final outputs or
-    insights (aligned with the ReAct framework's Finish step).
+这些笔记本被解析并转换成一个 ReActAgent 的示例。
+笔记本应遵循ReAct框架，遵循以下格式：
 
-This format ensures that each ReActStep except for the final one with
-`is_finished` as True has a Thought, Action, and Observation. The final step has
-a Thought, Action, and an Observation set to None.
+*   第一个单元格包含问题说明。
+*   第二个单元格描述解决问题的初始思维过程或上下文
+    问题。
+*   随后的单元格遵循此结构：
+    -   描述下一个行动背后的想法或理由的文本单元格
+        (与ReAct框架的思想步骤相配合).
+    -   执行上一个描述的构想或动作的代码单元格
+        单元格(与 ReAct 框架的动作步骤相匹配)。
+    -   评估上一个代码单元格的结果或观测结果(对齐)
+        与ReAct框架的"央视台阶".
+*   最后单元提供结论性想法和任何最后产出，或
+    见解(与ReAct框架的“完成步骤”相一致)。
+
+这种格式确保了除最后一种外的每一种ReActStep
+`is_finished`作为True有思想、行动和观察。
+a 思想、行动和观察设定为无。
