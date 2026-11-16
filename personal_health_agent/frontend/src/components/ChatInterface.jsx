@@ -5,40 +5,38 @@ import './ChatInterface.css'
 
 
 const TAG_LABELS = {
-  Orch:     { label: 'Orchestrator',   icon: '🎯' },
-  DS:       { label: 'Data Science',   icon: '📊' },
-  Coach:    { label: 'Health Coach',   icon: '💬' },
-  DE:       { label: 'Domain Expert',  icon: '🩺' },
-  LLM:      { label: 'LLM Call',       icon: '🧠' },
-  Parallel: { label: 'Parallel',       icon: '⚡' },
-  PHIA:     { label: 'PHIA Agent',     icon: '🤖' },
+  Orch:     { label: '编排器',   icon: '🎯' },
+  DS:       { label: '数据科学',   icon: '📊' },
+  Coach:    { label: '健康教练',   icon: '💬' },
+  DE:       { label: '领域专家',  icon: '🩺' },
+  LLM:      { label: '模型调用',       icon: '🧠' },
+  Parallel: { label: '并行架构',       icon: '⚡' },
+  PHIA:     { label: 'PHIA',     icon: '🤖' },
 }
 
-/* ── Thinking indicator (Gemini-style) ──
-   While active: shows spinner + current step message
-   When done: green checkmark + summary, expandable to see all steps */
+// 处理时显示当前步骤，处理完成后可展开全部步骤。
 function ThinkingIndicator({ steps, isActive, elapsed }) {
   const [expanded, setExpanded] = useState(false)
 
-  // 对于现场展示，跳过LLM"呼叫..."步骤——只显示正在发生的事情。
-  const displaySteps = steps.filter(s => !s.message.startsWith('Calling '))
+  // 实时摘要只展示业务步骤，展开后仍能看到底层模型调用。
+  const displaySteps = steps.filter(s => s.tag !== 'LLM')
   const lastDisplayStep = displaySteps[displaySteps.length - 1]
 
   if (steps.length === 0 && isActive) {
     return (
       <div className="thinking-indicator active">
         <span className="thinking-spinner" />
-        <span className="thinking-label">Thinking...</span>
+        <span className="thinking-label">正在处理…</span>
       </div>
     )
   }
 
-  // 还没有可以显示(目前仅LLM 呼叫)
+  // 只有底层模型调用时，显示通用加载提示。
   if (!lastDisplayStep && isActive) {
     return (
       <div className="thinking-indicator active">
         <span className="thinking-spinner" />
-        <span className="thinking-label">Thinking...</span>
+        <span className="thinking-label">正在处理…</span>
       </div>
     )
   }
@@ -57,7 +55,7 @@ function ThinkingIndicator({ steps, isActive, elapsed }) {
             <span className="thinking-label">
               {lastTag.icon} {lastDisplayStep.message}
             </span>
-            <span className="thinking-elapsed">{elapsed}s</span>
+            <span className="thinking-elapsed">{elapsed} 秒</span>
           </>
         ) : (
           <>
@@ -65,7 +63,7 @@ function ThinkingIndicator({ steps, isActive, elapsed }) {
             <span className="thinking-label done-label">
               {lastTag.icon} {lastDisplayStep.message}
             </span>
-            <span className="thinking-elapsed">{elapsed}s</span>
+            <span className="thinking-elapsed">{elapsed} 秒</span>
             {steps.length > 1 && (
               <span className={`thinking-chevron ${expanded ? 'open' : ''}`}>▾</span>
             )}
@@ -92,7 +90,7 @@ function ThinkingIndicator({ steps, isActive, elapsed }) {
   )
 }
 
-function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, userId, userStudyMode }) {
+function ChatInterface({ session, personaName, apiBase, onEndSession, onRefresh, refreshing, userId, userStudyMode }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -151,7 +149,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
     const loadMessages = async () => {
       try {
         const res = await fetch(`${apiBase}/sessions/${session.session_id}/messages`)
-        if (!res.ok) throw new Error('Failed to load session messages')
+        if (!res.ok) throw new Error('无法加载会话消息')
         const data = await res.json()
 
         if (!isMounted) return
@@ -199,16 +197,16 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
     // 在用户学习模式下使用匿名姓名( A/B/C 代理)
     const baselineNames = userStudyMode
       ? {
-          pha: 'Agent A',
-          parallel: 'Agent B',
-          phia: 'Agent C',
+          pha: '系统 A',
+          parallel: '系统 B',
+          phia: '系统 C',
         }
       : {
-          pha: 'PHA (Orchestrated Multi-Agent)',
-          parallel: 'Parallel (Multi-Agent, No Orchestration)',
-          phia: 'PHIA (Single Agent)',
+          pha: 'PHA（多 Agent 编排）',
+          parallel: 'Parallel（多 Agent 并行）',
+          phia: 'PHIA（单 Agent）',
         }
-    return `👋 Hello! I'm your Personal Health Agent running on **${baselineNames[session.config.baseline]}**. How can I help you today?`
+    return `👋 你好，我是你的个人健康 Agent，当前使用 **${baselineNames[session.config.baseline]}**。你今天想了解什么？`
   }
 
   const sendMessage = useCallback(async (e) => {
@@ -291,7 +289,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
             })
           } else if (eventType === 'error') {
             setIsStreaming(false)
-            const errorContent = `⚠️ **Error from backend**\n\n\`\`\`\n${data.detail}\n\`\`\`\n\nCheck the terminal/server logs for the full stack trace.`
+            const errorContent = `⚠️ **服务端出错**\n\n\`\`\`\n${data.detail}\n\`\`\`\n\n可在服务端日志中查看详细错误。`
             setThinkingSteps(currentSteps => {
               setMessages(prev => [...prev, {
                 role: 'assistant',
@@ -309,7 +307,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
       if (err.name === 'AbortError') return
       setError(err.message)
       setIsStreaming(false)
-      const errorContent = `⚠️ **Error**\n\n\`\`\`\n${err.message}\n\`\`\``
+      const errorContent = `⚠️ **请求失败**\n\n\`\`\`\n${err.message}\n\`\`\``
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: errorContent,
@@ -361,7 +359,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
             <span className="message-time">{formatTime(msg.timestamp)}</span>
             {msg.processingTime && (
               <span className="message-processing">
-                {(msg.processingTime / 1000).toFixed(1)}s
+                {(msg.processingTime / 1000).toFixed(1)} 秒
               </span>
             )}
           </div>
@@ -374,11 +372,11 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
     <div className="chat-container">
       <header className="chat-header">
         <div className="chat-header-info">
-          <h1>🏥 PHA Chat</h1>
+          <h1>🏥 个人健康对话</h1>
           <div className="session-info">
             <span className="session-badge baseline">
               {userStudyMode
-                ? { pha: 'AGENT A', parallel: 'AGENT B', phia: 'AGENT C' }[session.config.baseline]
+                ? { pha: '系统 A', parallel: '系统 B', phia: '系统 C' }[session.config.baseline]
                 : session.config.baseline.toUpperCase()}
             </span>
             {!userStudyMode && (
@@ -387,7 +385,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
                   {session.config.model_id.split('/').pop()}
                 </span>
                 <span className="session-badge persona">
-                  {session.config.persona_id}
+                  {personaName || session.config.persona_id}
                 </span>
               </>
             )}
@@ -395,23 +393,23 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
         </div>
         <div className="chat-header-actions">
           <button className="refresh-btn" onClick={onRefresh} disabled={refreshing}>
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? '正在重新开始…' : '重新开始'}
           </button>
           <button className="end-session-btn" onClick={handleEndSession} disabled={refreshing}>
-            End Session
+            结束会话
           </button>
         </div>
       </header>
 
       <div className="pha-disclaimer" role="note">
-        <span className="pha-disclaimer-label">NOTE:</span>
-        This research portal (i) is not intended to be a medical device; and (ii) is not intended for clinical use of any kind, including but not limited to diagnosis, prognosis, or treatment recommendations.
+        <span className="pha-disclaimer-label">提示：</span>
+        本门户仅供研究使用，不作为医疗器械，也不适用于任何临床用途，包括诊断、预后判断和治疗建议。
       </div>
 
       <div className="chat-messages">
         {messages.map((msg, i) => renderMessage(msg, i))}
 
-        {/* 流线时的实时思维指示器 */}
+        {/* 展示服务端实时处理进度 */}
         {isStreaming && (
           <div className="message assistant">
             <div className="message-avatar">🤖</div>
@@ -425,7 +423,7 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
           </div>
         )}
 
-        {/* 如果装入后退点，溪流尚未开始 */}
+        {/* 等待服务端发出第一条事件时显示加载状态 */}
         {loading && !isStreaming && thinkingSteps.length === 0 && (
           <div className="message assistant loading">
             <div className="message-avatar">🤖</div>
@@ -446,16 +444,16 @@ function ChatInterface({ session, apiBase, onEndSession, onRefresh, refreshing, 
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your health data..."
+            placeholder="想了解哪些健康数据？"
             disabled={loading}
             autoFocus
           />
           <button type="submit" disabled={loading || !input.trim()}>
-            {loading ? '...' : 'Send'}
+            {loading ? '发送中…' : '发送'}
           </button>
         </div>
         <p className="input-hint">
-          Press Enter to send • Session ID: {session.session_id}
+          按 Enter 发送 · 会话 ID： {session.session_id}
         </p>
       </form>
     </div>

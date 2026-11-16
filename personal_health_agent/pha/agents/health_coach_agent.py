@@ -471,12 +471,12 @@ class HealthCoachAgent:
         from datetime import datetime
         from pha.streaming import emit_step
         ts = datetime.now().strftime("%H:%M:%S")
-        emit_step("Coach", "Health Coach generating response...")
+        emit_step("Coach", "健康教练 Agent 正在生成回复…")
         print(f"\n[Coach:{ts}] respond: {user_message[:80]}...")
         self.add_user_message(user_message)
         response = self.take_turn()
         self.add_coach_message(response)
-        emit_step("Coach", "Health Coach response ready", detail=response[:100])
+        emit_step("Coach", "健康教练 Agent 已生成回复", detail=response[:100])
         print(f"[Coach:{ts}] Response ({len(response)} chars): {response[:200]}...")
         return response
     
@@ -495,7 +495,7 @@ class HealthCoachAgent:
         from datetime import datetime
         from pha.streaming import emit_step
         ts = datetime.now().strftime("%H:%M:%S")
-        emit_step("Coach", "Health Coach synthesizing agent insights...")
+        emit_step("Coach", "健康教练 Agent 正在汇总各方结论…")
         print(f"\n[Coach:{ts}] respond_with_analysis: {user_message[:80]}...")
         print(f"[Coach:{ts}] Analysis ({len(analysis)} chars): {analysis[:200]}...")
         self.add_user_message(user_message)

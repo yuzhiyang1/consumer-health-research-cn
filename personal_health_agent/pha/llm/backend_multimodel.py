@@ -91,7 +91,7 @@ class GeminiBackend(LLMBackend):
     def generate(self, prompt: str) -> str:
         try:
             from pha.streaming import emit_step
-            emit_step("LLM", f"Calling {self.model_name}...", detail=f"prompt={len(prompt)} chars")
+            emit_step("LLM", f"正在调用 {self.model_name}…", detail=f"提示词长度：{len(prompt)} 字符")
             print(f"[LLM:Gemini] Calling model={self.model_name}, prompt_len={len(prompt)}, temp={self.generation_config.temperature}")
             response = self.client.models.generate_content(
                 model=self.model_name,
@@ -164,7 +164,7 @@ class OpenAIBackend(LLMBackend):
     def generate(self, prompt: str) -> str:
         try:
             from pha.streaming import emit_step
-            emit_step("LLM", f"Calling {self.model_name}...", detail=f"prompt={len(prompt)} chars")
+            emit_step("LLM", f"正在调用 {self.model_name}…", detail=f"提示词长度：{len(prompt)} 字符")
             # 合理模型(o1/o3/o4/gpt-5)得到温度夸克
             # 完全省略——在日志中显示以避免误导
             # 给人一种印象，我们发送了一个价值该模型拒绝。
@@ -245,7 +245,7 @@ class AnthropicBackend(LLMBackend):
     def generate(self, prompt: str) -> str:
         try:
             from pha.streaming import emit_step
-            emit_step("LLM", f"Calling {self.model_name}...", detail=f"prompt={len(prompt)} chars")
+            emit_step("LLM", f"正在调用 {self.model_name}…", detail=f"提示词长度：{len(prompt)} 字符")
             print(f"[LLM:Anthropic] Calling model={self.model_name}, prompt_len={len(prompt)}, temp={self.temperature}")
             response = self.client.messages.create(
                 model=self.model_name,

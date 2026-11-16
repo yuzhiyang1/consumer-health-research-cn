@@ -73,13 +73,16 @@ def _load_persona_metadata(persona_dir: Path) -> PersonaInfo:
         PersonaInfo with loaded metadata.
     """
     persona_id = persona_dir.name
-    display_name = persona_id.replace('_', ' ').replace('-', ' ').title()
+    display_name = '合成示例档案' if persona_id == 'sample' else persona_id.replace('_', ' ').replace('-', ' ').title()
     
-    # 可用时装入描述
+    # 档案说明使用 UTF-8，可包含中文。
     description = ""
     desc_file = persona_dir / "description.txt"
     if desc_file.exists():
-        description = desc_file.read_text().strip()
+        try:
+            description = desc_file.read_text(encoding="utf-8-sig").strip()
+        except UnicodeDecodeError:
+            description = desc_file.read_text().strip()
     
     # 创建基础信息
     info = PersonaInfo(
@@ -366,11 +369,11 @@ def create_persona_template(
     
     # 创建 description.txt
     if description:
-        (persona_dir / "description.txt").write_text(description)
+        (persona_dir / "description.txt").write_text(description, encoding="utf-8")
     else:
         (persona_dir / "description.txt").write_text(
-            f"Health data profile for {persona_id}.\n"
-            "Edit this file to describe the persona."
+            f"{persona_id} 的健康档案。\n可编辑此文件补充档案说明。",
+            encoding="utf-8",
         )
     
     return persona_dir
@@ -413,6 +416,6 @@ def copy_persona(
     
     # 更新说明
     desc_file = new_dir / "description.txt"
-    desc_file.write_text(f"Copy of {source_id} persona.\nEdit this description.")
+    desc_file.write_text(f"从 {source_id} 复制的档案。\n可修改这段说明。", encoding="utf-8")
     
     return new_dir

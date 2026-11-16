@@ -50,7 +50,7 @@ datetime,steps,sleep_minutes,bed_time,wake_up_time,resting_heart_rate,heart_rate
 
 ### activities.csv（活动记录）
 
-单个练习和活动记录，每行代表一个活动会话。
+每行记录一次锻炼或活动。
 
 | 列名 | 类型 | 说明 |
 |--------|------|-------------|
@@ -79,7 +79,7 @@ start_time,end_time,activity_name,duration,distance,averageHeartRate,calories,st
 
 ### profile.csv（用户档案）
 
-用户人口与物理信息，单行。
+一行记录用户的年龄、性别、身高、体重等资料。
 
 | 列名 | 类型 | 说明 |
 |--------|------|-------------|
@@ -104,7 +104,7 @@ age,gender,height_cm,weight_kg,averageDailySteps
 | 列名 | 类型 | 说明 |
 |--------|------|-------------|
 | `percentile` | int | 百分位数（1–100） |
-| `age_group` 或 减 减 `age` | string | 年龄区间，例如 `18-24`、`25-34`、`35-44`、`45-54`、`55-64` 或 `65+` |
+| `age_group` 或 `age` | string | 年龄区间，例如 `18-24`、`25-34`、`35-44`、`45-54`、`55-64` 或 `65+` |
 | `gender` | string | `male` 或 `female` |
 | `resting_heart_rate` | float | 该百分位数的静息心率 |
 | `heart_rate_variability` | float | 该百分位数的心率变异性 |
@@ -127,11 +127,11 @@ percentile,age_group,gender,resting_heart_rate,heart_rate_variability,steps
 
 ## 使用您自己的数据
 
-### 选项 1:替换样本文件
+### 方法 1：替换样本文件
 
-将 `data/sample/` 中的文件替换为您自己的 CSVs。系统会自动加载它们。
+用自己的 CSV 文件替换 `data/sample/` 中对应的文件，保持字段结构一致。
 
-### 选项 2:自定义数据目录
+### 方法 2：指定数据目录
 
 ```python
 from config.settings import Settings
@@ -139,7 +139,7 @@ from config.settings import Settings
 settings = Settings(data_dir="/path/to/your/data")
 ```
 
-### 选项 3:直接 DataFrame 装入
+### 方法 3：直接传入 DataFrame
 
 ```python
 from pha.agents import DataScienceAgent
@@ -154,9 +154,9 @@ agent.load_dataframes({
 })
 ```
 
-## 临时本地化
+## 对齐样本数据的日期
 
-默认情况下，PHA 数据中的移位日期可以让最近的记录显示为“今天 ”。这样可以让样本数据感受电流。禁用：
+PHA 默认平移所有记录的日期，使最新一条记录对齐到今天，同时保留记录之间的时间间隔。如果需要使用原始日期，请设置：
 
 ```python
 settings = Settings(temporally_localize=False)
@@ -164,14 +164,14 @@ settings = Settings(temporally_localize=False)
 
 ## 样本数据
 
-`sample/`目录包含~365天的虚构34-年长男性的合成健康数据，这些数据完全是为演示目的捏造的，并不代表任何真实的个人。
+`sample/` 包含为演示构造的健康数据。档案中的人物设定为 34 岁男性。
 
-## 真实使用的数据源
+## 导入其他数据源
 
-要使用 PHA , 加上真实的数据，您可以导出：
-- ** Fitbit**:通过Google 外卖或Fitbit的数据导出特性导出。
-- ** “健康”**:通过健康应用软件的“出口所有健康数据”功能出口
-- ** Garmin**:通过Garmin连接导出
-- **其他 可穿戴设备**: 多数设备提供数据导出;您可能需要转换格式
+可以先从设备或应用导出，再转换成上面的 CSV 格式。
+- **Fitbit**：使用 Google Takeout 或 Fitbit 的数据导出功能。
+- **Apple 健康**：使用「导出所有健康数据」。
+- **Garmin**：通过 Garmin Connect 导出。
+- **其他设备**：查看设备或配套应用是否提供数据导出。
 
-注:您可能需要写入预处理脚本，以便将导出的数据转换成预期的CSV格式。
+转换时请核对时间格式、字段名称和计量单位。

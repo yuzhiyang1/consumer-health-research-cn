@@ -3,7 +3,7 @@ import './SplashScreen.css'
 
 const API_BASE = '/api'
 
-// localStorage 密钥
+// localStorage 的存储键
 const STORAGE_KEYS = {
   gemini: 'pha_gemini_key',
   openai: 'pha_openai_key',
@@ -45,7 +45,7 @@ function SplashScreen({ config, onStart, loading, error }) {
   const [checkingAvailability, setCheckingAvailability] = useState(false)
   const isFirstAvailabilityRun = useRef(true)
 
-  // 在用户学习模式下获取用户学习默认值
+  // 在用户研究模式下获取用户研究默认配置值
   useEffect(() => {
     if (!userStudyMode) return
     const fetchDefaults = async () => {
@@ -64,10 +64,8 @@ function SplashScreen({ config, onStart, loading, error }) {
     fetchDefaults()
   }, [userStudyMode])
 
-  // 任何 API 关键更改时重新检查模型可用性。
-  // -在第一舱： 立即开火，所以节省的钥匙在前面被验证。
-  // - 之后的关键改变： 卸下500米这样我们就不会在每次键盘中取回。
-  // -如果没有输入密钥，则不做任何动作(保留所有可用默认的全程目录)。
+  // 首次打开页面时立即校验已保存的密钥。之后等待输入停止 500 毫秒再请求。
+  // 没有填写密钥时，继续显示默认模型列表。
   useEffect(() => {
     const hasAnyKey = !!(apiKeys.gemini || apiKeys.openai || apiKeys.anthropic)
     if (!hasAnyKey) {
@@ -148,8 +146,7 @@ function SplashScreen({ config, onStart, loading, error }) {
     }
   }, [modelId])
 
-  // 当配置负载或提供者改变时初始化模型(在用户学习模式下进行skip).
-  // 优惠顺序:如果有的话，存储模型;第一个可用模型;第一个模型。
+  // 普通模式优先恢复保存的模型，其次选择第一个可用模型，最后回退到列表首项。
   useEffect(() => {
     if (userStudyMode || !effectiveConfig?.models) return
 
@@ -169,7 +166,7 @@ function SplashScreen({ config, onStart, loading, error }) {
     setModelId((firstAvailable || providerModels[0]).id)
   }, [userStudyMode, effectiveConfig, provider, baseline])
 
-  // 当提供者改变时更新模型——先选择可用，或先作为倒置。
+  // 切换提供商时，优先选择该提供商的第一个可用模型。
   const handleProviderChange = (newProvider) => {
     setProvider(newProvider)
     const providerModels = effectiveConfig?.models?.[newProvider] || []
@@ -225,18 +222,16 @@ function SplashScreen({ config, onStart, loading, error }) {
     e.preventDefault()
 
     if (!hasRequiredKey) {
-      setValidationError(`${keyInfo[requiredKeyType].label} API key is required`)
+      setValidationError(`${keyInfo[requiredKeyType].label} API 密钥为必填项`)
       return
     }
 
-    // 如果已知选定模型无法使用，则块提交
-    // 键。这阻止用户踢出聊天会话
-    // 第一次会失败 LLM 打电话。
+    // 拦截已知不可用的模型，避免会话创建后第一次调用就失败。
     if (!userStudyMode) {
       const picked = currentModels.find(m => m.id === modelId)
       if (picked && picked.available === false) {
         setValidationError(
-          `"${picked.name}" is not available for this ${effectiveProvider} key. Pick an enabled option.`
+          `当前 ${effectiveProvider} 密钥无法访问「${picked.name}」，请选择可用模型。`
         )
         return
       }
@@ -255,7 +250,7 @@ function SplashScreen({ config, onStart, loading, error }) {
       user_id: userId,
     }
     
-    // API 密钥:在用户学习模式后端从配置文件注入;否则从形式中注入
+    // 用户研究模式由后端配置密钥，普通模式使用表单中填写的密钥。
     if (!userStudyMode) {
       if (apiKeys.gemini) sessionConfig.gemini_api_key = apiKeys.gemini
       if (apiKeys.openai) sessionConfig.openai_api_key = apiKeys.openai
@@ -274,32 +269,32 @@ function SplashScreen({ config, onStart, loading, error }) {
     <div className="splash">
       <div className="splash-container">
         <header className="splash-header">
-          <h1>🏥 PHA Portal</h1>
-          <p className="subtitle">Personal Health Agent</p>
+          <h1>🏥 个人健康 Agent</h1>
+          <p className="subtitle">PHA 研究门户</p>
         </header>
 
         <div className="pha-disclaimer" role="note">
-          <span className="pha-disclaimer-label">NOTE:</span>
-          This research portal (i) is not intended to be a medical device; and (ii) is not intended for clinical use of any kind, including but not limited to diagnosis, prognosis, or treatment recommendations.
+          <span className="pha-disclaimer-label">提示：</span>
+          本门户仅供研究使用，不作为医疗器械，也不适用于任何临床用途，包括诊断、预后判断和治疗建议。
         </div>
 
         <form onSubmit={handleSubmit} className="config-form">
           
           {/* 用户 ID 条目 */}
           <section className="config-section user-id-section">
-            <h2>User ID</h2>
+            <h2>用户 ID</h2>
             <input
               type="text"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              placeholder="Enter your user ID"
+              placeholder="请输入用户 ID"
               className="config-input user-id-input"
             />
           </section>
 
           {/* 步骤 1 : 基线 选择 */}
           <section className="config-section">
-            <h2>1. Select System Architecture</h2>
+            <h2>1. 选择系统架构</h2>
             <div className="baseline-grid">
               {config?.baselines?.map(b => (
                 <div
@@ -324,22 +319,21 @@ function SplashScreen({ config, onStart, loading, error }) {
             </div>
           </section>
 
-          {/* 步骤 2: 提供者选择(隐藏在用户学习模式中) */}
+          {/* 步骤 2: 提供者选择(隐藏在用户研究模式中) */}
           {!userStudyMode && (
           <section className="config-section">
             <h2>
-              2. Select Provider
+              2. 选择模型提供商
             </h2>
             <div className="provider-grid">
               {config?.providers?.map(p => {
                 const isAnthropic = p === 'anthropic'
-                // Anthropic由PHA和并行基线(多型号)支持。
-                // 后端),但不由PHIA(使用OneTwo/没有Anthropic后端).
+                // Anthropic 支持 PHA 和 Parallel 架构。PHIA 使用的 OneTwo 后端不支持 Anthropic。
                 const isDisabled = isAnthropic && baseline === 'phia'
 
                 let disabledReason = ''
                 if (isDisabled) {
-                  disabledReason = 'Anthropic is not supported by the PHIA baseline (OneTwo has no Anthropic backend). Use PHA or Parallel.'
+                  disabledReason = 'PHIA 使用 OneTwo，目前无法调用 Anthropic 模型。使用 Anthropic 时请选择 PHA 或 Parallel。'
                 }
                 
                 return (
@@ -361,7 +355,7 @@ function SplashScreen({ config, onStart, loading, error }) {
                         {p === 'anthropic' && '🟠'}
                       </span>
                       <span className="provider-name">
-                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                        {keyInfo[p]?.label || p}
                       </span>
                     </button>
                   </div>
@@ -371,10 +365,10 @@ function SplashScreen({ config, onStart, loading, error }) {
           </section>
           )}
 
-          {/* 步骤 3:模型选择(隐藏在用户学习模式中) */}
+          {/* 步骤 3:模型选择(隐藏在用户研究模式中) */}
           {!userStudyMode && (
           <section className="config-section">
-            <h2>3. Select Model</h2>
+            <h2>3. 选择模型</h2>
             <select
               value={modelId}
               onChange={(e) => {
@@ -394,7 +388,7 @@ function SplashScreen({ config, onStart, loading, error }) {
                     disabled={isUnavailable}
                     style={isUnavailable ? { color: '#94a3b8' } : undefined}
                   >
-                    {m.name}{isUnavailable ? ' — not available for this key' : ''}
+                    {m.name}{isUnavailable ? '（当前密钥无法访问）' : ''}
                   </option>
                 )
               })}
@@ -404,14 +398,14 @@ function SplashScreen({ config, onStart, loading, error }) {
               if (!hasProviderKey) {
                 return (
                   <p className="model-availability-note">
-                    Enter a {effectiveProvider.charAt(0).toUpperCase() + effectiveProvider.slice(1)} key below to verify which models your account can access.
+                    请在下方填写 {keyInfo[effectiveProvider]?.label || effectiveProvider} 密钥，查看账号可访问的模型。
                   </p>
                 )
               }
               if (checkingAvailability) {
                 return (
                   <p className="model-availability-note checking">
-                    Verifying availability with {effectiveProvider}…
+                    正在验证 {keyInfo[effectiveProvider]?.label || effectiveProvider} 模型的可用性…
                   </p>
                 )
               }
@@ -421,8 +415,8 @@ function SplashScreen({ config, onStart, loading, error }) {
               return (
                 <p className={`model-availability-note ${allOk ? 'ok' : 'partial'}`}>
                   {allOk
-                    ? `✓ All ${total} models available for this ${effectiveProvider} key.`
-                    : `${available} of ${total} models available for this ${effectiveProvider} key.`}
+                    ? `✓ 当前密钥可访问全部 ${total} 个模型。`
+                    : `当前密钥可访问 ${total} 个模型中的 ${available} 个。`}
                 </p>
               )
             })()}
@@ -431,7 +425,7 @@ function SplashScreen({ config, onStart, loading, error }) {
 
           {/* 步骤 4:人物选择 */}
           <section className="config-section">
-            <h2>{userStudyMode ? '2. Select User Profile' : '4. Select User Profile'}</h2>
+            <h2>{userStudyMode ? '2. 选择用户档案' : '4. 选择用户档案'}</h2>
             <select
               value={persona}
               onChange={(e) => setPersona(e.target.value)}
@@ -445,26 +439,26 @@ function SplashScreen({ config, onStart, loading, error }) {
             </select>
             {selectedPersona?.demographics && (
               <div className="persona-details">
-                {selectedPersona.demographics.age && <span>Age: {selectedPersona.demographics.age}</span>}
-                {selectedPersona.demographics.gender && <span>Gender: {selectedPersona.demographics.gender}</span>}
-                {selectedPersona.data_summary?.days && <span>{selectedPersona.data_summary.days} days of data</span>}
+                {selectedPersona.demographics.age && <span>年龄：{selectedPersona.demographics.age} 岁</span>}
+                {selectedPersona.demographics.gender && <span>性别：{{ male: '男', female: '女' }[String(selectedPersona.demographics.gender).toLowerCase()] ?? selectedPersona.demographics.gender}</span>}
+                {selectedPersona.data_summary?.days && <span>{selectedPersona.data_summary.days} 天的数据</span>}
               </div>
             )}
           </section>
 
-          {/* 步 5: API 键(隐藏在用户学习模式中) */}
+          {/* 步 5: API 键(隐藏在用户研究模式中) */}
           {!userStudyMode && (
           <section className="config-section">
-            <h2>5. API Keys</h2>
+            <h2>5. API 密钥</h2>
             
             {/* 需要的 API 密钥 */}
             <div className="api-key-group">
               <h3 className="api-key-title">
                 <span className="required-dot"></span>
-                Required: {keyInfo[requiredKeyType].label} API Key
+                必填：{keyInfo[requiredKeyType].label} API 密钥
               </h3>
               <p className="api-key-reason">
-                {`Required for ${provider.charAt(0).toUpperCase() + provider.slice(1)} models`}
+                {`调用 ${keyInfo[requiredKeyType].label} 模型时需要此密钥`}
               </p>
               <input
                 type="password"
@@ -479,7 +473,7 @@ function SplashScreen({ config, onStart, loading, error }) {
                 rel="noopener noreferrer"
                 className="api-key-link"
               >
-                Get {keyInfo[requiredKeyType].label} API Key →
+                获取 {keyInfo[requiredKeyType].label} API 密钥 →
               </a>
             </div>
             
@@ -487,9 +481,9 @@ function SplashScreen({ config, onStart, loading, error }) {
             <div className="api-key-group optional">
               <h3 className="api-key-title">
                 <span className="optional-dot"></span>
-                Optional: Tavily API Key
+                选填：Tavily API 密钥
               </h3>
-              <p className="api-key-reason">Enables web search for health information lookups</p>
+              <p className="api-key-reason">供领域专家 Agent 搜索健康资料</p>
               <input
                 type="password"
                 placeholder="tvly-..."
@@ -503,14 +497,14 @@ function SplashScreen({ config, onStart, loading, error }) {
                 rel="noopener noreferrer"
                 className="api-key-link"
               >
-                Get Tavily API Key →
+                获取 Tavily API 密钥 →
               </a>
             </div>
             
             <p className="api-env-hint">
-              💡 Keys can also be set as environment variables on the server
+              💡 也可通过服务端环境变量配置密钥
               {(apiKeys.gemini || apiKeys.openai || apiKeys.anthropic || apiKeys.tavily) && (
-                <span className="saved-indicator"> • ✓ Keys saved locally</span>
+                <span className="saved-indicator"> • ✓ 密钥已保存在本机</span>
               )}
             </p>
           </section>
@@ -528,10 +522,10 @@ function SplashScreen({ config, onStart, loading, error }) {
             {loading ? (
               <>
                 <span className="btn-spinner"></span>
-                Initializing...
+                正在创建会话…
               </>
             ) : (
-              'Start Chat Session →'
+              '开始对话 →'
             )}
           </button>
 
@@ -546,7 +540,7 @@ function SplashScreen({ config, onStart, loading, error }) {
         </form>
 
         <footer className="splash-footer">
-          <p>PHA - A multi-agent system for personal health insights</p>
+          <p>PHA 可以协同多个 Agent 分析个人健康数据</p>
           <button
             type="button" 
             className="clear-data-btn"
@@ -559,7 +553,7 @@ function SplashScreen({ config, onStart, loading, error }) {
               setUserId('test')
             }}
           >
-            Clear saved data
+            清除本机保存的设置
           </button>
         </footer>
       </div>

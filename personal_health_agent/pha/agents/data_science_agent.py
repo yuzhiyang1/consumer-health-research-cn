@@ -590,19 +590,19 @@ class DataScienceAgent:
         print(f"[DS:{ts}] Question: {question[:100]}...")
         
         # 步骤1:生成方法
-        emit_step("DS", "Generating analysis approach...")
+        emit_step("DS", "正在制定分析方案…")
         print(f"[DS:{ts}] Step 1: Generating approach...")
         approach = self.generate_approach(question)
         print(f"[DS:{ts}] Approach ({len(approach)} chars): {approach[:200]}...")
         
         # 步骤 2:生成初始代码
-        emit_step("DS", "Writing analysis code...")
+        emit_step("DS", "正在生成分析代码…")
         print(f"[DS:{ts}] Step 2: Generating code...")
         code = self.generate_code(question, approach)
         print(f"[DS:{ts}] Code ({len(code)} chars):\n{code[:300]}")
         
         # 步骤 3:执行代码
-        emit_step("DS", "Executing analysis code...")
+        emit_step("DS", "正在运行分析代码…")
         print(f"[DS:{ts}] Step 3: Executing code...")
         code_result = self.execute_code(code)
         has_err = code_result.has_error()
@@ -618,7 +618,7 @@ class DataScienceAgent:
             
             # 如果有错误或反馈，请试着修正
             if code_result.has_error() or code_update_feedback:
-                emit_step("DS", f"Debugging code (attempt {num_total_steps})...")
+                emit_step("DS", f"正在修正分析代码（第 {num_total_steps} 次）…")
                 print(f"[DS:{ts}] Debug loop iteration {num_total_steps}: error={code_result.has_error()}, feedback={bool(code_update_feedback)}")
                 for retry in range(self.num_code_retries):
                     code = self.debug_code(
@@ -638,8 +638,8 @@ class DataScienceAgent:
                         break
             
             # 步骤5:解释结果
-            emit_step("DS", "Interpreting results...")
-            print(f"[DS:{ts}] Step 5: Interpreting results...")
+            emit_step("DS", "正在解读分析结果…")
+            print(f"[DS:{ts}] Step 5: 正在解读分析结果…")
             result_communication = self.interpret_results(
                 question=question,
                 approach=approach,

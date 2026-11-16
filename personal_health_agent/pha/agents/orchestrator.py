@@ -157,7 +157,7 @@ def clean_agent_response(text: str) -> str:
     if text and text[0].islower():
         text = text[0].upper() + text[1:]
     
-    # 检测和拒绝系统即时泄漏
+    # 拦截模型复述系统提示词的情况。
     # 这些模式显示模型正在输出指令，而不是响应
     # 将文本规范化以供检测(手性椭圆、额外空格等)
     text_normalized = text.lower().replace('…', '...').replace('  ', ' ')
@@ -199,20 +199,21 @@ def clean_agent_response(text: str) -> str:
         'you are tasked with',
         'as a domain expert',
         'you are a domain expert',
+        '你负责协调个人健康对话。组织各专用 agent 与用户之间的交流',
+        '你具备内科、健康和运动医学知识，能够解释个人健康数据',
+        '你是一位善于对话的健康教练。阅读 user 与 coach 的对话',
         'you have access to a number of tools',
         'it is imperative that you',
     ]
     for indicator in prompt_leak_indicators:
         if indicator.lower() in text_normalized:
-            # 记录终端调试的漏水情况，但也会在响应中显示
+            # 在终端记录触发原因，向界面返回可读的错误提示。
             print(f"[clean_agent_response] PROMPT LEAK detected: matched '{indicator}'")
             print(f"[clean_agent_response] Raw text (first 300 chars): {text[:300]}")
             return (
-                "⚠️ **Response contained system prompt leakage** — the model echoed its instructions "
-                "instead of answering your question.\n\n"
-                f"**Matched pattern:** `{indicator}`\n\n"
-                "This is a known issue with some models. Please try again, rephrase your question, "
-                "or switch to a different model."
+                "⚠️ **模型复述了系统指令**，本次回复未正常生成。\n\n"
+                f"**触发规则：** `{indicator}`\n\n"
+                "请重试、换一种问法，或切换模型。"
             )
     
     # 清除任何额外的空白
@@ -731,7 +732,7 @@ class MultiAgentOrchestrator:
             self._build_supporting_agent_rephrase_prompts(supporting_agent_list)
         
         if self.debug_verbose:
-            print(f"Calling supporting agents: {supporting_agent_list}")
+            print(f"正在调用协作 Agent：{supporting_agent_list}")
         
         def call_agent(agent_name: str) -> Tuple[str, str]:
             """Call a single supporting agent."""
@@ -863,7 +864,7 @@ class MultiAgentOrchestrator:
             return str(response), supporting_insights
         
         else:
-            # 倒计时:使用 编排器 LLM (中文(简体) ).
+            # 使用编排器配置的模型整理回复。
             prompt = FINAL_RESPONSE_PROMPT(
                 self.main_agent,
                 self.supporting_agents,
@@ -901,7 +902,7 @@ class MultiAgentOrchestrator:
         # 主题，目标，finish_desc是独立的LLM呼叫。
         # 团队结构只需要话题，所以我们一开始
         # 专题解决——与仍在运行的目标/最终呼号重叠。
-        emit_step("Orch", "Analyzing query and updating memory...")
+        emit_step("Orch", "正在分析问题并更新对话记录…")
         conv_history = self.get_conversation_history()
         
         with ThreadPoolExecutor(max_workers=3) as mem_executor:
@@ -920,7 +921,7 @@ class MultiAgentOrchestrator:
             
             if len(self.agent_name_list) > 1:
                 # 重叠:在目标/完成仍在计算时确定团队结构
-                emit_step("Orch", "Determining which agents to use...")
+                emit_step("Orch", "正在选择参与处理的 Agent…")
                 self._update_agent_team_structure()
             
             # 收集剩余内存结果(可能已经完成)
@@ -928,16 +929,16 @@ class MultiAgentOrchestrator:
             self.memory["finish_desc"] = finish_future.result()
         
         if len(self.agent_name_list) > 1:
-            emit_step("Orch", f"Team: main={self.main_agent}, supporting={self.supporting_agents or 'none'}")
+            emit_step("Orch", f"团队分工：主 Agent 为 {self.main_agent}，协作 Agent 为 {self.supporting_agents or '无'}")
             
             # 呼叫辅助人员
             if self.supporting_agents:
-                emit_step("Orch", f"Calling supporting agents: {self.supporting_agents}")
+                emit_step("Orch", f"正在调用协作 Agent：{self.supporting_agents}")
             self._call_supporting_agents(flag_rephrase_prompt=True)
             self._accumulate_supporting_agents_complete()
             
             # 调用主代理
-            emit_step("Orch", f"Calling main agent: {self.main_agent}")
+            emit_step("Orch", f"正在调用主 Agent：{self.main_agent}")
             main_response, supporting_insights = self._call_main_agent()
 
             # 坚持主剂输出作为该剂不断发展的洞察力记忆。
@@ -946,7 +947,7 @@ class MultiAgentOrchestrator:
                 self._merge_and_store_agent_insights(self.main_agent, main_response)
             
             # 在最后答复之前反映(渔获物问题按数据回答)
-            emit_step("Orch", "Reflecting on response quality...")
+            emit_step("Orch", "正在检查回复是否完整…")
             reflection_result = self._reflect_before_final_response(
                 main_response, supporting_insights
             )
@@ -957,7 +958,7 @@ class MultiAgentOrchestrator:
                 self.reflection_round_counter += 1
                 
                 if self.reflection_round_counter <= self.reflection_round_upper_bound:
-                    emit_step("Orch", "Reflection found improvements needed — re-querying agents...")
+                    emit_step("Orch", "发现需要补充的信息，正在再次查询相关 Agent…")
                     # 更新带有反射问题的提示
                     for agent_name, questions in reflection_result.get("reflection_questions", {}).items():
                         if isinstance(questions, list):
@@ -978,12 +979,12 @@ class MultiAgentOrchestrator:
                     if self.main_agent in self.agent_name_list:
                         self._merge_and_store_agent_insights(self.main_agent, main_response)
             
-            emit_step("Orch", "Composing final response...")
+            emit_step("Orch", "正在整理最终回复…")
         
         elif len(self.agent_name_list) == 1:
             # 单一代理模式
             self.main_agent = self.agent_name_list[0]
-            emit_step("Orch", f"Single-agent mode: calling {self.main_agent}")
+            emit_step("Orch", f"单 Agent 模式：正在调用 {self.main_agent}")
             main_response, _ = self._call_main_agent()
             if self.main_agent in self.agent_name_list:
                 self._merge_and_store_agent_insights(self.main_agent, main_response)
@@ -1128,6 +1129,9 @@ class MultiAgentOrchestrator:
                 'with the goal of delivering',
                 'clinically accurate, evidence-based',
                 'you are a domain expert',
+        '你负责协调个人健康对话。组织各专用 agent 与用户之间的交流',
+        '你具备内科、健康和运动医学知识，能够解释个人健康数据',
+        '你是一位善于对话的健康教练。阅读 user 与 coach 的对话',
             ]
             is_prompt_leak = any(p in response_lower for p in prompt_leak_patterns)
             

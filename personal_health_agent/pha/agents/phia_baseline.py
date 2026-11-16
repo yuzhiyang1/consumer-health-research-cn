@@ -433,122 +433,99 @@ except ImportError:
 
 PHIA_PREAMBLE = textwrap.dedent("""\
 {#- Preamble: Agent functionality description -#}
-I am going to ask you a question about Fitbit data. Assume that you have access
-to pandas through `pd` and numpy through `np`. You DO NOT have access to matplotlib or other python libraries.
+处理 Fitbit 数据相关问题。可以通过 `pd` 和 `np` 使用 pandas 和 numpy，无法使用 matplotlib 等其他 Python 库。
+参考工具示例，按 ReAct 协议逐步调用工具，每次只调用一个。对话可能有多轮，应结合当前问题与必要的前文。
 
-Carefully consider examples of how different tasks can be solved with different tools and use them to answer my questions.
-Be sure to follow the ReAct protocol as specified and be careful with tool usage (e.g., use only one tool at a time).
-You can expect questions to be conversational and multi-turn, so avoid overfixating on a single turn or a past turn at any point.
+#### 可用的 DataFrame
 
-#### You have access to the two dataframes below:
+- `summary_df`：用户每日活动和睡眠摘要。
+    - `datetime`：记录日期（datetime64[ns]）。
+    - `resting_heart_rate`：平均静息心率（bpm，float64）。
+    - `heart_rate_variability`：心率变异性（float64）。
+    - `fatburn_active_zone_minutes`：脂肪燃烧心率区间的时长（分钟，float64）。
+    - `cardio_active_zone_minutes`：有氧运动心率区间的时长（分钟，float64）。
+    - `peak_active_zone_minutes`：峰值心率区间的时长（分钟，float64）。
+    - `active_zone_minutes`：每日活跃区间分钟数（float64）。
+    - `steps`：每日步数（float64）。
+    - `rem_sleep_minutes`：REM 睡眠时长（分钟，float64）。
+    - `deep_sleep_minutes`：深睡时长（分钟，float64）。
+    - `awake_minutes`：清醒时长（分钟，float64）。
+    - `light_sleep_minutes`：浅睡时长（分钟，float64）。
+    - `sleep_minutes`：总睡眠时长（分钟，float64）。
+    - `bed_time`：就寝时间（datetime64[ns]）。
+    - `wake_up_time`：起床时间（datetime64[ns]）。
+    - `stress_management_score`：每日压力管理得分（float64）。
+    - `deep_sleep_percent`：深睡百分比（float64，可选）。缺少时用 `deep_sleep_minutes / sleep_minutes * 100` 计算。
+    - `rem_sleep_percent`：REM 睡眠百分比（float64，可选）。缺少时用 `rem_sleep_minutes / sleep_minutes * 100` 计算。
+    - `awake_percent`：清醒百分比（float64，可选）。缺少时用 `awake_minutes / sleep_minutes * 100` 计算。
+    - `light_sleep_percent`：浅睡百分比（float64，可选）。缺少时用 `light_sleep_minutes / sleep_minutes * 100` 计算。
 
-- `summary_df`: This is a summary of the user's activity and sleep data. It's a pandas DataFrame with the following columns:
-    - `datetime`: The date of the record (datetime64[ns]).
-    - `resting_heart_rate`: The average resting heart rate (float64) in beats per minute.
-    - `heart_rate_variability`: The user's heart rate variability (float64).
-    - `fatburn_active_zone_minutes`: The number of minutes spent in the fat burn active zone (float64).
-    - `cardio_active_zone_minutes`: The number of minutes spent in the cardio active zone (float64).
-    - `peak_active_zone_minutes`: The number of minutes spent in the peak active zone (float64).
-    - `active_zone_minutes`: The number of active zone minutes earned each day (float64).
-    - `steps`: The number of steps taken each day (float64).
-    - `rem_sleep_minutes`: The amount of REM sleep (float64) in minutes.
-    - `deep_sleep_minutes`: The amount of deep sleep (float64) in minutes.
-    - `awake_minutes`: The amount of awake time (float64) in minutes.
-    - `light_sleep_minutes`: The amount of light sleep (float64) in minutes.
-    - `sleep_minutes`: The total sleep time (float64) in minutes.
-    - `bed_time`: The time the user went to bed (datetime64[ns]).
-    - `wake_up_time`: The time the user woke up (datetime64[ns]).
-    - `stress_management_score`: The user's stress management score for each day (float64).
-    - `deep_sleep_percent`: The percentage of sleep time spent in deep sleep (float64). NOTE: This column may not be available in all datasets. If absent, compute it as `deep_sleep_minutes / sleep_minutes * 100`.
-    - `rem_sleep_percent`: The percentage of sleep time spent in REM sleep (float64). NOTE: This column may not be available in all datasets. If absent, compute it as `rem_sleep_minutes / sleep_minutes * 100`.
-    - `awake_percent`: The percentage of sleep time spent awake (float64). NOTE: This column may not be available in all datasets. If absent, compute it as `awake_minutes / sleep_minutes * 100`.
-    - `light_sleep_percent`: The percentage of sleep time spent in light sleep (float64). NOTE: This column may not be available in all datasets. If absent, compute it as `light_sleep_minutes / sleep_minutes * 100`.
+- `activities_df`：用户运动记录。
+    - `start_time`：开始时间（datetime64[ns]）。
+    - `end_time`：结束时间（datetime64[ns]）。
+    - `activity_name`：活动类型（str），例如 "WALKING"、"RUNNING"、"OUTDOOR_BIKE"、"STRENGTH_TRAINING"、"WORKOUT"、"ELLIPTICAL"、"YOGA"、"TREADMILL"、"HIKING"、"SWIMMING"。
+    - `distance`：活动距离（英里，float64）。
+    - `duration`：活动时长（分钟，float64）。
+    - `calories`：消耗的热量（float64）。
+    - `steps`：活动步数（float64）。
+    - `active_zone_minutes`：活动获得的活跃区间分钟数（float64）。
 
-- `activities_df`: This is a list of the user's activities. It's also a pandas DataFrame with the following columns:
-    - `start_time`: The start time of the activity (datetime64[ns]).
-    - `end_time`: The end time of the activity (datetime64[ns]).
-    - `activity_name`: The name of the activity (str). (e.g., "WALKING", "RUNNING", "OUTDOOR_BIKE", "STRENGTH_TRAINING", "WORKOUT", "ELLIPTICAL", "YOGA", "TREADMILL", "HIKING", "SWIMMING").
-    - `distance`: The distance covered during the activity (float64) in miles.
-    - `duration`: The duration of the activity (float64) in minutes.
-    - `calories`: The number of calories burned during the activity (float64).
-    - `steps`: The number of steps taken during the activity (float64).
-    - `active_zone_minutes`: The number of active zone minutes earned during the activity (float64).
+实际字段随数据集变化。遇到 KeyError 时，可用 `print(activities_df.columns)` 查看字段。
 
-NOTE: The available columns may vary by dataset. If you get a KeyError, use `print(activities_df.columns)` to check available columns.
+- `profile`：用户档案。
+    - `age`：年龄（int）。
+    - `gender`：性别（str）。
+    - `averageDailySteps`：历史日均步数（int）。
+    - `elderly`：是否为老年人（字符串 "Yes" 或 "No"）。
+    - `height_cm`：身高（厘米，int）。
+    - `weight_kg`：体重（千克，int）。
 
-#### You also have access to a profile dataframe:
-
-The profile dataframe contains the following keys:
-    - `age`: The age of the user (int).
-    - `gender`: The gender of the user (str).
-    - `averageDailySteps`: The average number of steps taken each day (int).
-    - `elderly`: Whether the user is elderly ("Yes" or "No") (str).
-    - `height_cm`: The height of the user in centimeters (int).
-    - `weight_kg`: The weight of the user in kilograms (int).
-
-IMPORTANT: The profile dataframe already contains the user's demographic information (age, gender, height, weight). 
-Always use `profile['age'].values[0]`, `profile['gender'].values[0]`, etc. to get clean scalar values - NEVER ask the user for data that is already available in the dataframes.
+读取年龄、性别、身高或体重时，使用 `profile['age'].values[0]`、`profile['gender'].values[0]` 等方法读取单个值。已有数据能回答时，无需再次询问用户。
 """)
 
 PHIA_REACT_PROMPT_TEXT = """\
 {#- Preamble: Tools description -#}
 {%- role name='system' -%}
-You are a ReAct agent that solves problems by thinking step-by-step and using tools.
+你是一个使用工具逐步解决问题的 ReAct Agent。按以下协议实际调用工具并读取结果。
 
-CRITICAL: Execute the ReAct loop - do not just describe what you would do.
-
-Here is a list of available tools:
+可用工具：
 {% for tool in tools %}
-Tool name: {{ tool.name }}
-Tool description: {{ tool.description }}
+工具名称：{{ tool.name }}
+工具说明：{{ tool.description }}
 {% if tool.example -%}
-  Tool example: {{ tool.example_str }}
+  工具示例：{{ tool.example_str }}
 {%- endif -%}
 {% endfor %}
 
-ReAct Format (MUST FOLLOW EXACTLY):
-1. [Thought]: Reason about what to do next (1-2 sentences max)
-2. [Act]: Call ONE tool with its arguments
-3. [Observe]: Wait for and read the result
-4. Repeat steps 1-3 until you have the answer
-5. [Finish]: Provide your final answer to the user
+ReAct 协议：
+1. [Thought]: 用一到两句话说明下一步。
+2. [Act]: 调用一个工具，并传入所需参数。
+3. [Observe]: 等待并查看结果。
+4. 重复第 1–3 步，直到取得回答所需的信息。
+5. [Finish]: 给出完整的最终回复，使用用户最近一轮发言的语言，除非用户另有要求。
 
-FORMAT RULES:
-- [Act] lines must contain ONLY the function call on ONE LINE
-- tool_code() calls: put ALL code as a single quoted string argument
-  CORRECT: tool_code('avg = summary_df["sleep_minutes"].mean()\\nprint(f"Average: {avg:.0f} min")')
-  WRONG: tool_code(
-    avg = summary_df['sleep_minutes'].mean()
-  )
-- For multi-line code, use \\n inside the string: tool_code('line1\\nline2\\nline3')
-- Keep tool_code calls CONCISE (under 15 lines). Do NOT wrap code in if/else guards
-  for empty data checks — just compute directly. If data is missing, the error will
-  tell you, and you can handle it in your next step.
-- Do NOT use markdown code blocks (```) 
-- Do NOT use backticks (`) around tool calls  
-- Do NOT output planning statements without executing tools
-- ALWAYS wait for [Observe] before providing answers
-- In tool_code, ALWAYS use print() with labels: print(f"Average RHR: {val:.2f} bpm")
-  Do NOT use bare return/tuple — output must be labeled and human-readable.
-- Use [Finish]: to provide your final synthesized answer
-- The [Finish] text must be COMPLETE — include ALL details, tips, and recommendations.
-  Do NOT end with a colon or promise content you don't include.
-  Do NOT put detailed analysis in [Thought] and then write a short [Finish].
+格式要求：
+- [Act] 行只写一个函数调用，保持在同一行。
+- 调用 tool_code 时，将所有代码放在一个带引号的字符串参数内。多行代码用 `\\n` 表示换行。
+- 代码不超过 15 行。先直接计算，无需用 if/else 预判空数据。遇到错误时下一步再处理。
+- 工具调用不加 Markdown 代码块或反引号。执行工具后等待 [Observe]，再依据实际结果回答。
+- 在 tool_code 中使用 print() 输出带标签的结果，例如 print(f"Average RHR: {val:.2f} bpm")。不要只返回值或元组。
+- 将结果、提示和建议都写入 [Finish]。不要把关键信息只放在 [Thought] 中，也不要用冒号结束回答或承诺尚未给出的内容。
 
-CORRECT EXAMPLE:
+正确示例：
 [Thought]: I need to calculate the average steps from the data.
 [Act]: tool_code('avg_steps = summary_df["steps"].mean()\nprint(f"Average daily steps: {avg_steps:.0f}")')
 [Observe]: Average daily steps: 6543
 [Thought]: Now I have the average. Let me provide the answer.
 [Finish]: Your average daily steps is 6,543 steps.
 
-INCORRECT (DO NOT DO):
-- "I need to calculate X, then search Y, then compute Z" (this is planning, not executing)
-- [Act]: ```tool_code(...)```  (no markdown blocks)
-- Outputting raw search results without synthesizing them
+应避免的输出：
+- 只计划计算、搜索和再次计算，没有调用工具。
+- 将 [Act] 的工具调用包在 Markdown 代码块里。
+- 原样返回搜索结果，没有整理成回答。
 
 {#- Preamble: ReAct few-shots #}
-Here are examples of how different tasks can be solved with these tools. Never copy the answer directly, and instead use examples as a guide to solve a task:
+以下示例展示如何用工具解决不同任务。参考其中的步骤，根据当前问题独立作答。
 {% for example in exemplars %}
 [{{ stop_prefix }}Question]: {{ example.inputs + '\n' }}
 {%- for step in example.updates -%}
@@ -567,11 +544,11 @@ Here are examples of how different tasks can be solved with these tools. Never c
 {%- endfor -%}
 {%- endfor -%}
 
-Remember: Execute the ReAct loop step by step. Think, Act, Observe, repeat until done, then Finish with a synthesized answer.
+逐步执行 ReAct 循环。依次分析、行动、观察，信息足够后用 [Finish] 给出最终回复。
 
 {# Start of the processing of the actual inputs. -#}
 
-Here is the question you need to solve and your current state toward solving it:
+下面给出当前问题和处理进度。
 {#- Render the original question. -#}
 {%- endrole -%}
 {%- role name='user' %}
@@ -605,29 +582,15 @@ Here is the question you need to solve and your current state toward solving it:
 {%- endrole -%}
 """
 
+# 保留 [Finish] 和工具名称，OneTwo 会按固定格式解析。
 QUESTION_PREFIX = (
-    "Use tools such as tool_code to execute Python code and search to find "
-    "external relevant information as needed. Tell the user you cannot "
-    "answer the question if it is not health and wellness related. "
-    "Take into account that questions may have typos or grammatical "
-    "mistakes and try to reinterpret them before answering. Follow all "
-    "instructions and the ReAct template carefully. Answer the following "
-    "question in detail and with suggestions when appropriate. Always make "
-    "sure the final answer is nicely formatted and does not contain "
-    "incorrectly formatted ReAct steps. "
-    "IMPORTANT: When a user expresses health concerns or worries, ALWAYS "
-    "use tool_code FIRST to check their actual data (sleep, heart rate, "
-    "activity, etc.) before giving general advice. Ground your response "
-    "in their specific numbers. "
-    "IMPORTANT: When a user asks to 'see' or 'show' their data, print "
-    "actual values and statistics, NOT column names. "
-    "IMPORTANT: In tool_code, always use print() with descriptive labels "
-    "for results (e.g., print(f'Average RHR: {avg_rhr:.2f} bpm')). "
-    "Do NOT use bare return statements or tuples — the output must be "
-    "human-readable with labeled values. "
-    "IMPORTANT: Always provide a COMPLETE answer in [Finish]. Include ALL "
-    "details, tips, and recommendations in the finish text. Never end "
-    "with a colon or promise content that you don't include. "
+    "需要计算时使用 tool_code 执行 Python，需要外部资料时使用 search。"
+    "超出健康和日常保健范围的问题要如实说明无法回答。"
+    "遇到拼写和语法错误时先尝试理解用户的真实意思。严格遵守 ReAct 模板，给出结构清晰的回答。"
+    "用户表达健康担忧时，先用 tool_code 核对实际的睡眠、心率或活动数据，再给一般性建议。"
+    "用户要求查看数据时，输出实际数值和统计量。"
+    "tool_code 始终使用 print() 输出带说明的数值，不单独返回值或元组。"
+    "把全部细节和建议写入 [Finish]，不要以冒号收尾。使用用户最近一轮发言的语言，除非用户另有要求。"
     "Question: "
 )
 
@@ -1424,7 +1387,7 @@ if _ONETWO_AVAILABLE:
             
             # 使用 ot.run () 运行代理( 遵循原始 PHIA 模式)
             try:
-                emit_step("PHIA", "Running ReAct agent...")
+                emit_step("PHIA", "正在运行 ReAct Agent…")
                 final_answer, final_state = ot.run(
                     self._agent(inputs=full_query, return_final_state=True)
                 )
@@ -1436,7 +1399,7 @@ if _ONETWO_AVAILABLE:
                 if hasattr(final_state, 'updates') and final_state.updates:
                     n_steps = len(final_state.updates)
                     print(f"[PHIA] final_state has {n_steps} steps")
-                    emit_step("PHIA", f"ReAct completed with {n_steps} steps")
+                    emit_step("PHIA", f"ReAct 已完成 {n_steps} 个步骤")
                     for i, step in enumerate(final_state.updates):
                         thought_preview = repr(str(step.thought))[:120] if step.thought else 'None'
                         action_preview = repr(str(step.action))[:120] if step.action else 'None'
@@ -1449,7 +1412,7 @@ if _ONETWO_AVAILABLE:
                     print(f"[PHIA] final_state: {repr(final_state)[:200]}")
                 
                 # 提取最后的答案
-                emit_step("PHIA", "Extracting and cleaning response...")
+                emit_step("PHIA", "正在提取并整理回复…")
                 response = self._extract_answer(final_answer, final_state)
                 
                 # 如果提取失败，请尝试从 OneTwo 解析错误
@@ -1458,7 +1421,7 @@ if _ONETWO_AVAILABLE:
                     "Response contained system prompt leakage",
                 ]
                 if any(indicator in response for indicator in _FALLBACK_INDICATORS):
-                    emit_step("PHIA", "Extraction failed — attempting recovery...")
+                    emit_step("PHIA", "未能提取回复，正在尝试恢复…")
                     recovered = self._try_recover_from_parse_error(
                         final_answer, final_state, user_message
                     )
@@ -1474,7 +1437,7 @@ if _ONETWO_AVAILABLE:
                 # 模型产生长期的想法 吃到象征性的预算，
                 # 离开[结 文本断绝中刑
                 if self._is_truncated_response(response):
-                    emit_step("PHIA", "Response appears truncated — generating complete answer...")
+                    emit_step("PHIA", "回复可能不完整，正在重新生成…")
                     print(f"[PHIA] Truncated response detected ({len(response)} chars): {repr(response[:100])}")
                     direct = self._generate_direct_answer(user_message)
                     if direct:
@@ -1483,7 +1446,7 @@ if _ONETWO_AVAILABLE:
                 # 检查低质量回复:模糊的序言或原始数据堆放
                 # 通过了综合检查但实际上没有帮助
                 if not self._is_substantive_response(response, final_state):
-                    emit_step("PHIA", "Response lacks substance — generating enriched answer...")
+                    emit_step("PHIA", "回复信息不足，正在生成更完整的答案…")
                     print(f"[PHIA] Non-substantive response detected ({len(response)} chars): {repr(response[:100])}")
                     # 从 ReAct 步骤中收集 ALL 语境:工具输出，
                     # 搜索结果，以及模型本身对想法的分析
@@ -1502,7 +1465,7 @@ if _ONETWO_AVAILABLE:
                 print(f"\n[PHIA] *** EXCEPTION in ot.run(): {e}")
                 import traceback
                 traceback.print_exc()
-                emit_step("PHIA", f"Error: {type(e).__name__}: {str(e)[:100]}")
+                emit_step("PHIA", f"处理失败： {type(e).__name__}: {str(e)[:100]}")
                 response = f"I encountered an error processing your question: {str(e)}"
             
             print(f"\n[PHIA] Final response ({len(response)} chars): {response[:200]}...")
@@ -1652,7 +1615,7 @@ if _ONETWO_AVAILABLE:
                         obs_no_backticks = obs_stripped.replace('`', '')
                         is_raw_tool_call = obs_no_backticks.startswith('tool_code(') or obs_no_backticks.startswith('search(')
                         is_onetwo_error = '#ERROR#' in obs or 'Invalid syntax for positional arguments' in obs
-                        is_raw_pandas = 'dtype:' in obs and 'Name:' in obs  # pandas 系列 重播
+                        is_raw_pandas = 'dtype:' in obs and 'Name:' in obs  # 检查是否原样返回 pandas Series。
                         is_raw_code_output = obs_stripped.startswith('(np.') or obs_stripped.startswith('np.')  # 原始数字输出
                         # 检测代码内容( 模式倾销工具调用为文本)
                         code_indicators = ['summary_df[', 'activities_df[', 'profile[',
@@ -1917,7 +1880,7 @@ if _ONETWO_AVAILABLE:
                 f'Please provide a helpful, well-formatted response to the user\'s '
                 f'question based on these results. Include context about what the '
                 f'numbers mean for their health. Be conversational and supportive. '
-                f'Do not mention tools, code, dataframes, or technical details.'
+                f'无需提及工具、代码、DataFrame 或其他实现细节。使用用户提问的语言作答。'
             )
             result = self._call_llm_direct(prompt)
             if result:
@@ -1951,7 +1914,7 @@ if _ONETWO_AVAILABLE:
                 f'{data_context[:3000]}{profile_context}\n\n'
                 f'Please provide a helpful, well-formatted response based on this data. '
                 f'Reference specific numbers from the data. Be conversational and supportive. '
-                f'If the data doesn\'t contain relevant information, say so honestly.'
+                f'如果数据没有提供相关信息，请如实说明。使用用户提问的语言作答。'
             )
             result = self._call_llm_direct(prompt)
             if result:
@@ -2304,7 +2267,7 @@ if _ONETWO_AVAILABLE:
             if not text:
                 return False
             
-            # 文本正常化： 取消回转和模式匹配的额外白空间
+            # 去除反引号和多余空格，统一后再检测特定模式。
             text_normalized = text.lower().replace('`', '').replace('  ', ' ')
             
             # 反应不完整的迹象 - 模型大声思考
@@ -2403,8 +2366,8 @@ if _ONETWO_AVAILABLE:
             text_stripped = text.strip()
             text_lower = text_stripped.lower()
             
-            # 回应以结肠结束——明确承诺从未出现的内容
-            if text_stripped.endswith(':'):
+            # 冒号结尾可能表示后续内容未生成。
+            if text_stripped.endswith((':', '：')):
                 print(f"[PHIA:truncation] Detected: ends with ':'")
                 return True
             
@@ -2464,7 +2427,7 @@ if _ONETWO_AVAILABLE:
             if len(text) < 500:
                 import re
                 # 查找实际健康数值(例如 " 62.17 bpm], "417 mine, "7.0 小时")
-                health_numbers = re.findall(r'\d+\.?\d*\s*(?:bpm|min|hrs?|hours?|%|steps|ms)', text.lower())
+                health_numbers = re.findall(r'\d+\.?\d*\s*(?:bpm|min|hrs?|hours?|[%％]|steps|ms|小时|分钟|毫秒|步|次/分钟)', text.lower())
                 # 同时检查独立的有意义的数字( 不仅仅是 " 1]" 列表标记)
                 data_numbers = re.findall(r'\b\d{2,}\b', text)  # 带有 2+ 数字
                 
@@ -2624,7 +2587,7 @@ if _ONETWO_AVAILABLE:
                 f'- Relevant information from the search results\n'
                 f'- Actionable suggestions\n'
                 f'Be conversational, supportive, and thorough. '
-                f'Do not mention tools, code, dataframes, or technical details.'
+                f'无需提及工具、代码、DataFrame 或其他实现细节。使用用户提问的语言作答。'
             )
             result = self._call_llm_direct(prompt)
             if result:

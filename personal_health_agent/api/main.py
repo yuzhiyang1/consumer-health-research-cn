@@ -1,4 +1,4 @@
-"""PHA Portal API - FastAPI backend for the PHA user study portal.
+"""个人健康 Agent 门户 API - FastAPI backend for the PHA user study portal.
 
 This provides REST endpoints for:
 - Configuration (models, personas, baselines)
@@ -76,9 +76,9 @@ sessions: Dict[str, "ChatSession"] = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    print("🚀 PHA Portal API starting...")
+    print("🚀 个人健康 Agent 门户 API starting...")
     yield
-    print("👋 PHA Portal API shutting down...")
+    print("👋 个人健康 Agent 门户 API shutting down...")
     # 清除前关闭全部会话日志
     for session in sessions.values():
         if hasattr(session, 'logger') and session.logger:
@@ -90,7 +90,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="PHA Portal API",
+    title="个人健康 Agent 门户 API",
     description="Backend API for the Personal Health Agent system",
     version="1.0.0",
     lifespan=lifespan,
@@ -296,7 +296,7 @@ class ChatSession:
         try:
             api_key = self._get_api_key(self.config.provider)
             if not api_key:
-                raise ValueError(f"No API key found for {self.config.provider}")
+                raise ValueError(f"请配置 {self.config.provider} 的 API 密钥")
             
             tavily_key = self.config.tavily_api_key or os.environ.get("TAVILY_API_KEY")
             
@@ -322,7 +322,7 @@ class ChatSession:
                 from pha.agents import DataScienceAgent, DomainExpertAgent, HealthCoachAgent
                 from pha.utils import load_persona
                 
-                # 为上下文装入人称数据
+                # 加载用户档案及其健康数据，供 Agent 建立上下文。
                 summary_df, activities_df, profile_df, population_df = load_persona(settings=settings)
                 
                 # 从配置文件创建用户上下文字符串
@@ -462,7 +462,7 @@ class ChatSession:
             timestamp=datetime.now().isoformat(),
         ))
         
-        # 开始记录此转弯—— 抓取全部stdout/stderr
+        # 记录本轮对话，同时捕获标准输出和错误输出。
         capture = self.logger.begin_turn(user_message)
         
         # 获取代理端的响应(在线程池中运行到不屏蔽)
@@ -477,7 +477,7 @@ class ChatSession:
                 )
         except Exception as e:
             processing_ms = (datetime.now() - start_time).total_seconds() * 1000
-            # 仍然登录失败的转弯
+            # 出错时也保存本轮记录，便于排查。
             self.logger.end_turn(
                 assistant_response=f"[ERROR] {e}",
                 processing_time_ms=processing_ms,
@@ -493,7 +493,7 @@ class ChatSession:
         
         processing_ms = (datetime.now() - start_time).total_seconds() * 1000
         
-        # 将转弯记录与来自request_stats的数据最后完成
+        # 向本轮日志写入回复、处理耗时和请求统计。
         self.logger.end_turn(
             assistant_response=response,
             processing_time_ms=processing_ms,
@@ -531,7 +531,7 @@ class ChatSession:
 async def root():
     """Root endpoint with API info."""
     return {
-        "name": "PHA Portal API",
+        "name": "个人健康 Agent 门户 API",
         "version": "1.0.0",
         "docs": "/docs",
         "status": "running",
@@ -579,7 +579,7 @@ async def get_config():
         ],
     }
     
-    # 来人啊
+    # 读取可供用户选择的档案。
     personas_raw = list_personas()
     personas = [
         PersonaOption(
@@ -592,48 +592,48 @@ async def get_config():
         for p in personas_raw
     ]
     
-    # 定义 基线
+    # 用户研究模式使用中性标签隐藏架构名称。
 
     if GLOBAL_USER_STUDY_FLAG:
         baselines = [
             BaselineOption(
                 id="pha",
-                name="Agent A",
-                description="Health insights assistant",
-                architecture="System A",
+                name="系统 A",
+                description="健康数据分析助手",
+                architecture="研究架构 A",
             ),
             BaselineOption(
                 id="parallel",
-                name="Agent B",
-                description="Health insights assistant",
-                architecture="System B",
+                name="系统 B",
+                description="健康数据分析助手",
+                architecture="研究架构 B",
             ),
             BaselineOption(
                 id="phia",
-                name="Agent C",
-                description="Health insights assistant",
-                architecture="System C",
+                name="系统 C",
+                description="健康数据分析助手",
+                architecture="研究架构 C",
             ),
         ]
     else:
         baselines = [
             BaselineOption(
                 id="pha",
-                name="PHA (Orchestrated)",
-                description="Full multi-agent system with intelligent orchestration",
-                architecture="3 specialists + orchestrator",
+                name="PHA（多 Agent 编排）",
+                description="编排器按问题协调三个专用 Agent",
+                architecture="三个专用 Agent 和一个编排器",
             ),
             BaselineOption(
                 id="parallel",
-                name="Parallel (No Orchestration)",
-                description="All agents run in parallel, responses synthesized",
-                architecture="3 specialists, no routing",
+                name="Parallel（多 Agent 并行）",
+                description="三个专用 Agent 同时处理问题，再汇总结果",
+                architecture="三个专用 Agent，无路由",
             ),
             BaselineOption(
                 id="phia",
-                name="PHIA (Single Agent)",
-                description="Original single ReAct agent baseline",
-                architecture="1 generalist agent",
+                name="PHIA（单 Agent）",
+                description="使用一个 ReAct Agent 的原始对照架构",
+                architecture="一个通用 Agent",
             ),
         ]
     
@@ -687,7 +687,7 @@ async def get_models(request: ModelsRequest):
     This endpoint discovers actual available models from each provider,
     returning more accurate model lists than the static defaults.
     """
-    # 获取带有备注的目录，并按所提供密钥提供现场可用性。
+    # 依据各提供商的密钥查询可用模型。
     gemini_models = get_gemini_models(request.gemini_api_key)
     openai_models = get_openai_models(request.openai_api_key)
     anthropic_models = get_anthropic_models(request.anthropic_api_key)
@@ -719,7 +719,7 @@ async def create_session(config: SessionConfig):
         if not defaults:
             raise HTTPException(
                 status_code=500,
-                detail="config/user_study_defaults.json not found. Copy from user_study_defaults.example.json and fill in api_keys.",
+                detail="找不到 config/user_study_defaults.json。请复制 user_study_defaults.example.json 并填写 api_keys。",
             )
         updates = {
             "provider": defaults.get("provider", config.provider),
@@ -731,7 +731,7 @@ async def create_session(config: SessionConfig):
         if not key:
             raise HTTPException(
                 status_code=500,
-                detail=f"API key for provider '{provider}' not set in config/user_study_defaults.json",
+                detail=f"请在 config/user_study_defaults.json 中填写 {provider} 的 API 密钥",
             )
         if provider == "gemini":
             updates["gemini_api_key"] = key
@@ -750,7 +750,7 @@ async def create_session(config: SessionConfig):
         if config.persona_id not in get_persona_ids():
             raise HTTPException(
                 status_code=400,
-                detail=f"Persona '{config.persona_id}' not found",
+                detail=f"用户档案「{config.persona_id}」不存在",
             )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -771,7 +771,7 @@ async def create_session(config: SessionConfig):
 async def get_session(session_id: str):
     """Get the current state of a session."""
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     return sessions[session_id].get_state()
 
@@ -780,7 +780,7 @@ async def get_session(session_id: str):
 async def delete_session(session_id: str):
     """Delete a session."""
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     # 关闭会话记录器( 写入最后摘要)
     session = sessions[session_id]
@@ -795,7 +795,7 @@ async def delete_session(session_id: str):
 async def get_messages(session_id: str):
     """Get all messages in a session."""
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     return sessions[session_id].messages
 
@@ -804,7 +804,7 @@ async def get_messages(session_id: str):
 async def send_chat_message(session_id: str, request: ChatRequest):
     """Send a message and get a response."""
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     session = sessions[session_id]
     
@@ -850,17 +850,17 @@ async def stream_chat_message(session_id: str, request: ChatRequest):
     )
     
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     session = sessions[session_id]
     emitter_id = create_emitter()
     
-    # 代理工作运行在背景线条中
+    # 在后台线程运行 Agent，避免阻塞 SSE 连接。
     def run_agent():
         bind_thread(emitter_id)
         start = datetime.now()
         
-        # 开始记录此转弯——从代理中捕获全部stdout/stderr
+        # 记录本轮对话，同时捕获 Agent 的标准输出和错误输出。
         capture = session.logger.begin_turn(request.message)
         
         try:
@@ -973,7 +973,7 @@ async def list_sessions():
 async def get_models_for_provider(provider: str):
     """Get available models for a specific provider."""
     if provider not in ["gemini", "openai", "anthropic"]:
-        raise HTTPException(status_code=400, detail="Invalid provider")
+        raise HTTPException(status_code=400, detail="不支持该模型提供商")
     
     models = get_available_models(provider)
     return {
@@ -998,7 +998,7 @@ async def get_persona_detail(persona_id: str):
     for p in personas:
         if p["id"] == persona_id:
             return p
-    raise HTTPException(status_code=404, detail="Persona not found")
+    raise HTTPException(status_code=404, detail="用户档案不存在")
 
 # =============================================================================
 # 运行与:乌维柯尔阿皮. main:app --reload

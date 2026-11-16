@@ -21,8 +21,8 @@ conda_setup() {
     echo "Installing dependencies from requirements.txt..."
     python -m pip install -r requirements.txt || exit 1
     
-    # 从官方GoogleDeepMind重播中安装 OneTwo
-    # 使用 --no-deps 防止它覆盖我们共享的 libs(如 numpy) 的特定版本
+    # 从 Google DeepMind 官方仓库安装 OneTwo。
+    # 使用 --no-deps 保留已安装的依赖版本，例如 numpy。
     echo "Installing OneTwo..."
     python -m pip install --no-deps git+https://github.com/google-deepmind/onetwo || exit 1
     

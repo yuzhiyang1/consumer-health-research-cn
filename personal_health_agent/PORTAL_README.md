@@ -49,7 +49,7 @@ GET /sessions/{id}
 DELETE /sessions/{id}
 
 POST /sessions/{id}/chat
-Body: { "message": "How is my sleep?" }
+Body: { "message": "我的睡眠怎么样？" }
 Response: { "response": "...", "processing_time": 1.23 }
 
 GET /sessions/{id}/messages

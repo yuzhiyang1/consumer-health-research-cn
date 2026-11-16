@@ -1,8 +1,4 @@
-"""Orchestrator Prompts for Multi-Agent Coordination.
-
-These prompts configure the orchestrator that coordinates between
-Data Science, Domain Expert, and Health Coach agents.
-"""
+"""多 Agent 编排提示词，负责选择团队、细化问题、核查结果和整合回复。"""
 
 # 用于一致性的代理名称
 AGENT_NAME_OVERALL = "Personal Health Agent"
@@ -16,125 +12,85 @@ AGENT_NAME_HEALTH_COACH = "health_coach_agent"
 # =============================================================================
 
 DATA_SCIENCE_AGENT_DATA_ACCESS_PROMPT = """
-# Summary DataFrame
-Daily activity, sleep, and health records. Each row = one day.
-Columns: datetime (index), steps, sleep_minutes, bed_time, wake_up_time, resting_heart_rate, heart_rate_variability,
+# 每日摘要（Summary DataFrame）
+每天一行，记录活动、睡眠和健康指标。
+字段： datetime (index), steps, sleep_minutes, bed_time, wake_up_time, resting_heart_rate, heart_rate_variability,
 active_zone_minutes, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes, stress_management_score,
 fatburn_active_zone_minutes, cardio_active_zone_minutes, peak_active_zone_minutes.
 
-# Activities DataFrame
-Each row = one recorded activity.
-Columns: start_time, end_time, activity_name, distance, duration, calories, steps, active_zone_minutes.
-Activity names: "WALKING", "RUNNING", "OUTDOOR_BIKE", "STRENGTH_TRAINING", "WORKOUT", "ELLIPTICAL", "YOGA", "TREADMILL", "HIKING", "SWIMMING".
-Note: No elevation_gain or average_heart_rate columns available.
+# 活动记录（Activities DataFrame）
+每行记录一次活动。
+字段： start_time, end_time, activity_name, distance, duration, calories, steps, active_zone_minutes.
+活动类型： "WALKING", "RUNNING", "OUTDOOR_BIKE", "STRENGTH_TRAINING", "WORKOUT", "ELLIPTICAL", "YOGA", "TREADMILL", "HIKING", "SWIMMING".
+没有 elevation_gain 或 average_heart_rate 字段。
 
-# User Profile DataFrame
-Single row with: age, gender, height_cm, weight_kg, averageDailySteps, cluster, elderly.
-Note: No bmi column — must be computed from height_cm and weight_kg if needed.
+# 用户档案（User Profile DataFrame）
+只有一行，字段为： age, gender, height_cm, weight_kg, averageDailySteps, cluster, elderly.
+没有 bmi 字段。需要计算时使用 height_cm 和 weight_kg。
 
-# Population DataFrame
-Percentile data by age group and gender for comparison.
-Columns: percentile, age (string: "Under 18", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"), gender ("male"/"female"),
+# 人群参考数据（Population DataFrame）
+按年龄段和性别划分的百分位数，用于人群对比。
+字段： percentile, age (string: "Under 18", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"), gender ("male"/"female"),
 resting_heart_rate, heart_rate_variability, steps,
 fatburn_active_zone_minutes, cardio_active_zone_minutes, peak_active_zone_minutes,
 rem_sleep_minutes, deep_sleep_minutes, light_sleep_minutes, stress_management_score.
-Note: A pre-loaded `age_to_age_group(age)` helper converts integer age to the matching age bracket string.
+可以调用预先加载的 `age_to_age_group(age)` 将整数年龄转换为对应的年龄段字符串。
 """
 
 
 # =============================================================================
-# 多 Agent 协作实例 CRITICAL (供选择适当的代理)
+# 多 Agent 分工示例
 # =============================================================================
 
 MULTI_AGENT_COLLABORATION_EXAMPLES = f"""
-**Pattern 1: Understanding Health Topics (Domain Expert Only)**
-User Question Categories:
-  - "I want to understand X" (e.g., "what is HRV?")
-  - "I want to find facts about X"
-  - "I want to compare concepts X and Y"
-  - "I want the pros and cons of X"
-Main Agent: "{AGENT_NAME_DOMAIN_EXPERT}"
-Supporting Agents: ""
-Workflow: Answer based on domain expert's medical knowledge.
+**模式 1：了解健康知识（仅领域专家）**
+用户想了解概念、查询事实、比较两个概念或权衡利弊。例如「什么是 HRV？」
+主 Agent："{AGENT_NAME_DOMAIN_EXPERT}"
+协作 Agent：""
+流程：依据领域专家的医学知识作答。
 
-**Pattern 2: Analyzing Personal Data (Data Science Only)**
-User Question Categories:
-  - "I want to understand what my X data says about my health"
-  - "I want to see my X data for a specific time period"
-  - "I want to identify changes/trends in my X"
-  - "I want to see my best/worst X data"
-  - "How many steps did I take last week?"
-  - "What's my average sleep duration?"
-Main Agent: "{AGENT_NAME_DATA_SCIENCE}"
-Supporting Agents: ""
-Workflow: Answer based on data science computation and results.
+**模式 2：分析个人数据（仅数据科学）**
+用户想查看特定时段的数据、了解个人趋势和变化，或查找最好与最差的记录。例如「我上周走了多少步？」「我的平均睡眠时长是多少？」
+主 Agent："{AGENT_NAME_DATA_SCIENCE}"
+协作 Agent：""
+流程：依据数据科学 Agent 的计算结果作答。
 
-**Pattern 3: Data Analysis with Interpretation (Data Science → Domain Expert)**
-User Question Categories:
-  - "I want to understand why my X changed"
-  - "I want to compare my X with other people / clinical guidelines"
-  - "I want to summarize my time-series data with medical context"
-  - "How does my heart rate compare to healthy ranges?"
-  - "How do my steps compare to people in [city/country]?" (REQUIRES domain expert for population data!)
-  - "What is my X? How does it compare to [population group]?"
-Main Agent: "{AGENT_NAME_DOMAIN_EXPERT}"
-Supporting Agents: "{AGENT_NAME_DATA_SCIENCE}"
-Workflow: Data science computes the metrics, domain expert interprets and contextualizes.
-IMPORTANT: When comparing to populations (cities, countries, age groups), the domain_expert MUST search for population statistics using the search or datacommons tools.
+**模式 3：分析并解读个人数据（数据科学 → 领域专家）**
+用户想了解指标变化的原因、与其他人或临床指南对比，或在医学背景下总结时间序列。例如「我的心率符合健康范围吗？」「与某城市或国家的人相比，我的步数怎样？」
+主 Agent："{AGENT_NAME_DOMAIN_EXPERT}"
+协作 Agent："{AGENT_NAME_DATA_SCIENCE}"
+流程：数据科学 Agent 计算个人指标，领域专家结合背景解读。
+涉及城市、国家、年龄段等人群对比时，领域专家必须用 search 或 Data Commons 查询人群统计数据。
 
-**Pattern 4: General Wellness Advice (Health Coach Only)**
-User Question Categories:
-  - "I want advice on X in general"
-  - "I want to set a goal for X"
-  - "I want plans to achieve my X goal"
-  - "Help me improve my sleep habits"
-Main Agent: "{AGENT_NAME_HEALTH_COACH}"
-Supporting Agents: ""
-Workflow: Health coach guides the user through goal-setting and recommendations.
+**模式 4：一般健康建议（仅健康教练）**
+用户希望获得一般建议、设立目标或制定计划。例如「帮我改善睡眠习惯」。
+主 Agent："{AGENT_NAME_HEALTH_COACH}"
+协作 Agent：""
+流程：健康教练帮助用户设立目标并给出建议。
 
-**Pattern 5: Data-Driven Coaching (Data Science → Health Coach)**
-User Question Categories:
-  - "I want advice on X based on my data"
-  - "I want to set a goal based on my current metrics"
-  - "I want to track progress against my goals"
-  - "Based on my sleep data, what should I improve?"
-Main Agent: "{AGENT_NAME_HEALTH_COACH}"
-Supporting Agents: "{AGENT_NAME_DATA_SCIENCE}"
-Workflow: Data science analyzes user's data, health coach uses insights to guide goal-setting.
-IMPORTANT: The coach should USE the data insights rather than asking the user for information that can be found in their data.
+**模式 5：根据个人数据制定建议（数据科学 → 健康教练）**
+用户希望根据当前数据设立目标、获得建议或跟踪进展。例如「从我的睡眠数据看，我应该改善什么？」
+主 Agent："{AGENT_NAME_HEALTH_COACH}"
+协作 Agent："{AGENT_NAME_DATA_SCIENCE}"
+流程：数据科学 Agent 分析个人数据，健康教练据此指导用户设立目标。已有数据能回答的内容无需再问用户。
 
-**Pattern 6: Comprehensive Health Questions (All Agents)**
-User Question Categories:
-  - "I want to identify areas for improvement in my health"
-  - "Give me a complete health summary"
-  - "I want advice on a health condition based on my data"
-  - "How can I improve my overall wellness?"
-Main Agent: "{AGENT_NAME_HEALTH_COACH}"
-Supporting Agents: "{AGENT_NAME_DATA_SCIENCE};{AGENT_NAME_DOMAIN_EXPERT}"
-Workflow: Data science analyzes data, domain expert provides medical context, health coach synthesizes into actionable guidance.
-IMPORTANT: Before asking the user questions, check if the data science agent can provide that information from their data.
+**模式 6：综合健康问题（全部 Agent）**
+用户希望找出有待改善的方面、获得全面健康总结，或结合个人数据获得某种健康状况的建议。
+主 Agent："{AGENT_NAME_HEALTH_COACH}"
+协作 Agent："{AGENT_NAME_DATA_SCIENCE};{AGENT_NAME_DOMAIN_EXPERT}"
+流程：数据科学 Agent 分析数据，领域专家补充医学背景，健康教练将两者整合为行动建议。追问前先确认数据能否提供答案。
 
-**Corner Case: Symptom Questions**
-User Question Categories:
-  - "I want to explore symptoms I'm feeling"
-  - "I don't feel good, what might be wrong?"
-  - "I want to understand my symptoms"
-Main Agent: "{AGENT_NAME_DOMAIN_EXPERT}"
-Supporting Agents: ""
-Workflow: Domain expert provides general health information. DO NOT provide diagnosis.
-IMPORTANT: Always recommend consulting a healthcare provider for symptom evaluation. This system does not diagnose conditions.
+**特殊情况：症状问题**
+用户想了解自己的症状，或感觉不舒服、想知道可能的原因。
+主 Agent："{AGENT_NAME_DOMAIN_EXPERT}"
+协作 Agent：""
+流程：提供一般健康信息，始终建议由医疗专业人员评估症状。系统不作诊断。
 
-**Corner Case: Unsupported Requests**
-User Question Categories:
-  - "I want to find a care provider in my area"
-  - "I want to manage my data sources"
-  - "I want to see/delete past conversations"
-  - "I want to log new data"
-  - "I want to create a report"
-  - "I want help with my device"
-Main Agent: ""
-Supporting Agents: ""
-Workflow: Explain that this functionality is not currently supported and suggest alternatives if possible.
+**特殊情况：暂不支持的请求**
+例如查找当地医疗服务、管理数据源、查看或删除历史会话、记录新数据、创建报告或排查设备问题。
+主 Agent：""
+协作 Agent：""
+流程：说明当前的功能范围，如有可行的替代办法就一并提供。
 """
 
 
@@ -142,19 +98,13 @@ Workflow: Explain that this functionality is not currently supported and suggest
 # 代理描述
 # =============================================================================
 
-DATA_SCIENCE_AGENT_DESCRIPTION = f"""data_science_agent: a data scientist who can write and execute Python code to analyze the user's personal health records data.
-This agent can analyze the user's data and provide insights about trends, patterns, and comparisons to population norms.
-The data science agent has access to: summary DataFrame (daily metrics), activities DataFrame (exercise logs), user profile, and population percentiles.
+DATA_SCIENCE_AGENT_DESCRIPTION = f"""data_science_agent：编写并执行 Python 代码来分析用户的健康记录，识别趋势、模式并与参考人群比较。
+可以读取每日摘要、运动记录、用户档案及人群百分位数。
 {DATA_SCIENCE_AGENT_DATA_ACCESS_PROMPT}"""
 
-DOMAIN_EXPERT_AGENT_DESCRIPTION = """domain_expert_agent: an authoritative domain expert in internal medicine, sports medicine and general population health.
-This agent can reason and interpret health-related data across different personal health records, with a particular emphasis on blood test results and data derived from wearable devices.
-The domain expert can summarize, interpret, and contextualize users' personal health records data, putting their health data into perspective."""
+DOMAIN_EXPERT_AGENT_DESCRIPTION = """domain_expert_agent：具备内科、运动医学及人群健康知识，尤其擅长解读化验结果和可穿戴设备数据。可以总结个人健康记录，并说明指标在医学背景下的意义。"""
 
-HEALTH_COACH_AGENT_DESCRIPTION = """health_coach_agent: a health coach who can provide advice and guidance to the user on their health and wellness.
-This agent can provide advice on topics like eating habits, sleep patterns, exercise programs, mental health, and medications.
-The health coach can offer personalized programs and plans to help the user improve their health and wellness.
-IMPORTANT: The health coach should leverage data from the data science agent when available, rather than asking the user for information that can be found in their health data."""
+HEALTH_COACH_AGENT_DESCRIPTION = """health_coach_agent：就饮食习惯、睡眠规律、运动计划、心理健康和用药等主题提供健康指导，并帮助用户制定个性化计划。有数据科学 Agent 的分析时，应直接使用已有数据，避免追问数据已经回答的问题。"""
 
 
 # =============================================================================
@@ -162,12 +112,10 @@ IMPORTANT: The health coach should leverage data from the data science agent whe
 # =============================================================================
 
 ORCHESTRATOR_PREAMBLE = f"""[SYSTEM PROMPT]
-You are an expert in personal health assistance and a helpful conversational orchestrator.
-You will be responsible for organizing the conversation between the user and the team of agents.
-Your job is to guide the conversation and help the user achieve their goals.
+你负责协调个人健康对话。组织各专用 Agent 与用户之间的交流，帮助用户实现目标。
 
 [MULTI_AGENT TEAM]
-There are a few agents in the multi-agent team. The agents and their capabilities are listed below.
+团队中的 Agent 及其能力如下。
 
 {DATA_SCIENCE_AGENT_DESCRIPTION}
 
@@ -177,46 +125,43 @@ There are a few agents in the multi-agent team. The agents and their capabilitie
 """
 
 ORCHESTRATOR_FINAL_RESPONSE_IMPROVEMENT_PROMPT = f"""
-Your role has been defined in {ORCHESTRATOR_PREAMBLE}.
+你的角色由以下说明定义：
+{ORCHESTRATOR_PREAMBLE}
 
-Now your job is to read the conversation history [CONVERSATION] and the final response [FINAL_RESPONSE] and improve the final response before it is sent to the user. Your goal is to make the response more helpful and engaging. You will keep a similar length of the response. You won't add or remove any information, you will only improve the framing. If there are data insights provided, definitely include them in the response.
+阅读 [CONVERSATION] 中的对话记录和 [FINAL_RESPONSE] 中的草稿。保持篇幅接近，只调整表达，使回复更贴合用户。保留信息与已有数据发现。
 
-STRICT TRUTHFULNESS RULES:
-- Never invent capabilities or actions. Do NOT add phrases like "Let me pull up your data", "Let me check your numbers", "One moment while I analyze", "*[Checking your data now]*", or any other language that pretends the system is fetching/computing data when the original response did not include those data points.
-- If the original response says the system does not have access to certain data or cannot answer the question, the improved response MUST preserve that limitation honestly — do not promise to look something up that is not already in the response.
-- Do not insert placeholder brackets, ellipses-as-action ("…"), or stage directions that suggest work-in-progress.
+真实性要求：
+- 不得虚构能力或动作。草稿没有给出相关数据时，不得声称正在读取、核对或计算用户的数据。
+- 如果草稿说明无法获取某项数据或无法回答问题，要如实保留这一限制，不得承诺查询草稿中没有的信息。
+- 不要插入占位符、省略号或表示动作正在进行的舞台提示。
 
-Output ONLY the improved response itself. Do NOT include any preamble, acknowledgement, or meta-commentary such as "Of course", "Here is the improved response", "Sure", "Certainly", or horizontal rules like "***". Begin directly with the first word of the user-facing reply.
+只输出修改后的回复。从正文开始，不添加「当然」「以下是优化后的回复」等开场白、分隔线或说明。使用用户最新一轮发言的语言，除非用户明确指定其他语言。
 """
 
 # =============================================================================
 # 团队结构提示
 # =============================================================================
 
-TEAM_STRUCTURE_PROMPT = f"""Given the conversation history in [CONVERSATION], the user's question in [LAST_QUESTION], 
-and the current topic in [TOPIC], determine the agent team structure.
+TEAM_STRUCTURE_PROMPT = f"""根据 [CONVERSATION] 中的对话、[LAST_QUESTION] 中的问题和 [TOPIC] 中的主题确定团队分工。
 
-You need to output the following:
-1. main_agent: The primary agent responsible for responding to the user
-2. supporting_agents: Semi-colon separated list of agents that should provide supporting insights
-3. collaboration_workflow: Brief description of how the agents should collaborate
+- main_agent：负责向用户回复的主 Agent。
+- supporting_agents：提供协作分析的 Agent，用英文分号分隔。
+- collaboration_workflow：简述协作方式。
 
-CRITICAL: Use the following patterns to determine the correct agent structure:
-
+参考这些分配模式：
 {MULTI_AGENT_COLLABORATION_EXAMPLES}
 
-IMPORTANT RULES:
-- If the user asks about their personal health DATA (steps, sleep, heart rate, etc.), ALWAYS include data_science_agent
-- If the user asks for INTERPRETATION or MEDICAL CONTEXT, include domain_expert_agent  
-- If the user wants COACHING, ADVICE, or GOAL-SETTING, health_coach_agent should be main
-- For comprehensive questions about health improvement, use all three agents
-- The health coach should NEVER ask the user for information that can be obtained from their health data
+- 涉及个人健康数据（如步数、睡眠、心率）时，必须安排 data_science_agent。
+- 需要解读含义或医学背景时，安排 domain_expert_agent。
+- 需要教练指导、建议或设立目标时，由 health_coach_agent 担任主 Agent。
+- 涉及全面改善健康时，安排全部三个 Agent。
+- 教练无需追问能从数据得出的信息。
 
-Output as JSON only (no explanation):
+只输出 JSON，不附解释：
 {{
     "main_agent": "<agent_name>",
     "supporting_agents": "<agent1>;<agent2>",
-    "collaboration_workflow": "<brief description>"
+    "collaboration_workflow": "<协作方式>"
 }}
 """
 
@@ -225,21 +170,17 @@ Output as JSON only (no explanation):
 # 专题和目标提示
 # =============================================================================
 
-TOPIC_PROMPT = """Based on the [CONVERSATION], determine the current topic being discussed.
-Output a brief summary of the topic (1-2 sentences).
+TOPIC_PROMPT = """根据 [CONVERSATION] 判断当前讨论的主题，用一到两句话概括。
 
 [CONVERSATION]:
 """
 
-GOAL_PROMPT = """Based on the [CONVERSATION], determine what the user is trying to achieve.
-Output a brief summary of the user's goal (1-2 sentences).
+GOAL_PROMPT = """根据 [CONVERSATION] 判断用户想达成的目标，用一到两句话概括。
 
 [CONVERSATION]:
 """
 
-FINISH_DESC_PROMPT = """Based on the [CONVERSATION], determine if the conversation has reached a natural conclusion.
-If the user has said goodbye, thanked the assistant, or indicated they're done, output "FINISH".
-Otherwise output "CONTINUE".
+FINISH_DESC_PROMPT = """根据 [CONVERSATION] 判断对话是否自然结束。用户道别、致谢或表示讨论已结束时，输出 "FINISH"。其他情况输出 "CONTINUE"。
 
 [CONVERSATION]:
 """
@@ -255,7 +196,7 @@ def REPHRASE_PROMPT_SUPPORTING_AGENTS(
     supporting_agents: str,
     collaboration_workflow: str,
 ) -> str:
-    """Generate prompt for rephrasing user question for each supporting agent."""
+    """为每个协作 Agent 生成细化后的问题。"""
     
     additional_info = ""
     output_format = "{\n"
@@ -269,18 +210,17 @@ def REPHRASE_PROMPT_SUPPORTING_AGENTS(
     
     for agent in (supporting_agents.split(";") + [main_agent]):
         if agent:
-            output_format += f'    "{agent}": "<rephrased prompt for {agent}>",\n'
+            output_format += f'    "{agent}": "<交给 {agent} 的问题>",\n'
     output_format += "}"
     
-    return f"""You get this question from the user: "{original_prompt}".
-You have the main agent as {main_agent} and supporting agents as {supporting_agents},
-and the following workflow: {collaboration_workflow}.
+    return f"""用户的问题是「{original_prompt}」。
+主 Agent 为 {main_agent}，协作 Agent 为 {supporting_agents}，协作方式为 {collaboration_workflow}。
 
-Now decompose the user's question and frame it properly for each agent to answer.
+拆解用户的问题，按各 Agent 的能力分别组织问题。
 {additional_info}
 
-The rephrased prompt should be a clear question that can be answered by each agent.
-Provide JSON only, no additional formatting or code blocks:
+改写后的问题应当清晰，并在对应 Agent 的能力范围内。
+只输出 JSON，不添加其他格式或代码块：
 {output_format}
 """
 
@@ -290,39 +230,28 @@ Provide JSON only, no additional formatting or code blocks:
 # =============================================================================
 
 def SUPPORTING_AGENT_ADDITIONAL_PROMPT(agent_name: str) -> str:
-    """Generate additional context prompt for a supporting agent."""
+    """为协作 Agent 提供与其职责对应的补充指令。"""
     if agent_name == AGENT_NAME_DATA_SCIENCE:
-        return """You are a data science agent analyzing the user's personal health data.
-Focus on quantitative analysis, trends, patterns, and comparisons to population norms.
-Be specific with numbers and statistics from the data."""
+        return """你负责分析用户的个人健康数据。关注量化分析、趋势、模式和人群对比，并给出具体数值及统计量。"""
     elif agent_name == AGENT_NAME_DOMAIN_EXPERT:
-        return """You are a domain expert providing medical and health interpretation.
-Focus on explaining what the health metrics mean, clinical significance, and evidence-based context.
-Reference clinical guidelines where appropriate."""
+        return """你负责解读健康和医学信息。说明指标含义、临床意义和相关证据，适当引用临床指南。"""
     elif agent_name == AGENT_NAME_HEALTH_COACH:
-        return """You are a health coach providing conversational guidance.
-Focus on actionable recommendations, motivation, and personalized advice.
-Be encouraging and practical."""
+        return """你负责通过对话提供健康指导。用鼓励、务实的语气给出个性化、高可行性的建议。"""
     return ""
 
 
 def UPDATE_TEAM_AGENT_INSIGHTS_PROMPT_TEMPLATE(agent_name: str) -> str:
-    """Generate prompt for merging old and new insights for one agent."""
+    """合并同一个 Agent 在不同轮次中的分析发现。"""
     agent_token = agent_name.upper()
     return f"""
-Now you are going to update the [{agent_token}_INSIGHTS] based on the new insights.
-The insights should be structured and organized.
-Original insights is in [{agent_token}_INSIGHTS].
-The new insights is in [NEW_{agent_token}_INSIGHTS].
-If there is any content related to errors or technical issues, don't include them in your response.
-Combine the two pieces of insight, using the same format as the original insights. Don't consolidate the insights into one paragraph which is hard to read.
-No more other words. Don't include any tags like [{agent_token}_INSIGHTS] or [NEW_{agent_token}_INSIGHTS].
-If the merged insight is empty, just return "EMPTY".
+合并 [{agent_token}_INSIGHTS] 中的原有发现与 [NEW_{agent_token}_INSIGHTS] 中的新发现。
+沿用原有结构，分段组织内容，删去技术报错和故障信息。
+只输出合并后的内容，不输出 [{agent_token}_INSIGHTS] 或 [NEW_{agent_token}_INSIGHTS] 等标签。没有内容时只返回 "EMPTY"。
 """
 
 
 # =============================================================================
-# 反射提示
+# 回复核查提示
 # =============================================================================
 
 def REFLECT_PROMPT(
@@ -333,37 +262,34 @@ def REFLECT_PROMPT(
     main_agent_response: str,
     supporting_agent_insights: str,
 ) -> str:
-    """Generate prompt for reflecting on whether the response needs improvement."""
-    return f"""You get this question from the user: "{original_prompt}".
-You have the main agent as {main_agent} and supporting agents as {supporting_agents},
-and the following workflow: {collaboration_workflow}.
+    """判断主 Agent 的回复是否需要补充信息。"""
+    return f"""用户的问题是「{original_prompt}」。
+主 Agent 为 {main_agent}，协作 Agent 为 {supporting_agents}，协作方式为 {collaboration_workflow}。
 
-The insights from the supporting agents are:
+协作 Agent 的发现如下。
 [SUPPORTING_AGENT_INSIGHTS]
 {supporting_agent_insights}
 
-The response from the main agent is:
+主 Agent 的回复如下。
 [MAIN_AGENT_RESPONSE]
 {main_agent_response}
 
-Reflect on whether the main agent response can be improved by asking supporting agents additional questions.
-For example, if the main agent asks "What time do you usually go to bed?" but this can be answered from the user's data,
-then the data_science_agent should be asked to provide that information.
+判断是否需要协作 Agent 补充信息。例如，主 Agent 问「你一般几点睡觉？」时，如果用户的记录可以回答，就请 data_science_agent 提供答案。
 
-Output JSON:
+输出 JSON：
 {{
     "decision": "YES" or "NO",
     "reflection_questions": {{
-        "<agent_name>": "<additional question>"
+        "<agent_name>": "<补充问题>"
     }}
 }}
 
-Return "NO" if the response is good enough. Return "YES" if it can be improved with additional agent insights.
+回复已足够完整时返回 "NO"；协作 Agent 能提供有用的补充信息时返回 "YES"。
 """
 
 
 # =============================================================================
-# 最后反应提示
+# 最终回复提示
 # =============================================================================
 
 def FINAL_RESPONSE_PROMPT(
@@ -372,23 +298,19 @@ def FINAL_RESPONSE_PROMPT(
     supporting_agent_complete: str,
     collaboration_workflow: str,
 ) -> str:
-    """Generate prompt for polishing the final response."""
+    """生成用于整理最终回复的提示词。"""
     if supporting_agent_complete:
-        prompt = f"""Given the conversation history in [CONVERSATION], continue the conversation.
-You have the main agent as {main_agent}, supporting agents as {supporting_agents},
-overall supporting agents as {supporting_agent_complete}, and workflow: {collaboration_workflow}.
-The main agent response is in [MAIN_AGENT_RESPONSE], insights from supporting agents in [SUPPORTING_AGENT_INSIGHTS].
+        prompt = f"""根据 [CONVERSATION] 中的历史记录继续对话。
+主 Agent 为 {main_agent}，本轮协作 Agent 为 {supporting_agents}，历次参与协作的 Agent 为 {supporting_agent_complete}。协作方式为 {collaboration_workflow}。
+主 Agent 的回复位于 [MAIN_AGENT_RESPONSE]，协作发现位于 [SUPPORTING_AGENT_INSIGHTS]。
 """
     else:
-        prompt = f"""Given the conversation history in [CONVERSATION], continue the conversation.
-You have the main agent as {main_agent} and the response is in [MAIN_AGENT_RESPONSE].
+        prompt = f"""根据 [CONVERSATION] 中的历史记录继续对话。
+主 Agent 为 {main_agent}，其回复位于 [MAIN_AGENT_RESPONSE]。
 """
     
     prompt += f"""
-Now organize this information and respond to the user. Your job is to polish the response.
-Follow the main conversation flow driven by the main agent. Don't change the conversation direction.
-For example, if the main agent is the {AGENT_NAME_HEALTH_COACH}, follow the conversation flow driven by the coach.
-Don't add too many additional suggestions that could break the conversation flow."""
+整理以上信息并润色回复。沿着主 Agent 的对话方向继续。例如，主 Agent 是 {AGENT_NAME_HEALTH_COACH} 时，沿用教练的对话流程。避免插入过多建议。使用用户最新一轮发言的语言，除非用户要求其他语言。"""
     
     return prompt
 
@@ -399,11 +321,10 @@ def SUMMARY_REPORT_PROMPT(
     supporting_agent_complete: str,
     collaboration_workflow: str,
 ) -> str:
-    """Generate prompt for creating a summary report of agent insights."""
-    return f"""Given the conversation history in [CONVERSATION], generate a summary report combining insights from all agents.
-You have the main agent as {main_agent}, current supporting agents as {supporting_agents}, 
-overall supporting agents as {supporting_agent_complete}, and workflow: {collaboration_workflow}.
+    """汇总各 Agent 的发现，供下一轮处理使用。"""
+    return f"""根据 [CONVERSATION] 中的历史记录，汇总所有 Agent 的发现。
+主 Agent 为 {main_agent}，本轮协作 Agent 为 {supporting_agents}，历次参与协作的 Agent 为 {supporting_agent_complete}。协作方式为 {collaboration_workflow}。
 
-The main agent response is in [MAIN_AGENT_RESPONSE], supporting agent insights in [SUPPORTING_AGENT_INSIGHTS].
+主 Agent 的回复位于 [MAIN_AGENT_RESPONSE]，协作发现位于 [SUPPORTING_AGENT_INSIGHTS]。
 
-Generate a structured summary report for the next round of agent processing. Maintain all references."""
+为下一轮处理生成结构清晰的摘要，保留所有参考来源。"""

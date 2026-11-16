@@ -3,7 +3,7 @@ import SplashScreen from './components/SplashScreen'
 import ChatInterface from './components/ChatInterface'
 import './App.css'
 
-// API 碱基 URL -在 dev中使用代理
+// API 使用相对路径，开发时由 Vite 代理。
 const API_BASE = '/api'
 const ACTIVE_SESSION_KEY = 'pha_active_session'
 
@@ -50,13 +50,10 @@ function App() {
 
     try {
       const res = await fetch(`${API_BASE}/sessions/${storedSession.session_id}`)
-      if (!res.ok) throw new Error('Stored session is unavailable')
+      if (!res.ok) throw new Error('已保存的会话不可用')
       const restoredState = await res.json()
 
-      // 校验恢复的会话模式是否还在目录中
-      // 如果不是的话(因为我们更新了自
-      // ),将会话放下并强迫用户返回到
-      // 喷射屏，不然他们会默默使用一个僵硬的模型。
+      // 模型从目录下架后，结束保存的会话并返回配置页。
       const restoredProvider = restoredState.config?.provider
       const restoredModel = restoredState.config?.model_id
       const cfg = latestConfig || config
@@ -86,7 +83,7 @@ function App() {
     try {
       setLoading(true)
       const res = await fetch(`${API_BASE}/config`)
-      if (!res.ok) throw new Error('Failed to fetch config')
+      if (!res.ok) throw new Error('无法获取门户配置')
       const data = await res.json()
       setConfig(data)
       await restoreSession(data)
@@ -100,7 +97,7 @@ function App() {
   const createSession = async (sessionConfig) => {
     try {
       setLoading(true)
-      // 摘录userId从sessionConfig并保存它
+      // 从会话配置保存用户 ID。
       if (sessionConfig.user_id) {
         setUserId(sessionConfig.user_id)
       }
@@ -111,7 +108,7 @@ function App() {
       })
       if (!res.ok) {
         const errData = await res.json()
-        throw new Error(errData.detail || 'Failed to create session')
+        throw new Error(errData.detail || '无法创建会话')
       }
       const data = await res.json()
       setSession(data)
@@ -130,7 +127,7 @@ function App() {
           method: 'DELETE',
         })
       } catch (err) {
-        console.error('Error ending session:', err)
+        console.error('无法结束会话：', err)
       }
     }
     setSession(null)
@@ -150,7 +147,7 @@ function App() {
           method: 'DELETE',
         })
       } catch (err) {
-        console.error('Error ending session during refresh:', err)
+        console.error('重新开始时无法结束旧会话：', err)
       }
 
       clearActiveSession()
@@ -161,12 +158,12 @@ function App() {
         body: JSON.stringify(sessionConfig),
       })
       if (!res.ok) {
-        let detail = 'Failed to refresh session'
+        let detail = '无法重新开始会话'
         try {
           const errData = await res.json()
           detail = errData.detail || detail
         } catch {
-          // 如果响应不是JSON,则保留默认细节。
+          // 如果响应不是 JSON，使用默认错误提示。
         }
         throw new Error(detail)
       }
@@ -184,12 +181,12 @@ function App() {
     }
   }
 
-  // 装入状态
+  // 加载状态
   if (loading && !config) {
     return (
       <div className="app-loading">
         <div className="spinner"></div>
-        <p>Loading PHA Portal...</p>
+        <p>正在加载个人健康 Agent…</p>
       </div>
     )
   }
@@ -198,12 +195,12 @@ function App() {
   if (error && !config) {
     return (
       <div className="app-error">
-        <h2>⚠️ Connection Error</h2>
+        <h2>⚠️ 连接失败</h2>
         <p>{error}</p>
-        <p className="hint">Make sure the API server is running:</p>
+        <p className="hint">请确认 API 服务已启动。</p>
         <code>cd personal_health_agent && uvicorn api.main:app --reload</code>
         <button onClick={() => { setError(null); fetchConfig(); }}>
-          Retry
+          重试
         </button>
       </div>
     )
@@ -221,6 +218,7 @@ function App() {
       ) : (
         <ChatInterface
           session={session}
+          personaName={config?.personas?.find(p => p.id === session.config.persona_id)?.name}
           apiBase={API_BASE}
           onEndSession={endSession}
           onRefresh={handleRefresh}

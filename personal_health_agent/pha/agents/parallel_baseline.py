@@ -163,12 +163,10 @@ PARALLEL_SYNTHESIS_PROMPT = """
 [HEALTH COACH AGENT RESPONSE]
 {coach_response}
 
-Given these insights and the conversation history,
-now synthesize these insights and answer the user's request.
-Do not directly include any of the insights in the response. Do not refer to any specific agent.
-Just act as an orchestrator and synthesize the response based on the insights.
+结合上面的发现和对话记录回答用户。将结果融为一份回复，避免照搬某一段输出或点名某个 Agent。
+使用用户最近一轮发言的语言，除非用户另有要求。
 
-Synthesized Response:"""
+综合回复："""
 
 
 # =============================================================================
@@ -401,7 +399,7 @@ class ParallelMultiAgentBaseline:
         from datetime import datetime
         from pha.streaming import emit_step
         ts = datetime.now().strftime("%H:%M:%S")
-        emit_step("Parallel", "Calling Data Science, Domain Expert, and Health Coach agents in parallel...")
+        emit_step("Parallel", "正在并行调用数据科学、领域专家和健康教练 Agent…")
         print(f"\n[Parallel:{ts}] Calling all 3 agents in parallel...")
         
         responses = {}
@@ -418,7 +416,7 @@ class ParallelMultiAgentBaseline:
                 responses[agent_name] = response
                 ts2 = datetime.now().strftime("%H:%M:%S")
                 is_err = response.startswith("[Error") or response.startswith("[Data Science Agent not") or response.startswith("[Domain Expert Agent not") or response.startswith("[Health Coach Agent not")
-                status = "error" if is_err else "completed"
+                status = "处理失败" if is_err else "处理完成"
                 emit_step("Parallel", f"{agent_name} {status}", detail=response[:100])
                 print(f"[Parallel:{ts2}] {agent_name} completed: {'ERROR' if is_err else 'OK'} ({len(response)} chars): {response[:150]}...")
         
@@ -483,7 +481,7 @@ class ParallelMultiAgentBaseline:
         self.last_coach_response = responses.get("health_coach", "")
         
         ts2 = datetime.now().strftime("%H:%M:%S")
-        emit_step("Parallel", "All agents completed — synthesizing responses...")
+        emit_step("Parallel", "各 Agent 已完成处理，正在汇总回复…")
         print(f"\n[Parallel:{ts2}] All agents completed, synthesizing...")
         print(f"[Parallel:{ts2}] DS: {len(self.last_ds_response)} chars")
         print(f"[Parallel:{ts2}] DE: {len(self.last_de_response)} chars")
@@ -595,7 +593,7 @@ def create_parallel_baseline(
     if settings is None:
         settings = Settings()
     
-    # 为上下文装入人称数据
+    # 加载用户档案及健康数据，供 Agent 建立上下文。
     summary_df, activities_df, profile_df, population_df = load_persona(settings=settings)
     
     # 从配置文件创建用户上下文字符串

@@ -1,8 +1,4 @@
-"""Prompts for the Data Science Agent.
-
-This module contains all prompt templates used by the Data Science Agent
-for approach generation, code generation, debugging, and result interpretation.
-"""
+"""数据科学 Agent 的提示词，覆盖分析计划、代码生成、修正和结果说明。"""
 
 from typing import Any, Dict, Final, List
 import jinja2
@@ -13,7 +9,7 @@ import jinja2
 # =============================================================================
 
 def render_prompt(template: str, **kwargs) -> str:
-    """Render a Jinja2 template with the given variables."""
+    """使用给定变量渲染 Jinja2 模板。"""
     env = jinja2.Environment(
         loader=jinja2.BaseLoader(),
         undefined=jinja2.StrictUndefined,
@@ -23,183 +19,61 @@ def render_prompt(template: str, **kwargs) -> str:
 
 
 # =============================================================================
-# 方法评价的Rubric
+# 分析方案评价标准
 # =============================================================================
 
 RUBRIC_QUESTIONS: Dict[str, Dict[str, str]] = {
     "data_answerable": {
-        "answerable": (
-            "Sometimes, the query will not be answerable given the data (e.g.,"
-            " comparing the user's weight to the population but there is no"
-            " weight related column in the population table). Assuming there is"
-            " no missing data and we have the data for each table in the data"
-            " schema for the past year, is this question answerable given the"
-            " data?"
-        ),
+        "answerable": "若过去一年的各表数据都完整，现有字段能否回答这个问题？例如，人群表没有体重字段时，无法比较用户和人群的体重。",
     },
     "timeframe": {
-        "identify": (
-            "Does the approach identify a *specific* timeframe for the question"
-            " (e.g., looking at the data in the past X months)?"
-        ),
-        "identify_reasonableness": (
-            "**If yes**, is the timeframe sufficiently reasonable?"
-        ),
-        "identify_clear": (
-            "**If yes**, is the timeframe sufficiently clear (e.g., the"
-            " timeframe is unambiguous.)? :red[**Do not make any extra"
-            " assumptions!**]"
-        ),
-        "improvement": "Would a timeframe improve the answer a user gets?",
+        "identify": "方案是否界定了具体的时间范围，例如最近几个月？",
+        "identify_reasonableness": "如果界定了时间范围，范围是否合理？",
+        "identify_clear": "如果界定了时间范围，起止点是否明确？不要加入额外假设。",
+        "improvement": "补充时间范围能否让回答更有用？",
     },
     "data_transformations": {
-        "appropriate_columns": (
-            "Does the approach reference appropriate columns (if not explicitly"
-            " referencing a column, it should be unambiguous what column and"
-            " data table we are referring to) that exist for the approach?"
-        ),
-        "hardcoded_values": (
-            "Besides for the timeframe, does the approach use any hardcoded"
-            " values as a threshold or filter etc. (e.g., a heart rate value to"
-            " reference tempo runs)?"
-        ),
-        "hardcoded_grounded": (
-            "**If yes**, is the hardcoded value grounded based on the user's"
-            " query or some accepted standard?"
-        ),
-        "made_transformations": (
-            "Did the approach make any data transformations (separate from"
-            " identifying the timeframe and calculating data statistics)?"
-        ),
-        "made_transformations_necessary": (
-            "**If no**, are transformations necessary for the approach to"
-            " answer the question?"
-        ),
-        "made_transformations_clear": (
-            "**If yes**, is the approach sufficiently clear in how to do it"
-            " (different data analysts can unambiguously get the same result"
-            " from the calculation.)? :red[**Do not make any extra"
-            " assumptions!**]"
-        ),
-        "made_transformations_logical_errors": (
-            "**If yes**, did the transformations involve any logical errors"
-            " (e.g., the query refers to how my steps are based on my sleep"
-            " from the night before but the approach uses the sleep data on the"
-            " day the steps are taken)?"
-        ),
-        "made_transformations_reference_nonexistant_columns": (
-            "**If yes**, did the transformations reference columns that do not"
-            " exist?"
-        ),
+        "appropriate_columns": "所用字段是否存在且适合分析？即使没有写出字段名，也应能明确判断使用哪张表的哪一列。",
+        "hardcoded_values": "除时间范围外，方案是否写死了筛选值或阈值，例如用固定心率识别节奏跑？",
+        "hardcoded_grounded": "如果有固定值，该值是否来自用户问题或已有公认标准？",
+        "made_transformations": "除选择时间范围和计算统计量外，方案是否进行了数据变换？",
+        "made_transformations_necessary": "如果没有，回答问题是否需要数据变换？",
+        "made_transformations_clear": "如果有，是否写明变换办法，让不同分析人员可以得到同样结果？不要加入额外假设。",
+        "made_transformations_logical_errors": "变换是否有逻辑错误？例如，问题问步数与前一晚睡眠的关系，却把当日睡眠与当日步数匹配。",
+        "made_transformations_reference_nonexistant_columns": "变换是否引用了不存在的字段？",
     },
     "data_distribution_availability": {
-        "columns_data_availability": (
-            "If the approach calculates statistics or performs statistical"
-            " tests, with respect to the **availability of data points** (rows)"
-            " for the transformations and calculations, does the approach"
-            " identify whether there is/is not sufficient data?"
-        ),
-        "columns_data_availability_reasonable": (
-            "**If yes**, assuming we have data for all the columns needed for"
-            " calculations, descriptive statistics and statistical tests, is"
-            " the sufficiency check reasonable (is it too strict, not strict"
-            " enough)?"
-        ),
-        "columns_specific_data_availability": (
-            "If the approach calculates statistics or performs statistical"
-            " tests, with respect to the **specific columns** necessary for"
-            " calculations, descriptive statistics and statistical tests, does"
-            " the approach identify whether there is/is not sufficient data"
-            " (cells in those columns) ?"
-        ),
-        "columns_specific_data_availability_clear": (
-            "**If yes**, is the sufficiency check clear (e.g., we know exactly"
-            " what columns to look at or how to count/calculate whether there"
-            " is/is not sufficient data)?"
-        ),
-        "columns_specific_data_availability_reasonable": (
-            "**If yes**, is the sufficiency check reasonable (is it too strict,"
-            " not strict enough)?"
-        ),
-        "columns_specific_data_availability_sufficient": (
-            "**If yes**, is the sufficiency check comprehensive (all columns"
-            " that are relevant are checked)?"
-        ),
+        "columns_data_availability": "需要统计分析时，方案是否检查记录行数是否充足？",
+        "columns_data_availability_reasonable": "假设所用字段数据齐全，记录行数的检查是否合理？",
+        "columns_specific_data_availability": "方案是否检查用于计算统计量或检验的具体字段中，可用值是否充足？",
+        "columns_specific_data_availability_clear": "是否明确指出要检查哪些列，以及如何计数或判断数据是否充足？",
+        "columns_specific_data_availability_reasonable": "检查条件是否合理，有没有过严或过宽？",
+        "columns_specific_data_availability_sufficient": "是否检查了所有相关字段？",
     },
     "data_statistics": {
-        "summary_statistics": (
-            "Does the approach calculate summary statistics (e.g., mean,"
-            " median, mode, max, min, standard deviation, percentiles, count,"
-            " sum, etc.)?"
-        ),
-        "summary_statistics_reasonable": (
-            "**If yes**, is it reasonable to calculate these statistics?"
-        ),
-        "summary_statistics_necessary": (
-            "**If no**, would summary statistics improve the data analysis"
-            " approach to answer the question?"
-        ),
-        "summary_statistics_compared_to_hardcoded_values": (
-            "**If yes**, does the approach compare the summary statistics to"
-            " hardcoded values (e.g., a standard deviation of 1000 or less when"
-            " specifying whether a person's steps have been consistent)?"
-        ),
-        "summary_statistics_compared_to_hardcoded_values_grounded": (
-            "**If yes**, is the comparison to hardcoded values grounded based"
-            " on the user's query or some accepted standard?"
-        ),
-        "summary_statistics_data_distribution": (
-            "**If yes**, did the approach consider the distribution of the data"
-            " when calculating the summary statistics (e.g., a median would"
-            " make more sense then a mean for skewed data or a mean for"
-            " categorical data would not make much sense)?"
-        ),
-        "summary_statistics_data_distribution_reasonable": (
-            "**If yes**, is the consideration of the data distribution"
-            " reasonable?"
-        ),
-        "summary_statistics_data_distribution_suitable": (
-            "**If yes**, should the approach consider the data distribution"
-            " when calculating the summary statistics?"
-        ),
-        "statistical_test": (
-            "Does the approach perform any statistical test (e.g., T-test,"
-            " ANOVA, correlation etc.)?"
-        ),
-        "statistical_test_reasonable": (
-            "**If yes**, is it reasonable to perform this test?"
-        ),
-        "statistical_test_necessary": (
-            "**If no**, would a statistical test improve the data analysis"
-            " approach to answer the question?"
-        ),
-        "statistical_test_clear": (
-            "**If yes**, is the approach sufficiently clear in how to do it"
-            " (different data analysts can unambiguously get the same result"
-            " from the calculation.)? :red[**Do not make any extra"
-            " assumptions!**]"
-        ),
-        "statistical_test_data_distribution": (
-            "**If yes**, does the approach consider the distribution of the"
-            " data necessary to satisfy the assumptions of the statistical"
-            " test?"
-        ),
-        "statistical_test_data_distribution_suitable": (
-            "**If yes**, are these the right considerations for the statistical"
-            " test?"
-        ),
+        "summary_statistics": "方案是否计算均值、中位数、众数、极值、标准差、百分位数、计数或总和等描述性统计量？",
+        "summary_statistics_reasonable": "如果计算了，这些统计量是否适合该问题？",
+        "summary_statistics_necessary": "如果没有，加入描述性统计量能否改善分析？",
+        "summary_statistics_compared_to_hardcoded_values": "是否将统计量与固定值比较？例如，用标准差小于等于 1000 判断步数是否稳定。",
+        "summary_statistics_compared_to_hardcoded_values_grounded": "如果使用固定值，比较依据是否来自用户问题或公认标准？",
+        "summary_statistics_data_distribution": "是否考虑了数据分布？例如，偏态数值可能更适合用中位数，对分类数据求均值通常不合适。",
+        "summary_statistics_data_distribution_reasonable": "如果考虑了分布，处理方式是否合理？",
+        "summary_statistics_data_distribution_suitable": "计算这些统计量时，是否需要考虑数据分布？",
+        "statistical_test": "方案是否使用了 t 检验、方差分析或相关分析等统计方法？",
+        "statistical_test_reasonable": "如果使用了，该方法是否适合当前问题？",
+        "statistical_test_necessary": "如果没有，增加统计检验能否改善分析？",
+        "statistical_test_clear": "是否给出清晰可复现的检验步骤？不要加入额外假设。",
+        "statistical_test_data_distribution": "是否考虑了统计方法对数据分布的假设？",
+        "statistical_test_data_distribution_suitable": "对这些分布条件的考虑是否适当？",
     },
     "summary": {
-        "align_intents": (
-            "Overall, does the approach align with the user's intent (i.e., the"
-            " user will get a satisfactory answer from the analysis)?"
-        ),
+        "align_intents": "整体方案是否符合用户意图，能否回答用户真正想了解的问题？",
     },
 }
 
 
 def _serialize_rubric_questions(num_tabs: int = 1) -> str:
-    """Serializes the approach rubric questions into a string."""
+    """将分析方案的评价问题排版为文本。"""
     sections = []
     indent = "\t" * num_tabs
 
@@ -223,42 +97,26 @@ RUBRIC_QUESTIONS_STR: Final[str] = _serialize_rubric_questions()
 
 APPROACH_EXEMPLARS: List[Dict[str, str]] = [
     {
-        "query": (
-            "Am I a better cyclist than I was 6 months ago based on my app"
-            " data?"
-        ),
+        "query": "从应用里的记录看，我的骑行水平比六个月前有进步吗？",
         "discussion": (
-            "The term 'better' is ambiguous and requires clarification. One way"
-            " to define it is by comparing average distance, speed, and heart"
-            " rate over two time periods: 1 year ago to 6 months ago vs. the"
-            " last 6 months. Because we are calculating summary statistics,"
-            " sufficient data must be available for each period, and missing"
-            " values should be checked."
+            "「有进步」需要量化。可以用单次里程、平均速度和心率对比两个时段："
+            "一年前至六个月前，以及最近六个月。计算统计量前，需检查各时段的数据量和缺失值。"
         ),
         "approach": (
-            "1. Define 'better' using distance per ride, speed, and heart rate."
-            " 2. Filter cycling activities labeled 'OUTDOOR_BIKE' or 'BIKING'"
-            " and separate them into past (1 year ago to 6 months ago) and"
-            " recent (last 6 months) periods. 3. Ensure at least 5 activities"
-            " per period; otherwise, return 'Insufficient data'. 4. Check for"
-            " missing data and exclude metrics with >50% missing values. 5."
-            " Compute summary statistics for available metrics. 6. Conduct"
-            " Shapiro-Wilk test to determine normality. 7. Use t-test for"
-            " normally distributed data or Mann-Whitney U test otherwise. 8."
-            " Return summary statistics, missing data counts, and statistical"
-            " test results, flagging any excluded metrics."
+            "1. 用单次骑行里程、速度和心率衡量表现。"
+            "2. 筛选 OUTDOOR_BIKE 或 BIKING，按两个时段分组。"
+            "3. 每组至少需要五次活动，否则报告数据不足。"
+            "4. 检查缺失值，排除缺失比例超过 50% 的指标。"
+            "5. 计算可用指标的描述性统计量。"
+            "6. 用 Shapiro-Wilk 检验检查正态性。"
+            "7. 正态数据用 t 检验，其他数据用 Mann-Whitney U 检验。"
+            "8. 返回统计量、缺失值数量和检验结果，并标记被排除的指标。"
         ),
     },
     {
-        "query": "How's my friend's heart rate compared to me?",
-        "discussion": (
-            "There is no data about my friend available. Therefore we cannot"
-            " answer the query."
-        ),
-        "approach": (
-            "1. Return 'There is no data about the user's friend available, we"
-            " only have fitness data for the user and the general population.'"
-        ),
+        "query": "我的心率和朋友相比怎样？",
+        "discussion": "现有记录没有朋友的心率，无法比较。",
+        "approach": "1. 说明只有用户本人及参考人群的数据，未提供朋友的数据。",
     },
 ]
 
@@ -268,76 +126,36 @@ APPROACH_EXEMPLARS: List[Dict[str, str]] = [
 # =============================================================================
 
 APPROACH_PREAMBLE_BASELINE: Final[str] = """\
-You are an expert data scientist. Generate a step by step analysis approach based on given user query.
-## Output Format
-Your output should include _one_ discussion, _one_ approach field.
+你是数据科学专家。根据用户问题制定逐步分析方案。只给出一段讨论和一段方法说明。
 
-Begin!
-Query: {{query}}
+问题：{{query}}
 == DISCUSSION ==
 """
 
 APPROACH_PREAMBLE_V3: Final[str] = """\
-{#- Preamble: Instructions for generating the approach given the user's query -#}
-You are an expert Python data analyst skilled in working with Fitbit time series health data. Your task is to devise a precise, step-by-step analysis plan based *only* on the provided user query and the available data schemas below. This plan will guide subsequent Python code generation but should **NOT** contain any code itself.
+你熟悉 Python 和 Fitbit 健康时间序列。仅根据用户问题和下面的数据结构制定明确、可复现的分析计划，供后续生成代码。计划中不要写代码。
 
-**Available Data Schemas:**
+**可用数据结构：**
 {{data_summary}}
 
-**Task:**
-Analyze the user's query below. Generate a **Discussion** section analyzing the query feasibility and operationalizing terms, followed by a step-by-step **Approach** section outlining the analysis plan.
-
-**User Query:**
+**用户问题：**
 {{query}}
 
-**Instructions for Generating the Plan:**
-**A. Discussion Section:**
-1.  **Analyze Feasibility:** Determine if the query can be answered using the provided data schemas.
-2.  **Identify Ambiguity:** Pinpoint any vague terms in the query (e.g., "better," "active," "consistent," "often").
-3.  **Operationalize Terms:** Define *exactly* how each ambiguous term will be measured using specific columns and calculations from the available data (e.g., "Define 'better cyclist' by comparing average speed (`distance`/`duration`) and average `active_zone_minutes` during cycling activities").
-4.  **Outline Strategy:** Briefly summarize the overall plan.
-5.  **Unanswerable Queries:** If the query cannot be answered (e.g., requires non-existent data like friend's metrics, uses undefined concepts), clearly state *why* in the discussion.
+先给出 == Discussion ==，讨论问题能否用现有数据回答。找出「更好」「活跃」「规律」「经常」等含义不明确的词。说明要用哪些字段、怎么算，才能量化这些词。例如，用骑行记录的平均速度（distance / duration）与 active_zone_minutes 衡量。随后概括总体策略。如果缺少数据（例如只有用户本人的记录，没有朋友的数据），或概念无法明确定义，说明为什么无法回答。
 
-**B. Approach Section:**
-* **If Query is Unanswerable:** Write a single step containing a helpful message explaining why it cannot be answered, based on the discussion (e.g., "1. Return 'Query cannot be answered because data for [missing element] is not available.'").
-* **If Query is Answerable:** Provide a numbered list of precise, unambiguous steps:
-    1.  **Timeframe:**
-        * Specify the exact start and end dates/times for the analysis period.
-        * If not specified in the query, default to the last 1 year of available data from the relevant DataFrame(s).
-        * Ensure the chosen timeframe is reasonable and clearly stated.
-    2.  **Data Selection & Filtering:**
-        * Identify the necessary DataFrame(s) (e.g., `Summary DataFrame`, `Activities DataFrame`).
-        * Specify the exact column(s) required from each DataFrame.
-        * Detail any filtering criteria based on the operationalized terms or timeframe (e.g., "Filter `Activities DataFrame` for `activity_name` in ['OUTDOOR_BIKE', 'BIKING']", "Filter `Summary DataFrame` for `datetime` within the specified timeframe").
-    3.  **Data Transformations:**
-        * Clearly describe any required calculations or data manipulations (e.g., "Calculate speed as `distance` / (`duration` / 60) for each activity", "Aggregate daily `steps` from `Summary DataFrame` into weekly averages", "Lag `sleep_minutes` by one day to align with next day's `steps`").
-        * Ensure transformations are logical and unambiguous. Specify units where relevant.
-    4.  **Data Sufficiency Checks:**
-        * Define and justify minimum data requirements (e.g., "Require at least 5 activities matching the criteria within each comparison period for analysis"). State this check as a step.
-        * Specify checks for missing values in critical columns needed for calculations (e.g., "Check `resting_heart_rate` for nulls. If >50% are missing in a period, exclude this metric from analysis for that period and note it"). State this check as a step.
-        * Clearly state what should happen if data is insufficient (e.g., "If insufficient data, return a message indicating this.").
-    5.  **Statistical Analysis:**
-        * Specify which summary statistics to calculate (e.g., mean, median, count, std dev, min, max). Justify why they are appropriate (consider data distribution - e.g., "Calculate median `steps` due to potential skewness").
-        * If performing statistical tests (e.g., t-test, correlation, ANOVA):
-            * State the exact test to be used and the variables involved.
-            * Justify the choice of test.
-            * Mention necessary assumptions (e.g., normality for t-test) and how they will be assessed (e.g., "Perform Shapiro-Wilk test on metric distributions within each group").
-            * Ensure the test setup is unambiguous.
-    6.  **Define Output:**
-        * Clearly state what specific data, statistics, or test results the execution of this plan should produce (e.g., "Return the calculated median steps for each month", "Return the p-value from the t-test comparing average heart rates"). **Do not include interpretation or comparisons in the plan itself.**
+再给出 == Approach ==。无法回答时只列一步，明确缺少的数据或其他原因。可以回答时，按顺序列出以下步骤：
 
-**Key Requirements & Constraints:**
+1. **时间范围**：给出确切的起止日期或时间。没有指定时，使用相关 DataFrame 中最近一年可用数据，并明确分析区间。
+2. **数据选择和筛选**：明确需要哪些 DataFrame 和字段，以及时间、活动类型等筛选条件。例如活动类型为 OUTDOOR_BIKE 或 BIKING，日期落在给定范围。
+3. **数据变换**：说明计算公式、对齐方式和单位。例如用 distance / (duration / 60) 计算速度，将日步数按周汇总，或将 sleep_minutes 滞后一天与下日步数对齐。
+4. **数据充足性**：指定并说明最低数据要求，例如每个对比区间至少有五条记录。明确如何检查关键字段的空值。例如某区间 resting_heart_rate 缺失超过 50% 时，排除该区间的这一指标并说明原因。数据不足时返回说明。
+5. **统计分析**：说明需要哪些统计量和选择理由，例如分布可能偏斜时使用中位数。如果需要 t 检验、相关分析或方差分析，写明检验、变量、适用条件及检查方法。例如按组进行 Shapiro-Wilk 正态性检验。
+6. **返回结果**：明确应返回的数据、统计量或检验结果，例如每月步数中位数或平均心率比较的 p 值。计划本身无需解释或评判结果。
 
-* **Precision:** Steps must be unambiguous. Another analyst using the same data must reach the exact same numerical result by following the plan. Use specific thresholds and column names.
-* **No Assumptions:** Base the plan *only* on the query and provided schemas. **Do not make extra assumptions!** If a needed threshold isn't specified or inferable, state this as a limitation or use a clearly justified standard (e.g., population norms if applicable and available).
-* **Relevance & Scope:** Use only the provided data. Address *only* the user's query. The plan should *only* return the data/statistics needed to answer the query, not interpretations.
-* **NO CODE:** The output must be the plan (Discussion + Approach) only.
+让其他分析人员能依照步骤得到相同数值。只用给定的数据和问题提供的信息，避免额外假设。阈值无法确定时，说明限制，或使用确有依据且可用的标准。分析仅返回回答问题所需的数据或统计量。
 
-**Output Format:**
-Your output must contain exactly one `== Discussion ==` section and one `== Approach ==` section, formatted as shown in the examples above.
-
-Begin!
-**Query:** {{query}}
+输出恰好一个 == Discussion == 和一个 == Approach ==，不输出代码。
+问题：{{query}}
 == Discussion ==
 """
 
@@ -348,77 +166,70 @@ Begin!
 
 # DataFrame 嵌入在即时的图案
 DATAFRAME_SCHEMAS: Final[str] = """
-# summary_df: Summary DataFrame
-This is a summary of the user's activity, sleep, and personal health records data. Each row in the summary dataframe represents a single day.
-The dataframe is indexed by the date of the record (datetime64[ns]), the index name is `datetime`.
-The dataframe has the following columns:
-- steps: The number of steps taken each day (float64).
-- sleep_minutes: The total sleep time (in minutes) for each day (float64).
-- bed_time: The time the user went to bed (datetime64[ns]).
-- wake_up_time: The time the user woke up (datetime64[ns]).
-- resting_heart_rate: The average resting heart rate (in beats per minute) for each day (float64).
-- heart_rate_variability: The user's heart rate variability (float64).
-- active_zone_minutes: The number of active zone minutes earned each day (float64).
-- deep_sleep_minutes: The amount of deep sleep (in minutes) for each day (float64).
-- rem_sleep_minutes: The amount of REM sleep (in minutes) for each day (float64).
-- light_sleep_minutes: The amount of light sleep (in minutes) for each day (float64).
-- awake_minutes: The amount of awake time (in minutes) for each day (float64).
-- stress_management_score: The user's stress management score for each day. Higher value means better stress management and lower stress level (float64).
-- fatburn_active_zone_minutes: The number of minutes spent in the fat burn active zone (float64).
-- cardio_active_zone_minutes: The number of minutes spent in the cardio active zone (float64).
-- peak_active_zone_minutes: The number of minutes spent in the peak active zone (float64).
+# summary_df：每日摘要
+汇总活动、睡眠与其他健康记录，每日一行。
+索引名为 `datetime`，值为记录日期（datetime64[ns]）。
+包含以下字段：
+- steps: 步数（float64）。
+- sleep_minutes: 总睡眠时长（分钟，float64）。
+- bed_time: 就寝时间（datetime64[ns]）。
+- wake_up_time: 起床时间（datetime64[ns]）。
+- resting_heart_rate: 静息心率（bpm，float64）。
+- heart_rate_variability: 心率变异性（float64）。
+- active_zone_minutes: 活跃区间分钟数（float64）。
+- deep_sleep_minutes: 深睡时长（分钟，float64）。
+- rem_sleep_minutes: REM 睡眠时长（分钟，float64）。
+- light_sleep_minutes: 浅睡时长（分钟，float64）。
+- awake_minutes: 清醒时长（分钟，float64）。
+- stress_management_score: 压力管理得分，越高表示管理得越好（float64）。
+- fatburn_active_zone_minutes: 脂肪燃烧心率区间的时长（分钟，float64）。
+- cardio_active_zone_minutes: 有氧运动心率区间的时长（分钟，float64）。
+- peak_active_zone_minutes: 峰值心率区间的时长（分钟，float64）。
 
-# activities_df: Activities DataFrame
-Each row in the activities dataframe represents a single activity.
-The dataframe is indexed by the start time of the activity (datetime64[ns]), the index name is `start_time`.
-The dataframe has the following columns:
-- start_time: The start time of the activity (datetime64[ns]).
-- end_time: The end time of the activity (datetime64[ns]).
-- activity_name: The name of the activity (object). Possible values: "WALKING", "RUNNING", "OUTDOOR_BIKE", "STRENGTH_TRAINING", "WORKOUT", "ELLIPTICAL", "YOGA", "TREADMILL", "HIKING", "SWIMMING".
-- distance: The distance covered during the activity (float64) in miles.
-- duration: The duration of the activity (float64) in minutes.
-- calories: The number of calories burned during the activity (float64).
-- steps: The number of steps taken during the activity (float64).
-- active_zone_minutes: The number of active zone minutes earned during the activity (float64).
+# activities_df：活动记录
+每行记录一次活动。
+索引名为 `start_time`，值为活动开始时间（datetime64[ns]）。
+包含以下字段：
+- start_time: 活动开始时间（datetime64[ns]）。
+- end_time: 活动结束时间（datetime64[ns]）。
+- activity_name: 活动类型。示例："WALKING", "RUNNING", "OUTDOOR_BIKE", "STRENGTH_TRAINING", "WORKOUT", "ELLIPTICAL", "YOGA", "TREADMILL", "HIKING", "SWIMMING".
+- distance: 活动距离（英里，float64）。
+- duration: 活动时长（分钟，float64）。
+- calories: 活动消耗的热量（float64）。
+- steps: 步数（float64）。
+- active_zone_minutes: 活跃区间分钟数（float64）。
 
-# profile_df: User Profile Dataframe
-The profile dataframe is a single row dataframe that contains the following information:
-- age: The age of the user as an integer (e.g., 34).
-- gender: The gender of the user as a lowercase string ("male" or "female").
-- height_cm: The height of the user in centimeters (int).
-- weight_kg: The weight of the user in kilograms (int).
-- averageDailySteps: The user's average daily step count (int).
-- cluster: The user's activity profile cluster label (object).
-- elderly: Whether the user is classified as elderly (bool).
+# profile_df：用户档案
+只有一行，包含以下字段：
+- age: 年龄（int）。
+- gender: 性别（字符串 "male" 或 "female"）。
+- height_cm: 身高（厘米，int）。
+- weight_kg: 体重（千克，int）。
+- averageDailySteps: 历史日均步数（int）。
+- cluster: 用户活动水平的分组标签（object）。
+- elderly: 是否归入老年人群（bool）。
 
-# population_df: Population DataFrame
-This DataFrame represents simulated population health and activity metrics, broken down by demographic groups and percentile ranks.
-Note: To compare a user's profile age (integer) with population data, call the pre-loaded `age_to_age_group(age)` helper function (already available in the execution environment — do NOT redefine it). It converts an integer age to the appropriate age bracket string (e.g., 34 → "25-34").
-The dataframe has the following columns:
-- percentile: An integer value ranging from 1 to 100.
-- age: A string representing the age bracket (e.g., "18-24", "25-34", "35-44", "45-54", "55-64", "65+", "Under 18").
-- gender: A string indicating the gender ("male" or "female").
-- resting_heart_rate: Resting heart rate (beats per minute) for the percentile (float64).
-- heart_rate_variability: Heart rate variability for the percentile (float64).
-- steps: Number of steps for the percentile (float64).
-- fatburn_active_zone_minutes: Fat burn active zone minutes for the percentile (float64).
-- cardio_active_zone_minutes: Cardio active zone minutes for the percentile (float64).
-- peak_active_zone_minutes: Peak active zone minutes for the percentile (float64).
-- rem_sleep_minutes: REM sleep minutes for the percentile (float64).
-- deep_sleep_minutes: Deep sleep minutes for the percentile (float64).
-- light_sleep_minutes: Light sleep minutes for the percentile (float64).
-- stress_management_score: Stress management score for the percentile (float64).
+# population_df：人群参考数据
+按年龄段、性别和百分位提供模拟的人群健康与活动数据。
+对比参考人群前，用执行环境预先加载的 `age_to_age_group(age)` 将年龄映射到年龄段，例如 34 对应 "25-34"。不需要重新定义该函数。
+包含以下字段：
+- percentile: 百分位数（1–100，int）。
+- age: 年龄（int）。
+- gender: 性别（字符串 "male" 或 "female"）。
+- resting_heart_rate: 静息心率（bpm，float64）。
+- heart_rate_variability: 心率变异性（float64）。
+- steps: 步数（float64）。
+- fatburn_active_zone_minutes: 脂肪燃烧心率区间的时长（分钟，float64）。
+- cardio_active_zone_minutes: 有氧运动心率区间的时长（分钟，float64）。
+- peak_active_zone_minutes: 峰值心率区间的时长（分钟，float64）。
+- rem_sleep_minutes: REM 睡眠时长（分钟，float64）。
+- deep_sleep_minutes: 深睡时长（分钟，float64）。
+- light_sleep_minutes: 浅睡时长（分钟，float64）。
+- stress_management_score: 压力管理得分，越高表示管理得越好（float64）。
 """
 
 # V2 代码提示
-CODEGEN_PREAMBLE_V2: Final[str] = """
-# Role and Goal
-You are an expert Python data scientist specializing in analyzing Fitbit health and fitness time series data using the pandas library. Your goal is to write the **functional body** of a Python script that performs a specific analysis task.
-
-# Inputs Provided
-You will receive:
-1.  **DataFrame Schemas:** Detailed descriptions of the pandas DataFrames available for use. Pay close attention to column names, data types, and the index. Crucially, `datetime` information is the **index** for these DataFrames, not a standard column.
-2.  **Approach:** A step-by-step description outlining the specific analysis required. It describes the objective, potentially mentions the input DataFrames (by conceptual name or description), and the expected output or result of the analysis (answering the user query within).
+CODEGEN_PREAMBLE_V2: Final[str] = """你熟悉 Python、pandas 和 Fitbit 时间序列。根据以下数据结构和方案，编写完成分析任务的 Python 函数。留意列名、类型和时间索引。
 
 <Dataframe schemas>
 """ + DATAFRAME_SCHEMAS + """
@@ -428,23 +239,15 @@ You will receive:
 {{approach}}
 </Approach>
 
-# Instructions for Generating Python Code
-Based strictly on the provided **schemas** and **approach**, generate only the Python code block that performs the requested analysis:
+- 严格实现 <Approach> 中的分析，不构造额外数据。
+- 使用已有 DataFrame：summary_df、activities_df、profile_df、population_df。
+- 用日期时间索引做筛选和汇总，除非结构明确给出同名列。
+- 在开头添加必要导入。将所需结果整理成 DataFrame、计算值或列表，并从 analysis 函数返回。
+- 函数签名如下。生成的代码中不写注释或 docstring。尽量使用 pandas 向量化操作。
+- 调用预加载的 age_to_age_group(age: int) -> str，无需重写。它将年龄转换为年龄段，如 34 转为 "25-34"。
+- 函数体少于 80 行，避免冗余检查。缺少对应人群数据时，只返回用户自己的数据，不因缺少参考值而报错。
 
-1.  **Core Logic:** Implement the data manipulation and analysis steps necessary to fulfill the requirements described in the `<Approach>`.
-2.  **Assume Inputs:** Assume the DataFrames described in `<Dataframe schemas>` are available as pandas DataFrame variables (`summary_df`, `activities_df`, `profile_df`, `population_df`).
-3.  **Use Index:** Remember to leverage the `datetime` index for time-based operations, filtering, or aggregations. Do not treat `datetime` as a column unless explicitly stated otherwise in the schema.
-4.  **Imports:** Start the code block with all necessary import statements. Include the standard ones provided below, and add any others required by your generated analysis code (e.g., `numpy`).
-5.  **Output:** The code should result in the final requested output (e.g., a processed DataFrame, a calculated value, a list of results). This might involve assigning the final result to a variable (e.g., `result_df` or `final_value`) as the last step, simulating what a function might return.
-6.  **Function:** The code should be wrapped in a function named `analysis` that takes the DataFrames as arguments.
-7.  **No Extras:**
-    * Do **NOT** include the docstring itself in the output.
-    * Do **NOT** include any comments (`# ...`) in the generated code.
-8.  **Code Quality:** Write clean, efficient, and idiomatic pandas code. Use vectorized operations where appropriate.
-9.  **Pre-loaded Helpers:** The execution environment provides `age_to_age_group(age: int) -> str` which converts an integer age to an age bracket string (e.g., 34 → "25-34"). Do NOT redefine this function — just call it directly.
-10. **Conciseness:** Keep the analysis function body under 80 lines. Avoid verbose error handling or redundant data checks. If population data for a demographic is missing, return the user's own metrics without population comparison rather than raising an error.
-
-Now generate the code.
+生成代码：
 
 ```python
 from typing import Any, Dict
@@ -460,176 +263,125 @@ def analysis(summary_df: pd.DataFrame | None = None,
 
 # V1 代码提示( 默认情况下没有使用)
 CODEGEN_PREAMBLE: Final[str] = """\
-{#- Preamble: Instructions for generating the code given the user's query and approach -#}
-You are an expert python data programmer skilled in working with Fitbit time series health data and writing code given a specific analysis approach.
+你负责用 Python 分析 Fitbit 健康时间序列。依据用户问题和分析方案写出所需代码，保留方案的原意和回答所需的计算结果与背景。
 
-Here's a summary of the available data relevant to the user:
+可用数据：
 {{data_summary}}
 
-You will be provided with an open-ended query related to the user's Fitbit data and an analysis approach to answer the query. Your task is to write the python code to implement the analysis approach.
-Please keep the intent of the approach in mind when writing the code. Return all necessary calculations and contextual data to answer the query.
+除 Python 内置库外，只可使用 matplotlib、pandas、numpy、scipy。系统不会读取打印内容，只读取代码末尾的数据结构。将答案和相关信息存入 result。
 
-Important:
-- In addition to built-in imports, please only use/import the following libraries:
-    - matplotlib
-    - pandas
-    - numpy
-    - scipy
-- Anything that is printed to the screen will not be observed.
-- ONLY the data structure stored in the last line of code will be used to \
-answer the query. Store the answer and all relevant contextual data in a variable called result.
-
-
-Begin!
-Query: {{query}}
-Approach: {{approach}}
-The dataframes are stored in the following variables (DO NOT create new toy dataframes):
+问题：{{query}}
+方案：{{approach}}
+可用 DataFrame 变量如下，请直接使用，不要构造示例数据：
 {{dfs_info}}
-Code:
+代码：
 ```python
 """
 
 
 CODEGEN_PREAMBLE_BASELINE: Final[str] = """\
-You are a Python expert with tons of experience with data anlysis on Fitbit health and fitness time series data.
-You are provided with dataframe schemas that describes Dataframes available to use, and a docstring that describe how an `analysis` function should work to generate code that answers the user query listed in the docstring.
-Here's a summary of the available data relevant to the user:
+根据数据结构和分析方案编写 Python，回答有关 Fitbit 健康和运动时间序列的问题。阅读 analysis 函数的 docstring，遵照其中的任务说明。
+
 <Dataframe schemas>
 """ + DATAFRAME_SCHEMAS + """
 </Dataframe schemas>
 
+问题：{{query}}
+方案：{{approach}}
 
+只返回修正后的代码，封装在 ```python ... ``` 中，无需解释。
 
-Query: {{query}}
-Approach: {{approach}}
-
-Return only the fixed code (enclosed in ```python ... ``` block), without any explanation.
-
-Generated Code:
+生成的代码：
 ```python
 """
 
 DEBUG_CODEGEN_PREAMBLE_BASELINE: Final[str] = """\
-{#- Preamble: Instructions for debugging code -#}
-Please dubug and return the fixed code for the following code instructions, code, and error.
+根据以下说明、待修正代码和错误信息修复代码。
 
-Code Instructions:
+代码目标：
 {{code_instructions}}
-Code:
+代码：
 {{code}}
-Error:
+错误：
 {{error}}
 
-Return only the fixed code (enclosed in ```python ... ``` block), without any explanation.
+只返回完整的修正代码，使用 ```python ... ``` 代码块，无需解释。
 
-Fixed Code:
+修正后的代码：
 ```python
 """
 
-CODE_REFINEMENT_PREAMBLE: Final[str] = """
-You are an expert Python data programmer specializing in analyzing Fitbit time series health data.
+CODE_REFINEMENT_PREAMBLE: Final[str] = """你负责根据反馈改进已经成功运行的 Fitbit 数据分析代码。只修改反馈指出的内容，保留其他正确逻辑。
 
-**Task:** The code below executed successfully. Refine it based on the feedback provided. Preserve all correct logic — only change what the feedback explicitly requests.
+- 使用原有 analysis 签名。代码中不添加注释，原代码没有 try/except 时也无需添加。
+- 函数体少于 80 行。直接调用预加载的 age_to_age_group，不要重写。
+- 无需引入额外分析或功能。
 
-**Guiding Principles:**
-* Preserve all correct logic from the original code.
-* Make only the changes described in the refinement feedback.
-* Do not introduce unrelated changes, new analyses, or extra functionality.
-
-**Structural Requirements (must be preserved exactly):**
-* Wrap all code in the `analysis` function with the exact signature shown at the end of this prompt.
-* No comments (`# ...`) anywhere in the code.
-* No `try/except` wrappers unless the original had them.
-* Keep the function body under 80 lines.
-* Do not redefine `age_to_age_group` — it is pre-loaded in the execution environment.
-
-**Input:**
-Here's a summary of the available data:
 <Dataframe schemas>
 """ + DATAFRAME_SCHEMAS + """
 </Dataframe schemas>
 
-**1. Analysis goal:**
+**1. 分析目标**
 {{code_instructions}}
 
-**2. Current code (executed successfully):**
+**2. 已成功运行的代码**
 {{code}}
 
-**3. Execution output:**
+**3. 执行输出**
 {{execution_results}}
 
-**4. Refinement feedback:**
+**4. 修正反馈**
 {{code_update_feedback}}
 
-Return only the refined code (enclosed in ```python ... ``` block), without any explanation.
+只返回修正后的代码，封装在 ```python ... ``` 中，无需解释。
 
-Refined Python code:
+修正后的 Python 代码：
 ```python
 """
 
 
 DEBUG_CODEGEN_PREAMBLE: Final[str] = """\
-{#- Preamble: Instructions for generating the code given the user's query and approach -#}
-You are an expert python data programmer skilled in working with Fitbit time series health data and writing and debugging code given a specific analysis approach.
-Given the user query, analysis approach, code, and a traceback error message from executing the code, your task is to edit the code to fix the error.
+你负责修复分析 Fitbit 时间序列的 Python 代码。参考用户的问题、分析方案、程序和执行报错，保留原有目标，返回完整的修正代码。
 
-Here's a summary of the available data relevant to the user:
+可用数据：
 {{data_summary}}
 
-Please keep the intent of the original code in mind when writing the code.
-Return the entire code with the error fixed.
+- 回答所需的数据放在代码最后一行对应的 result 变量里，该行不能在函数内。
+- 除 Python 内置库外，仅可使用 matplotlib、pandas、numpy、scipy。
+- 系统不读取打印内容，只读取 result。
+- 只修复当前错误，避免添加原程序没有的分析、图表或功能。
 
-Important:
-- The necessary data to answer the query will be stored on the last line of code and should not be the last line of a function.
-- In addition to built-in imports, please only use/import the following libraries:
-    - matplotlib
-    - pandas
-    - numpy
-    - scipy
-- Anything that is printed to the screen will not be observed.
-- ONLY the data structure stored in the last line of code will be used to answer the query. Store this in a variable called result.
-- Keep the code concise — focus ONLY on fixing the specific error. Do NOT add extra analyses, visualizations, or functionality that was not in the original code.
-
-Begin!
-Code Instructions: 
+代码目标：
 {{code_instructions}}
-Code: 
+代码：
 {{code}}
-Error: 
+错误：
 {{error}}
-Fixed Code:
+修正后的代码：
 ```python
 """
 
 
 DEBUG_CODEGEN_PREAMBLE_V2: Final[str] = """
-You are an expert Python data programmer specializing in analyzing and debugging Fitbit time series health data according to specific analysis requirements.
+你负责调试分析 Fitbit 时间序列的 Python 代码。检查原始代码目标、代码和真实执行结果，定位错误或结果偏差，只返回完整的修正代码。
 
-**Task:** Review the provided code generation prompt, the generated Python code, and the results of executing that code (which may include errors, tracebacks, or unexpected output). Identify the error(s) or discrepancies, fix the code accordingly, and return *only* the complete, corrected Python code block.
+- 实现原始提示词规定的分析，直接解决执行结果显示的问题。
+- 尽量保留原有意图、逻辑、结构和风格。
+- 只做所需修复，避免添加原程序没有的分析、可视化、try/except 或其他功能。原程序过长时，可在保留正确性的前提下简化。
 
-**Guiding Principles:**
-* The fixed code must accurately implement the analysis described in the 'Code generation prompt'.
-* The fix should directly address the error(s) or issues indicated in the 'Code execution results'.
-* Preserve the original intent and overall logic described in the 'Code generation prompt'.
-* Maintain the original coding style and structure where possible, unless changes are necessary for the fix.
-* Do not introduce significant unrelated logic changes.
-* **IMPORTANT: Focus ONLY on fixing the specific error. Do NOT add extra analyses, visualizations, try/except wrappers, or functionality that was not in the original code. If the original code was already long, simplify where possible while preserving correctness. The goal is a minimal, targeted fix.**
-
-**Input:**
-
-**1. Code generation prompt (Original Goal):**
+**1. 原始代码目标**
 {{code_instructions}}
 
-**2. Generated code (Contains Errors/Issues):**
+**2. 待修正代码**
 {{code}}
-**3. Code execution results (Error, Traceback, or Output):**
+
+**3. 执行结果或错误堆栈**
 {{code_result}}
 
-**4. Code Update Feedback (Optional):**
-Code Update Feedback:
+**4. 代码修正反馈（如有）**
 {{code_update_feedback}}
-**Output:**
-Fixed Python code:
+
+修正后的 Python 代码：
 ```python
 
 """
@@ -640,36 +392,19 @@ Fixed Python code:
 # =============================================================================
 
 INTERPRETATION_PREAMBLE: Final[str] = """\
-{#- Preamble: Instructions for interpreting the result of the data generation -#}
+你负责核对 Fitbit 健康时间序列的计算结果，并用用户能理解的语言说明数值。
 
-You are an expert data analyst specializing in Fitbit time-series health data.\
-Your goal is to analyze execution results, identify issues, and communicate \
-findings in a clear and user-friendly manner.
+- 如果分析正确且无需改代码，在原问题的背景下说明结果。用户看不到原始执行输出，需要用清楚的语言概括。只解释计算所得数值，不作医学解读。以 [SUMMARY] 开头，使用用户最近一轮发言的语言，除非用户另有要求。
+- 如果结果疑似由代码逻辑错误引起，例如本应有数值却出现 NaN，说明问题，用英文提出代码修正建议。以 [CODE UPDATE] 开头。
 
-You will be provided a user query, an analysis approach, code, and the \
-execution results from executing the code.
-
-Your response should follow these guidelines:
-- If the execution results are valid (i.e., the analysis is correct and no code \
-changes are needed), summarize the values within the context of the original query. \
-The user won't be able to see the execution results, so you will need to \
-summarize them in a way that is understandable to the user. \
-Do not make any interpretations for the user. YOU are not a health expert.
-    - Start your response with a "[SUMMARY]" tag.
-- If the execution results appear to be invalid due to a logical error in the \
-code (e.g., there are nan values when there should not be any), explain why the \
-result is not valid and suggest an update to the code (in english).
-    - Start your response with a "[CODE UPDATE]" tag.
-    
-Begin!
-Query: {{query}}
-Approach:
+问题：{{query}}
+分析方案：
 {{approach}}
-Code: 
+代码：
 {{code}}
-Execution Results:
+执行结果：
 {{execution_results}}
-Response:
+回复：
 """
 
 

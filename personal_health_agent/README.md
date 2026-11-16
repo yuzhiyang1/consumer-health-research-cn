@@ -1,6 +1,6 @@
 # 个人健康 Agent（PHA）框架
 
-本目录是论文《The Anatomy of a Personal Health Agent》及其个人健康 Agent（Personal Health Agent，PHA）框架的官方代码库。如果你在研究中使用这项工作，请[引用论文](#scroll-citation)。有问题可以通过 GitHub Issues 反馈。
+本目录是 Google 为论文《The Anatomy of a Personal Health Agent》开源的个人健康 Agent（Personal Health Agent，PHA）框架的简体中文版。如果你在研究中使用这项工作，请[引用论文](#scroll-citation)。英文源码见 [Google 官方仓库](https://github.com/Google-Health/consumer-health-research/tree/main/personal_health_agent)。
 
 [Google Research 博客](https://research.google/blog/the-anatomy-of-a-personal-health-agent/) · [论文预印本](https://www.arxiv.org/abs/2508.20148)
 
@@ -133,7 +133,7 @@ pha.set_agents(
 )
 
 # 提出健康问题
-response = pha.respond("How has my sleep been lately?")
+response = pha.respond("我最近睡得怎么样？")
 print(response)
 ```
 
@@ -151,7 +151,9 @@ print(response)
 | [06 Parallel 基线](notebooks/06_parallel_baseline.ipynb) | 多 Agent 并行基线。 |
 | [07 PHIA 基线](notebooks/07_phia_baseline.ipynb) | 单 Agent ReAct 基线。 |
 
-[少样本示例目录](few_shots/)还提供了血压、胆固醇、糖化血红蛋白（HbA1c）等解读示例及其[中文阅读版](few_shots/EXAMPLES.zh-CN.md)。
+[领域专家少样本导读](few_shots/EXAMPLES.zh-CN.md)和 [PHIA 少样本导读](few_shots/phia/EXAMPLES.zh-CN.md)提供 57 个原问题的中文翻译和答复摘要。完整的 ReAct 示例仍由模型从英文 Notebook 读取。
+
+中文版门户和教程可直接使用中文提问，运行提示词会引导模型沿用用户的语言。API 路径、CSV 字段、工具名称和 ReAct 标签沿用原有格式。若要复现论文的英文提示词实验，请使用 [Google 原版](https://github.com/Google-Health/consumer-health-research/tree/3e9d1e4877a54cf81ce8ef34085006952dd19601/personal_health_agent)。
 
 ### 环境变量（可选）
 
